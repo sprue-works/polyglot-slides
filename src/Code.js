@@ -84,38 +84,61 @@ function translateSelection(codes, mode) {
     return { text: 'Select a text box (or text inside one) first.', error: true };
   }
 
+  var translated = mode === 'duplicate'
+    ? duplicatePerLanguage_(shapes, codes)
+    : appendInPlace_(shapes, codes);
+
+  if (translated === 0) return { text: 'The selection has no text to translate.', error: true };
+  return {
+    text: translated + ' text box' + (translated === 1 ? '' : 'es') + ' translated into ' + codes.length + ' language' + (codes.length === 1 ? '' : 's') + '.',
+    error: false,
+  };
+}
+
+// Source '' = auto-detect, so this also works on non-English decks.
+function translate_(text, code) {
+  return LanguageApp.translate(text, '', code);
+}
+
+function appendInPlace_(shapes, codes) {
   var translated = 0;
   shapes.forEach(function (shape) {
     var textRange = shape.getText();
     var original = textRange.asString().trim();
     if (!original) return;
-
-    // Source '' = auto-detect, so this also works on non-English decks.
-    var translations = codes.map(function (code) {
-      return LanguageApp.translate(original, '', code);
-    });
-
-    if (mode === 'duplicate') {
-      // One clone per language, stacked below the original so nothing
-      // overlaps; each clone keeps the original's styling.
-      translations.forEach(function (text, i) {
-        var copy = shape.duplicate().asShape();
-        copy.setLeft(shape.getLeft());
-        copy.setTop(shape.getTop() + shape.getHeight() * (i + 1));
-        copy.getText().setText(text);
-      });
-    } else {
-      // Append below the original inside the same text box, preserving the
-      // box's base styling.
-      textRange.appendText('\n' + translations.join('\n'));
-    }
+    var translations = codes.map(function (code) { return translate_(original, code); });
+    // Append below the original inside the same text box, preserving the
+    // box's base styling.
+    textRange.appendText('\n' + translations.join('\n'));
     translated++;
   });
+  return translated;
+}
 
-  return {
-    text: translated + ' text box' + (translated === 1 ? '' : 'es') + ' translated into ' + codes.length + ' language' + (codes.length === 1 ? '' : 's') + '.',
-    error: false,
-  };
+// Clone the whole selection once per language, preserving the shapes'
+// relative layout: each language gets a copy of the full cluster, offset
+// below the previous one by the cluster's bounding-box height.
+var CLUSTER_GAP_PT = 10;
+
+function duplicatePerLanguage_(shapes, codes) {
+  var top = Math.min.apply(null, shapes.map(function (s) { return s.getTop(); }));
+  var bottom = Math.max.apply(null, shapes.map(function (s) { return s.getTop() + s.getHeight(); }));
+  var clusterHeight = bottom - top + CLUSTER_GAP_PT;
+
+  var translated = 0;
+  shapes.forEach(function (shape) {
+    var original = shape.getText().asString().trim();
+    if (original) translated++;
+    codes.forEach(function (code, i) {
+      // Copy even empty shapes so each language's cluster mirrors the
+      // original layout exactly.
+      var copy = shape.duplicate().asShape();
+      copy.setLeft(shape.getLeft());
+      copy.setTop(shape.getTop() + clusterHeight * (i + 1));
+      if (original) copy.getText().setText(translate_(original, code));
+    });
+  });
+  return translated;
 }
 
 // Collect the shapes-with-text implicated by the current selection,
