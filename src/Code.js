@@ -1,17 +1,32 @@
-// Polyglot Slides — translate selected text into Spanish + Chinese in place.
+// Polyglot Slides — translate selected text into chosen languages in place.
 //
 // Works as a container-bound script or as an Editor add-on (test deployment).
 // Translation uses LanguageApp (Google Translate, free, no API key).
 
-var TARGET_LANGUAGES = [
+// Languages offered in the sidebar. Add more freely — any Google Translate
+// code works (https://cloud.google.com/translate/docs/languages).
+var AVAILABLE_LANGUAGES = [
   { code: 'es', label: 'Spanish' },
-  { code: 'zh-CN', label: 'Chinese' },
+  { code: 'zh-CN', label: 'Chinese (Simplified)' },
+  { code: 'zh-TW', label: 'Chinese (Traditional)' },
+  { code: 'fr', label: 'French' },
+  { code: 'de', label: 'German' },
+  { code: 'pt', label: 'Portuguese' },
+  { code: 'vi', label: 'Vietnamese' },
+  { code: 'tl', label: 'Filipino (Tagalog)' },
+  { code: 'ar', label: 'Arabic' },
+  { code: 'ru', label: 'Russian' },
+  { code: 'ko', label: 'Korean' },
+  { code: 'ja', label: 'Japanese' },
 ];
+
+var DEFAULT_TARGETS = ['es', 'zh-CN'];
+var PROP_KEY = 'targetLanguages';
 
 function onOpen() {
   SlidesApp.getUi()
     .createAddonMenu()
-    .addItem('Translate selection → ES + ZH', 'translateSelection')
+    .addItem('Translate selection', 'translateSelectionFromMenu')
     .addItem('Open sidebar', 'showSidebar')
     .addToUi();
 }
@@ -25,17 +40,40 @@ function showSidebar() {
   SlidesApp.getUi().showSidebar(html);
 }
 
-// Entry point for both the menu item and the sidebar button.
-// Returns a summary string the sidebar displays.
-function translateSelection() {
+// Sidebar bootstrap: the language list plus this user's saved selection.
+function getLanguageState() {
+  return { languages: AVAILABLE_LANGUAGES, selected: getSavedTargets_() };
+}
+
+function getSavedTargets_() {
+  var raw = PropertiesService.getUserProperties().getProperty(PROP_KEY);
+  if (!raw) return DEFAULT_TARGETS;
+  try {
+    var saved = JSON.parse(raw);
+    return saved.length ? saved : DEFAULT_TARGETS;
+  } catch (e) {
+    return DEFAULT_TARGETS;
+  }
+}
+
+function translateSelectionFromMenu() {
+  var msg = translateSelection(getSavedTargets_());
+  if (msg.error) SlidesApp.getUi().alert(msg.text);
+}
+
+// Entry point for the sidebar button. codes: array of language codes.
+// Persists the choice, translates, returns {text, error} for display.
+function translateSelection(codes) {
+  codes = (codes || []).filter(function (c) {
+    return AVAILABLE_LANGUAGES.some(function (l) { return l.code === c; });
+  });
+  if (codes.length === 0) return { text: 'Pick at least one language.', error: true };
+  PropertiesService.getUserProperties().setProperty(PROP_KEY, JSON.stringify(codes));
+
   var selection = SlidesApp.getActivePresentation().getSelection();
   var shapes = shapesFromSelection_(selection);
   if (shapes.length === 0) {
-    var msg = 'Select a text box (or text inside one) first.';
-    // Menu invocations have no sidebar to show the message; use a toast-style alert
-    // only when nothing was translated so success stays silent.
-    SlidesApp.getUi().alert(msg);
-    return msg;
+    return { text: 'Select a text box (or text inside one) first.', error: true };
   }
 
   var translated = 0;
@@ -44,9 +82,9 @@ function translateSelection() {
     var original = textRange.asString().trim();
     if (!original) return;
 
-    var additions = TARGET_LANGUAGES.map(function (lang) {
+    var additions = codes.map(function (code) {
       // Source '' = auto-detect, so this also works on non-English decks.
-      return LanguageApp.translate(original, '', lang.code);
+      return LanguageApp.translate(original, '', code);
     });
     // Append below the original inside the same text box, preserving the
     // box's base styling. asString() ends with a trailing newline already.
@@ -54,7 +92,10 @@ function translateSelection() {
     translated++;
   });
 
-  return translated + ' text box' + (translated === 1 ? '' : 'es') + ' translated.';
+  return {
+    text: translated + ' text box' + (translated === 1 ? '' : 'es') + ' translated into ' + codes.length + ' language' + (codes.length === 1 ? '' : 's') + '.',
+    error: false,
+  };
 }
 
 // Collect the shapes-with-text implicated by the current selection,
