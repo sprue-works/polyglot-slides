@@ -26,7 +26,8 @@ var PROP_KEY = 'targetLanguages';
 function onOpen() {
   SlidesApp.getUi()
     .createAddonMenu()
-    .addItem('Translate selection', 'translateSelectionFromMenu')
+    .addItem('Translate in place', 'translateInPlaceFromMenu')
+    .addItem('Duplicate per language', 'duplicateFromMenu')
     .addItem('Open sidebar', 'showSidebar')
     .addToUi();
 }
@@ -56,14 +57,21 @@ function getSavedTargets_() {
   }
 }
 
-function translateSelectionFromMenu() {
-  var msg = translateSelection(getSavedTargets_());
+function translateInPlaceFromMenu() {
+  var msg = translateSelection(getSavedTargets_(), 'append');
   if (msg.error) SlidesApp.getUi().alert(msg.text);
 }
 
-// Entry point for the sidebar button. codes: array of language codes.
+function duplicateFromMenu() {
+  var msg = translateSelection(getSavedTargets_(), 'duplicate');
+  if (msg.error) SlidesApp.getUi().alert(msg.text);
+}
+
+// Entry point for the sidebar buttons. codes: array of language codes.
+// mode: 'append' adds translations below the original in the same text box;
+// 'duplicate' clones the text box once per language, each clone translated.
 // Persists the choice, translates, returns {text, error} for display.
-function translateSelection(codes) {
+function translateSelection(codes, mode) {
   codes = (codes || []).filter(function (c) {
     return AVAILABLE_LANGUAGES.some(function (l) { return l.code === c; });
   });
@@ -82,13 +90,25 @@ function translateSelection(codes) {
     var original = textRange.asString().trim();
     if (!original) return;
 
-    var additions = codes.map(function (code) {
-      // Source '' = auto-detect, so this also works on non-English decks.
+    // Source '' = auto-detect, so this also works on non-English decks.
+    var translations = codes.map(function (code) {
       return LanguageApp.translate(original, '', code);
     });
-    // Append below the original inside the same text box, preserving the
-    // box's base styling. asString() ends with a trailing newline already.
-    textRange.appendText('\n' + additions.join('\n'));
+
+    if (mode === 'duplicate') {
+      // One clone per language, stacked below the original so nothing
+      // overlaps; each clone keeps the original's styling.
+      translations.forEach(function (text, i) {
+        var copy = shape.duplicate().asShape();
+        copy.setLeft(shape.getLeft());
+        copy.setTop(shape.getTop() + shape.getHeight() * (i + 1));
+        copy.getText().setText(text);
+      });
+    } else {
+      // Append below the original inside the same text box, preserving the
+      // box's base styling.
+      textRange.appendText('\n' + translations.join('\n'));
+    }
     translated++;
   });
 
