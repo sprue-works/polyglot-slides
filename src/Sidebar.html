@@ -10,9 +10,10 @@
       label:hover { background: #f1f3f4; }
       button {
         width: 100%; padding: 12px; font-size: 15px; border: none; border-radius: 6px;
-        background: #1a73e8; color: #fff; cursor: pointer;
+        background: #1a73e8; color: #fff; cursor: pointer; margin-bottom: 8px;
       }
-      button:disabled { background: #9aa0a6; cursor: wait; }
+      button.secondary { background: #fff; color: #1a73e8; border: 1px solid #dadce0; }
+      button:disabled { background: #9aa0a6; color: #fff; cursor: wait; }
       #status { margin-top: 10px; font-size: 13px; color: #5f6368; min-height: 1.2em; }
       #status.error { color: #d93025; }
       .hint { font-size: 12px; color: #80868b; margin-top: 14px; line-height: 1.4; }
@@ -21,11 +22,14 @@
   <body>
     <h3>Translate into</h3>
     <div id="langs">Loading…</div>
-    <button id="go" onclick="run()" disabled>Translate</button>
+    <button class="action" onclick="run('duplicate')" disabled>Duplicate per language</button>
+    <button class="action secondary" onclick="run('append')" disabled>Translate in place</button>
     <div id="status"></div>
     <p class="hint">
-      Click a text box on the slide (or select text inside one), then press the button.
-      Translations are appended below the original text. Your language choice is remembered.
+      Click a text box on the slide (or select text inside one), then press a button.
+      <b>Duplicate</b> makes one copy of the text box per language, stacked below it.
+      <b>In place</b> appends the translations inside the original text box.
+      Your language choice is remembered.
     </p>
     <script>
       google.script.run.withSuccessHandler(render).getLanguageState();
@@ -43,31 +47,34 @@
           label.appendChild(document.createTextNode(lang.label));
           container.appendChild(label);
         });
-        document.getElementById('go').disabled = false;
+        setButtonsDisabled(false);
       }
 
-      function run() {
+      function setButtonsDisabled(disabled) {
+        document.querySelectorAll('button.action').forEach(function (b) { b.disabled = disabled; });
+      }
+
+      function run(mode) {
         var codes = Array.prototype.map.call(
           document.querySelectorAll('#langs input:checked'),
           function (box) { return box.value; }
         );
-        var btn = document.getElementById('go');
         var status = document.getElementById('status');
-        btn.disabled = true;
+        setButtonsDisabled(true);
         status.className = '';
         status.textContent = 'Translating…';
         google.script.run
           .withSuccessHandler(function (res) {
-            btn.disabled = false;
+            setButtonsDisabled(false);
             status.className = res.error ? 'error' : '';
             status.textContent = res.text;
           })
           .withFailureHandler(function (err) {
-            btn.disabled = false;
+            setButtonsDisabled(false);
             status.className = 'error';
             status.textContent = 'Error: ' + err.message;
           })
-          .translateSelection(codes);
+          .translateSelection(codes, mode);
       }
     </script>
   </body>
