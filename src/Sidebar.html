@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top" />
+    <style>
+      body { font-family: 'Google Sans', Roboto, Arial, sans-serif; margin: 12px; color: #202124; }
+      button {
+        width: 100%; padding: 12px; font-size: 15px; border: none; border-radius: 6px;
+        background: #1a73e8; color: #fff; cursor: pointer;
+      }
+      button:disabled { background: #9aa0a6; cursor: wait; }
+      #status { margin-top: 10px; font-size: 13px; color: #5f6368; min-height: 1.2em; }
+      .hint { font-size: 12px; color: #80868b; margin-top: 14px; line-height: 1.4; }
+    </style>
+  </head>
+  <body>
+    <button id="go" onclick="run()">Translate → Spanish + Chinese</button>
+    <div id="status"></div>
+    <p class="hint">
+      Click a text box on the slide (or select text inside one), then press the button.
+      Both translations are appended below the original text.
+    </p>
+    <script>
+      function run() {
+        var btn = document.getElementById('go');
+        var status = document.getElementById('status');
+        btn.disabled = true;
+        status.textContent = 'Translating…';
+        google.script.run
+          .withSuccessHandler(function (msg) { btn.disabled = false; status.textContent = msg; })
+          .withFailureHandler(function (err) { btn.disabled = false; status.textContent = 'Error: ' + err.message; })
+          .translateSelection();
+      }
+    </script>
+  </body>
+</html>
