@@ -37,7 +37,12 @@
       Your language choice is remembered.
     </p>
     <script>
-      google.script.run.withSuccessHandler(render).getLanguageState();
+      google.script.run
+        .withSuccessHandler(render)
+        .withFailureHandler(function (err) {
+          document.getElementById('langs').textContent = 'Failed to load languages: ' + err.message + ' — close and reopen the sidebar.';
+        })
+        .getLanguageState();
 
       function render(state) {
         var container = document.getElementById('langs');
