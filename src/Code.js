@@ -27,7 +27,9 @@ function onOpen() {
   SlidesApp.getUi()
     .createAddonMenu()
     .addItem('Translate in place', 'translateInPlaceFromMenu')
-    .addItem('Duplicate per language', 'duplicateFromMenu')
+    .addItem('Duplicate selection per language', 'duplicateFromMenu')
+    .addItem('Duplicate current slide per language', 'duplicateSlideFromMenu')
+    .addItem('Duplicate all slides per language', 'duplicateDeckFromMenu')
     .addItem('Open sidebar', 'showSidebar')
     .addToUi();
 }
@@ -67,6 +69,16 @@ function duplicateFromMenu() {
   if (msg.error) SlidesApp.getUi().alert(msg.text);
 }
 
+function duplicateSlideFromMenu() {
+  var msg = translateSelection(getSavedTargets_(), 'slide');
+  if (msg.error) SlidesApp.getUi().alert(msg.text);
+}
+
+function duplicateDeckFromMenu() {
+  var msg = translateSelection(getSavedTargets_(), 'deck');
+  if (msg.error) SlidesApp.getUi().alert(msg.text);
+}
+
 // Entry point for the sidebar buttons. codes: array of language codes.
 // mode: 'append' adds translations below the original in the same text box;
 // 'duplicate' clones the text box once per language, each clone translated.
@@ -78,7 +90,27 @@ function translateSelection(codes, mode) {
   if (codes.length === 0) return { text: 'Pick at least one language.', error: true };
   PropertiesService.getUserProperties().setProperty(PROP_KEY, JSON.stringify(codes));
 
-  var selection = SlidesApp.getActivePresentation().getSelection();
+  var presentation = SlidesApp.getActivePresentation();
+  var selection = presentation.getSelection();
+
+  if (mode === 'slide' || mode === 'deck') {
+    var slides;
+    if (mode === 'deck') {
+      slides = presentation.getSlides();
+    } else {
+      var page = selection.getCurrentPage();
+      if (!page || page.getPageType() !== SlidesApp.PageType.SLIDE) {
+        return { text: 'Open a slide first.', error: true };
+      }
+      slides = [page.asSlide()];
+    }
+    slides.forEach(function (slide) { duplicateSlidePerLanguage_(slide, codes); });
+    return {
+      text: slides.length + ' slide' + (slides.length === 1 ? '' : 's') + ' duplicated into ' + codes.length + ' language' + (codes.length === 1 ? '' : 's') + '.',
+      error: false,
+    };
+  }
+
   var shapes = shapesFromSelection_(selection);
   if (shapes.length === 0) {
     return { text: 'Select a text box (or text inside one) first.', error: true };
@@ -139,6 +171,42 @@ function duplicatePerLanguage_(shapes, codes) {
     });
   });
   return translated;
+}
+
+// Insert one translated copy of the slide per language, directly after the
+// original: [original, lang1 copy, lang2 copy, ...]. slide.duplicate()
+// inserts immediately after the source, so iterating codes in reverse
+// yields the copies in selection order.
+function duplicateSlidePerLanguage_(slide, codes) {
+  codes.slice().reverse().forEach(function (code) {
+    var copy = slide.duplicate();
+    copy.getPageElements().forEach(function (el) {
+      translateElement_(el, code);
+    });
+  });
+}
+
+// Recursively translate every piece of text inside a page element.
+function translateElement_(el, code) {
+  var type = el.getPageElementType();
+  if (type === SlidesApp.PageElementType.SHAPE) {
+    var textRange = el.asShape().getText();
+    var original = textRange.asString().trim();
+    if (original) textRange.setText(translate_(original, code));
+  } else if (type === SlidesApp.PageElementType.TABLE) {
+    var table = el.asTable();
+    for (var r = 0; r < table.getNumRows(); r++) {
+      for (var c = 0; c < table.getNumColumns(); c++) {
+        var cellText = table.getCell(r, c).getText();
+        var cellOriginal = cellText.asString().trim();
+        if (cellOriginal) cellText.setText(translate_(cellOriginal, code));
+      }
+    }
+  } else if (type === SlidesApp.PageElementType.GROUP) {
+    el.asGroup().getChildren().forEach(function (child) {
+      translateElement_(child, code);
+    });
+  }
 }
 
 // Collect the shapes-with-text implicated by the current selection,
