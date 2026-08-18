@@ -169,6 +169,13 @@ function duplicateSelection_(selection, codes) {
   if (selection.getSelectionType() === SlidesApp.SelectionType.TABLE_CELL) {
     return { text: 'Table cells can\'t be duplicated — select the whole table (click its border) instead.', error: true };
   }
+  // Highlighted text inside a box gets substring treatment: the translations
+  // are appended as new paragraphs at the bottom of that same box.
+  if (selection.getSelectionType() === SlidesApp.SelectionType.TEXT) {
+    var sub = translateSubstring_(selection, codes);
+    if (sub) return sub;
+    // A bare cursor (no highlighted text) falls through to whole-element mode.
+  }
   var elements = elementsFromSelection_(selection);
   if (elements.length === 0) {
     return { text: 'Select one or more text boxes, tables, or groups first.', error: true };
@@ -200,6 +207,39 @@ function duplicateSelection_(selection, codes) {
 
   return {
     text: elements.length + ' element' + (elements.length === 1 ? '' : 's') + ' duplicated into ' + codes.length + ' language' + (codes.length === 1 ? '' : 's') + '.',
+    error: false,
+  };
+}
+
+// If the TEXT selection covers an actual substring, append its translations
+// as new paragraphs at the bottom of the containing text box / table cell
+// and return a result. Returns null for a bare cursor (nothing highlighted).
+function translateSubstring_(selection, codes) {
+  var textRange = selection.getTextRange();
+  if (!textRange) return null;
+  var original = textRange.asString().trim();
+  if (!original) return null;
+
+  // Find the text body the selection lives in: a table cell when the text is
+  // inside a table, otherwise the selected shape.
+  var container = null;
+  var cellRange = selection.getTableCellRange();
+  if (cellRange && cellRange.getTableCells().length) {
+    container = cellRange.getTableCells()[0].getText();
+  } else {
+    var elements = elementsFromSelection_(selection);
+    if (elements.length === 1 && elements[0].getPageElementType() === SlidesApp.PageElementType.SHAPE) {
+      container = elements[0].asShape().getText();
+    }
+  }
+  if (!container) return null;
+
+  // Translate everything up front so a failure mutates nothing.
+  var translations = codes.map(function (code) { return translate_(original, code); });
+  translations.forEach(function (text) { container.appendParagraph(text); });
+
+  return {
+    text: 'Selected text translated into ' + codes.length + ' language' + (codes.length === 1 ? '' : 's') + ' at the bottom of the box.',
     error: false,
   };
 }
