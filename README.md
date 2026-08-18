@@ -7,11 +7,9 @@ so it scales to many users without a shared limit.
 
 ## Modes
 
-All four are available from the sidebar and the Extensions menu (menu actions
+All three are available from the sidebar and the Extensions menu (menu actions
 reuse the last language selection; default is Spanish + Simplified Chinese):
 
-- **Translate in place** — appends translations below the original text inside
-  the same text box / table cell.
 - **Duplicate selection per language** — clones the selected elements as a
   cluster (relative layout preserved), one translated cluster per language,
   stacked below the originals.
@@ -20,8 +18,8 @@ reuse the last language selection; default is Spanish + Simplified Chinese):
 - **Duplicate all slides per language** — the same for every slide:
   `slide 1, slide 1 ES, slide 1 ZH, slide 2, …` (asks for confirmation first).
 
-Selection modes understand text boxes, tables (whole or individual cells for
-in-place), and grouped shapes. Language choice is a per-user multi-select in
+Selection mode understands text boxes, whole tables, and grouped shapes.
+Language choice is a per-user multi-select in
 the sidebar, persisted via `UserProperties`; the offered list is
 `AVAILABLE_LANGUAGES` at the top of `Code.js` — any Google Translate code works.
 

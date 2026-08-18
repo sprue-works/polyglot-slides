@@ -1,4 +1,5 @@
-// Polyglot Slides — translate selected text into chosen languages in place.
+// Polyglot Slides — duplicate selections or slides with text translated
+// into the chosen languages.
 //
 // Works as a container-bound script or as an Editor add-on (test deployment).
 // Translation uses LanguageApp (Google Translate, free, no API key).
@@ -33,7 +34,6 @@ var MAX_DECK_CALLS = 600;
 function onOpen() {
   SlidesApp.getUi()
     .createAddonMenu()
-    .addItem('Translate in place', 'translateInPlaceFromMenu')
     .addItem('Duplicate selection per language', 'duplicateFromMenu')
     .addItem('Duplicate current slide per language', 'duplicateSlideFromMenu')
     .addItem('Duplicate all slides per language', 'duplicateDeckFromMenu')
@@ -94,16 +94,14 @@ function menuRun_(mode) {
   SlidesApp.getUi().alert(msg.text);
 }
 
-function translateInPlaceFromMenu() { menuRun_('append'); }
 function duplicateFromMenu() { menuRun_('duplicate'); }
 function duplicateSlideFromMenu() { menuRun_('slide'); }
 function duplicateDeckFromMenu() { menuRun_('deck'); }
 
 // Entry point for the sidebar buttons. codes: array of language codes.
-// mode: 'append' adds translations below the original in the same text box;
-// 'duplicate' clones the selected elements once per language, preserving
-// their relative layout; 'slide'/'deck' insert translated slide copies.
-// Persists the choice, translates, returns {text, error} for display.
+// mode: 'duplicate' clones the selected elements once per language,
+// preserving their relative layout; 'slide'/'deck' insert translated
+// slide copies. Persists the choice, translates, returns {text, error}.
 function translateSelection(codes, mode) {
   codes = (codes || []).filter(function (c) {
     return AVAILABLE_LANGUAGES.some(function (l) { return l.code === c; });
@@ -120,10 +118,7 @@ function translateSelection(codes, mode) {
   if (mode === 'slide' || mode === 'deck') {
     return duplicateSlides_(presentation, selection, codes, mode);
   }
-  if (mode === 'duplicate') {
-    return duplicateSelection_(selection, codes);
-  }
-  return appendInPlace_(selection, codes);
+  return duplicateSelection_(selection, codes);
 }
 
 // Source '' = auto-detect, so this also works on non-English decks.
@@ -164,46 +159,8 @@ function textRangesIn_(el, out) {
   return out;
 }
 
-// TextRanges targeted by the selection for in-place mode. Table-cell
-// selections translate just the selected cells; element selections
-// translate everything with text inside them.
-function textRangesFromSelection_(selection) {
-  if (selection.getSelectionType() === SlidesApp.SelectionType.TABLE_CELL) {
-    var cellRange = selection.getTableCellRange();
-    return cellRange ? cellRange.getTableCells().map(function (cell) { return cell.getText(); }) : [];
-  }
-  var out = [];
-  elementsFromSelection_(selection).forEach(function (el) { textRangesIn_(el, out); });
-  return out;
-}
-
 // ---------------------------------------------------------------------------
 // Modes
-
-function appendInPlace_(selection, codes) {
-  var ranges = textRangesFromSelection_(selection).filter(function (tr) {
-    return tr.asString().trim();
-  });
-  if (ranges.length === 0) {
-    return { text: 'Select a text box, table cell, or text first.', error: true };
-  }
-
-  // Translate everything up front so a failure mutates nothing.
-  var additions = ranges.map(function (tr) {
-    var original = tr.asString().trim();
-    return codes.map(function (code) { return translate_(original, code); }).join('\n');
-  });
-  ranges.forEach(function (tr, i) {
-    // TextRanges usually end with a newline already; avoid a blank line.
-    var sep = /\n$/.test(tr.asString()) ? '' : '\n';
-    tr.appendText(sep + additions[i]);
-  });
-
-  return {
-    text: ranges.length + ' text block' + (ranges.length === 1 ? '' : 's') + ' translated into ' + codes.length + ' language' + (codes.length === 1 ? '' : 's') + '.',
-    error: false,
-  };
-}
 
 // Clone the whole selection once per language, preserving the elements'
 // relative layout: each language gets a copy of the full cluster, offset
