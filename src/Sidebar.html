@@ -28,11 +28,13 @@
     <button class="action secondary" onclick="run('deck')" disabled>Duplicate all slides per language</button>
     <div id="status"></div>
     <p class="hint">
-      Selection modes: click a text box (or select text inside one) first.
-      <b>Duplicate selection</b> copies the selected boxes once per language, keeping
-      their layout, stacked below the originals. <b>In place</b> appends translations
-      inside the original box. Slide modes insert one translated copy of each slide
-      per language, right after the original. Your language choice is remembered.
+      Selection modes: click a text box, table, or group (or select text or table
+      cells) first. <b>Duplicate selection</b> copies the selected elements once per
+      language, keeping their layout, stacked below the originals (copies may land
+      past the slide edge — just drag them). <b>In place</b> appends translations
+      inside the original. Slide modes insert one translated copy of each slide per
+      language, right after the original (speaker notes aren't translated).
+      Your language choice is remembered.
     </p>
     <script>
       google.script.run.withSuccessHandler(render).getLanguageState();
@@ -62,6 +64,9 @@
           document.querySelectorAll('#langs input:checked'),
           function (box) { return box.value; }
         );
+        if (mode === 'deck' && !confirm('Every slide will get one translated copy per selected language, inserted after it. Continue?')) {
+          return;
+        }
         var status = document.getElementById('status');
         setButtonsDisabled(true);
         status.className = '';
