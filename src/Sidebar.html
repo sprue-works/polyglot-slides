@@ -22,14 +22,17 @@
   <body>
     <h3>Translate into</h3>
     <div id="langs">Loading…</div>
-    <button class="action" onclick="run('duplicate')" disabled>Duplicate per language</button>
-    <button class="action secondary" onclick="run('append')" disabled>Translate in place</button>
+    <button class="action" onclick="run('duplicate')" disabled>Duplicate selection per language</button>
+    <button class="action secondary" onclick="run('append')" disabled>Translate selection in place</button>
+    <button class="action secondary" onclick="run('slide')" disabled>Duplicate current slide per language</button>
+    <button class="action secondary" onclick="run('deck')" disabled>Duplicate all slides per language</button>
     <div id="status"></div>
     <p class="hint">
-      Click a text box on the slide (or select text inside one), then press a button.
-      <b>Duplicate</b> makes one copy of the text box per language, stacked below it.
-      <b>In place</b> appends the translations inside the original text box.
-      Your language choice is remembered.
+      Selection modes: click a text box (or select text inside one) first.
+      <b>Duplicate selection</b> copies the selected boxes once per language, keeping
+      their layout, stacked below the originals. <b>In place</b> appends translations
+      inside the original box. Slide modes insert one translated copy of each slide
+      per language, right after the original. Your language choice is remembered.
     </p>
     <script>
       google.script.run.withSuccessHandler(render).getLanguageState();
