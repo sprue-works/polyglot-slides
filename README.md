@@ -1,16 +1,52 @@
 # Polyglot Slides
 
-Google Slides Editor add-on: select a text box, press a button, and get the text
-translated into **Spanish and Chinese**, appended below the original. Uses Apps
-Script's built-in `LanguageApp` (Google Translate) — free, no API key.
+Google Slides Editor add-on: pick your languages once, then translate anything
+in the deck with one click. Uses Apps Script's built-in `LanguageApp` (Google
+Translate) — free, no API key, no billing. Quota is charged to whoever clicks,
+so it scales to many users without a shared limit.
+
+## Modes
+
+All four are available from the sidebar and the Extensions menu (menu actions
+reuse the last language selection; default is Spanish + Simplified Chinese):
+
+- **Translate in place** — appends translations below the original text inside
+  the same text box / table cell.
+- **Duplicate selection per language** — clones the selected elements as a
+  cluster (relative layout preserved), one translated cluster per language,
+  stacked below the originals.
+- **Duplicate current slide per language** — inserts one translated copy of
+  the slide per language, directly after it.
+- **Duplicate all slides per language** — the same for every slide:
+  `slide 1, slide 1 ES, slide 1 ZH, slide 2, …` (asks for confirmation first).
+
+Selection modes understand text boxes, tables (whole or individual cells for
+in-place), and grouped shapes. Language choice is a per-user multi-select in
+the sidebar, persisted via `UserProperties`; the offered list is
+`AVAILABLE_LANGUAGES` at the top of `Code.js` — any Google Translate code works.
+
+### Robustness properties
+
+- Translations are fetched **before** anything is mutated; a mid-run failure
+  (quota, network) leaves the deck untouched, and a slide copy that fails while
+  being filled in is removed.
+- Whole-deck runs are size-guarded (refused above ~600 translation calls) and
+  time-boxed under the Apps Script 6-minute cap; if time runs out, finished
+  slides are complete and the message says how many remain.
+
+### Known limitations
+
+- Speaker notes are not translated.
+- Mid-text character formatting (e.g. one bolded word) is flattened in
+  translated copies; the box/paragraph base style is preserved.
+- Duplicated clusters can land past the bottom slide edge — they're still
+  selectable, just drag them where you want.
 
 ## Layout
 
-- `src/Code.js` — menu, sidebar launcher, selection handling, translation
-- `src/Sidebar.html` — one-button sidebar UI
+- `src/Code.js` — menu, modes, selection handling, translation
+- `src/Sidebar.html` — sidebar UI (language multi-select + mode buttons)
 - `src/appsscript.json` — manifest (scopes: current presentation only + container UI)
-
-Target languages live in `TARGET_LANGUAGES` at the top of `Code.js`.
 
 ## Develop
 
