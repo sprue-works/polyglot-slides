@@ -12,7 +12,9 @@ reuse the last language selection; default is Spanish + Simplified Chinese):
 
 - **Duplicate selection per language** — clones the selected elements as a
   cluster (relative layout preserved), one translated cluster per language,
-  stacked below the originals.
+  stacked below the originals. If text is highlighted inside a box instead,
+  the translations are appended as new paragraphs at the bottom of that box
+  (works in table cells too).
 - **Duplicate current slide per language** — inserts one translated copy of
   the slide per language, directly after it.
 - **Duplicate all slides per language** — the same for every slide:
