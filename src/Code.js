@@ -53,6 +53,10 @@ function getSavedTargets_() {
   if (!raw) return DEFAULT_TARGETS;
   try {
     var saved = JSON.parse(raw);
+    if (!Array.isArray(saved)) return DEFAULT_TARGETS;
+    saved = saved.filter(function (c) {
+      return AVAILABLE_LANGUAGES.some(function (l) { return l.code === c; });
+    });
     return saved.length ? saved : DEFAULT_TARGETS;
   } catch (e) {
     return DEFAULT_TARGETS;
@@ -153,14 +157,17 @@ function appendInPlace_(shapes, codes) {
 var CLUSTER_GAP_PT = 10;
 
 function duplicatePerLanguage_(shapes, codes) {
+  // Bail before cloning anything if the selection has no text at all,
+  // so an error result never leaves stray duplicates behind.
+  var translated = shapes.filter(function (s) { return s.getText().asString().trim(); }).length;
+  if (translated === 0) return 0;
+
   var top = Math.min.apply(null, shapes.map(function (s) { return s.getTop(); }));
   var bottom = Math.max.apply(null, shapes.map(function (s) { return s.getTop() + s.getHeight(); }));
   var clusterHeight = bottom - top + CLUSTER_GAP_PT;
 
-  var translated = 0;
   shapes.forEach(function (shape) {
     var original = shape.getText().asString().trim();
-    if (original) translated++;
     codes.forEach(function (code, i) {
       // Copy even empty shapes so each language's cluster mirrors the
       // original layout exactly.
