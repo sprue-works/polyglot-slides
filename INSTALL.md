@@ -4,6 +4,16 @@ This is the install path for someone who is **not** a developer — no `clasp`, 
 command line, no Apps Script knowledge required. It works today, before any
 Marketplace listing exists.
 
+> **Shelf life.** Everything in this document is an interim measure. Once the
+> add-on is published to a Workspace domain or the Marketplace (#4), install
+> becomes "an admin turns it on" or "click Install", and both paths below stop
+> being relevant — along with the template deck and `tools/sync-template.sh`.
+> What survives that transition is the
+> [verification checklist](#verification-checklist-second-google-account): the
+> functional sweep in it is about the add-on working for a **non-owner user**,
+> which is worth re-running against any new distribution mechanism. Delete the
+> rest when #4 lands rather than letting it rot.
+
 There are two possible paths. **Path A (copy the template deck) is the
 recommended one**; Path B is kept as a documented alternative for the cases
 where A doesn't fit. The reasoning behind the choice is in
@@ -85,9 +95,9 @@ the deck that has the add-on. To use it on existing material:
   the slides you want. They come in with their formatting, and the add-on is
   right there.
 
-Doing it the other way round (adding the add-on to an existing deck) means
-pasting the source into that deck's own script — see
-[Path B](#path-b--shared-script-project--test-deployment) or ask the owner.
+If you need the add-on on a deck you can't rebuild from the template — say it
+has comments, revision history, or collaborators you'd lose — that is what
+[Path B](#path-b--shared-script-project--test-deployment) is for.
 
 ### Getting a newer version
 
@@ -105,17 +115,22 @@ Delete your copy of the deck, and remove the script's access at
 
 ## Path B — Shared script project + test deployment
 
-Use this when Path A doesn't fit — most often because you want the add-on on a
-deck you cannot rebuild from the template, or you want one install to serve
-several decks.
+Use this when Path A doesn't fit — most often because you need the add-on on a
+deck that already exists and can't be rebuilt from the template (comments,
+revision history, collaborators). Path B attaches to a deck in place.
 
-It costs more steps and puts you in the Apps Script editor, which is why it is
-not the default.
+It is not the default because it costs more steps and puts you in the Apps
+Script editor. It is also **not** an install-once-use-everywhere path: each deck
+needs its own test deployment (step 4). What it does save is re-authorizing —
+you approve once, and further decks only need a test entry added.
 
 1. The owner shares the Apps Script project with you (view access is enough).
-2. Open it, then **Overview → ⋮ → Make a copy**. Work from **your copy**, not
-   the owner's project. (Creating a deployment requires edit access, and you
-   should not need edit access to someone else's source. Your copy is yours.)
+2. Make your own copy of it — in the Apps Script editor the copy action lives
+   on the **Overview** page (the copy icon in the top bar). Work from **your
+   copy**, not the owner's project: creating a deployment needs edit access, and
+   you should not have edit access to the source everyone else works from. If
+   copying is unavailable to you, ask the owner to send you a copy rather than
+   to grant Editor.
 3. In your copy: **Deploy → Test deployments**.
 4. Under *Application(s): Slides*, click **Add test**.
 5. Choose **Latest Code**, click **Select a document**, pick the presentation
@@ -124,6 +139,20 @@ not the default.
    under **Extensions → Polyglot Slides**.
 7. Authorize on first run — same screens as
    [First-run authorization](#first-run-authorization) above.
+
+> **If you get "You do not have permission to perform this action"** when
+> opening **Deploy → Test deployments**, you are working in the *owner's*
+> project rather than your own copy. Viewer access lets you read the code but
+> not create a deployment. Go back and do step 2 — the error is expected, and
+> confirmed against a real second account.
+>
+> If the copy also refuses, check whether your account is a **Workspace /
+> school account**: some domains block Apps Script deployments or
+> unverified-app authorization outright, in which case no path here works and
+> the add-on has to be published to that domain (issue #4). Try
+> [Path A](#path-a--copy-the-template-deck-recommended) with the same account
+> to tell the two apart — if Path A's authorization screen also fails, it is a
+> domain policy, not a permissions mistake.
 
 **A test deployment targets one specific presentation.** For a second deck,
 repeat steps 4–6 with that deck selected. The authorization carries over; only
@@ -201,13 +230,6 @@ Run it after any change to `src/` that should reach new recipients. It does not
 touch existing copies — those are frozen at the version they were copied from,
 by design.
 
-### Housekeeping
-
-An obsolete first attempt at the template deck is still in Drive and should be
-deleted: `1Tkttu8cv1tFITWQCfFwq3azyvUhFfps9c7Hb66m5B6k` (its script project was
-misnamed, which would have produced an **Extensions → Polyglot Slides —
-Template** menu). Nothing references it.
-
 ---
 
 ## Verification checklist (second Google account)
@@ -229,6 +251,9 @@ The tester should, signed in as the second account:
 3. In the copy, confirm **Extensions → Polyglot Slides** appears, with all four
    items. Note whether a tab reload was needed.
 4. Click **Open sidebar** and complete authorization. Record:
+   - **whether authorization is allowed at all** — a Workspace/school account
+     may block unverified apps by domain policy, which would rule out every
+     path short of a domain-wide publish (issue #4);
    - whether the **"Google hasn't verified this app"** screen appeared, and
      whether **Advanced → Go to Polyglot Slides (unsafe)** matched the wording
      here;
