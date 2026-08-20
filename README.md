@@ -5,6 +5,11 @@ in the deck with one click. Uses Apps Script's built-in `LanguageApp` (Google
 Translate) — free, no API key, no billing. Quota is charged to whoever clicks,
 so it scales to many users without a shared limit.
 
+## Install
+
+Not a developer? See **[INSTALL.md](INSTALL.md)** — copy one template deck, click
+through one authorization screen, done. No command line, no Apps Script editor.
+
 ## Modes
 
 All three are available from the sidebar and the Extensions menu (menu actions
@@ -47,6 +52,8 @@ the sidebar, persisted via `UserProperties`; the offered list is
 - `src/Code.js` — menu, modes, selection handling, translation
 - `src/Sidebar.html` — sidebar UI (language multi-select + mode buttons)
 - `src/appsscript.json` — manifest (scopes: current presentation only + container UI)
+- `tools/sync-template.sh` — push `src/` to the template deck's bound script
+- `INSTALL.md` — end-user install runbook (and the owner-side sharing setup)
 
 ## Develop
 
@@ -57,7 +64,8 @@ clasp open-script # open the project in the browser editor
 
 ## Test on a real deck (one-time setup)
 
-Editor add-on test deployments can only be created in the Apps Script UI:
+Editor add-on test deployments can only be created in the Apps Script UI.
+This is the developer-side version of [INSTALL.md](INSTALL.md)'s Path B:
 
 1. `clasp open-script`
 2. **Deploy → Test deployments**
@@ -71,5 +79,22 @@ After that, iterate with `clasp push` and reload the deck.
 
 ## Distribution
 
-Planned: publish privately to the target school's Workspace domain (no Google
-review needed) or as an unlisted Marketplace listing. Not set up yet.
+**Today:** a template deck with the script container-bound to it. Recipients get
+a view-only link, do **File → Make a copy**, and the add-on comes along inside
+their copy — the full runbook, the alternative (shared script project + a
+per-deck test deployment), and the owner-side sharing steps are in
+[INSTALL.md](INSTALL.md).
+
+After changing `src/`, push the new version into the template so future copies
+carry it:
+
+```bash
+tools/sync-template.sh
+```
+
+Copies already made are frozen at the version they were copied from; that's
+inherent to the bound-script approach.
+
+**Planned:** publish privately to the target school's Workspace domain (no
+Google review needed) or as an unlisted Marketplace listing — the only route
+that gives everyone automatic updates. Not set up yet (#4).
