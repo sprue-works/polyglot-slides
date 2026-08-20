@@ -1,5 +1,23 @@
 # Polyglot Slides — working notes
 
+## Where things live
+
+- `src/` — the add-on itself. `Code.js` (modes, selection, translation),
+  `Sidebar.html` (the sidebar UI), `appsscript.json` (manifest + OAuth scopes).
+- `README.md` — what it does, the modes, known limitations, and the developer
+  loop (`clasp push`, test deployments).
+- `INSTALL.md` — how a non-developer installs it today, the owner-side sharing
+  setup, the staged template deck's IDs, and the second-account verification
+  checklist. **Interim by design** — see its shelf-life note; most of it is
+  superseded when #4 lands.
+- `tools/sync-template.sh` — pushes `src/` into the template deck's bound script.
+- This file — gotchas that aren't visible from the code.
+
+Two user-facing surfaces deliver messages differently and always have: sidebar
+runs write to `#status` in `Sidebar.html`, menu runs call `SlidesApp.getUi()
+.alert()` in `menuRun_`. That asymmetry is tracked in #6, not a bug to fix
+in passing.
+
 ## The script project's *name* is user-visible
 
 `onOpen` uses `Ui.createAddonMenu()`. For a **container-bound** script (which is
