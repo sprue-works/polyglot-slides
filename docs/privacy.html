@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy policy — Polyglot Slides</title>
+<link rel="icon" href="icon.png">
+<style>
+  :root { --ink:#202124; --muted:#5f6368; --accent:#1a73e8; --bg:#fff; }
+  @media (prefers-color-scheme: dark) { :root { --ink:#e8eaed; --muted:#9aa0a6; --accent:#8ab4f8; --bg:#202124; } }
+  body { margin:0; font:17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color:var(--ink); background:var(--bg); }
+  main { max-width:44rem; margin:0 auto; padding:3rem 1.25rem 4rem; }
+  h1 { font-size:1.75rem; } h2 { font-size:1.2rem; margin-top:2rem; }
+  a { color:var(--accent); } .muted { color:var(--muted); }
+  code { font-size:.95em; }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="./">← Polyglot Slides</a></p>
+  <h1>Privacy policy</h1>
+  <p class="muted">Effective 2026-08-25. Applies to the Polyglot Slides add-on for Google Slides ("the add-on").</p>
+
+  <h2>Summary</h2>
+  <p>The add-on runs entirely inside Google's Apps Script platform. It has no server of its own, collects no personal data, and sends nothing anywhere except to Google Translate, and only the text you ask it to translate.</p>
+
+  <h2>What the add-on can access</h2>
+  <p>The add-on requests two Google permissions (OAuth scopes):</p>
+  <ul>
+    <li><code>presentations.currentonly</code> — <strong>view and manage the presentation the add-on is open in.</strong> It cannot see any other file in your Drive. It reads text and layout from the elements you select (or the slides you choose) and inserts translated copies into the same presentation.</li>
+    <li><code>script.container.ui</code> — show its menu and sidebar inside Google Slides.</li>
+  </ul>
+  <p>It does not request access to your Drive, Gmail, Calendar, contacts, or account profile.</p>
+
+  <h2>What is sent where</h2>
+  <ul>
+    <li><strong>Text you choose to translate</strong> is sent to Google Translate through Apps Script's built-in <code>LanguageApp</code> service, subject to <a href="https://policies.google.com/privacy">Google's privacy policy</a>. Nothing is sent until you click a translate action, and only the text in the selection or slides you chose.</li>
+    <li>Nothing is sent to the developer or to any third party. There are no analytics, trackers, or external servers.</li>
+  </ul>
+
+  <h2>What is stored</h2>
+  <ul>
+    <li><strong>Your language selection</strong>, stored in your own Google account's Apps Script user properties so the sidebar remembers it. It is visible only to you and is removed when you uninstall the add-on.</li>
+    <li>Nothing else. The add-on keeps no copy of your presentations or translations.</li>
+  </ul>
+  <p>Google may keep standard Apps Script execution logs (timestamps, error messages) on the project, as it does for any add-on; these do not include your slide content.</p>
+
+  <h2>Google API Services User Data Policy</h2>
+  <p>Polyglot Slides' use of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements. Data obtained through Google APIs is used only to provide the add-on's translation features to you, is never sold, and is never used for advertising.</p>
+
+  <h2>Children</h2>
+  <p>The add-on is intended for teachers and other adults. It does not knowingly collect any information from anyone, including children.</p>
+
+  <h2>Changes</h2>
+  <p>Changes to this policy are published at this address with an updated effective date. Material changes will also be noted in the project's <a href="https://github.com/maguerrieri/polyglot-slides">repository</a>.</p>
+
+  <h2>Contact</h2>
+  <p>Mario Guerrieri — <a href="mailto:mario@guerrieri.codes">mario@guerrieri.codes</a>, or open an issue at <a href="https://github.com/maguerrieri/polyglot-slides/issues">github.com/maguerrieri/polyglot-slides/issues</a>.</p>
+</main>
+</body>
+</html>

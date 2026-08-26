@@ -1,0 +1,56 @@
+{
+  "_comment": "Source of truth for the Google Workspace Marketplace SDK listing and the OAuth consent screen. Nothing here is applied automatically -- Google exposes no write API for either -- but a human pastes from this file (see marketplace/RUNBOOK.md), and tools/check-listing.sh keeps it consistent with src/appsscript.json, deployment.json, and the assets it references.",
+
+  "app": {
+    "name": "Polyglot Slides",
+    "shortDescription": "Translate any selection, slide, or whole deck into several languages with one click.",
+    "detailedDescriptionFile": "marketplace/description.md",
+    "category": "Education",
+    "language": "en",
+    "developerName": "Mario Guerrieri",
+    "developerEmail": "mario@guerrieri.codes"
+  },
+
+  "urls": {
+    "homepage": "https://maguerrieri.github.io/polyglot-slides/",
+    "privacyPolicy": "https://maguerrieri.github.io/polyglot-slides/privacy.html",
+    "termsOfService": "https://maguerrieri.github.io/polyglot-slides/terms.html",
+    "support": "https://github.com/maguerrieri/polyglot-slides/issues"
+  },
+
+  "extension": {
+    "type": "editorAddOn",
+    "application": "slides",
+    "deployment": {
+      "_comment": "The Marketplace SDK 'Editor add-on' field takes an Apps Script deployment ID. Read it from deployment.json (tools/release.sh updates that deployment in place on every tagged release, so the listing never needs re-pointing).",
+      "source": "deployment.json",
+      "field": "deploymentId"
+    },
+    "scriptProject": ".clasp.json#scriptId"
+  },
+
+  "oauth": {
+    "_comment": "Must equal src/appsscript.json oauthScopes exactly; check-listing.sh fails otherwise. Both are non-sensitive scopes, so verification needs brand verification only (no security assessment).",
+    "scopes": [
+      "https://www.googleapis.com/auth/presentations.currentonly",
+      "https://www.googleapis.com/auth/script.container.ui"
+    ],
+    "sensitive": false,
+    "restricted": false
+  },
+
+  "assets": {
+    "_comment": "Sizes are what the Marketplace SDK App Configuration / Store Listing and the OAuth consent screen ask for. Icons are rendered from icon.svg by tools/render-icons.sh. Screenshots are captured by hand (RUNBOOK step 7) at 1280x800 and listed in screenshots.json.",
+    "icon128": "marketplace/assets/icon-128.png",
+    "icon32": "marketplace/assets/icon-32.png",
+    "consentLogo120": "marketplace/assets/icon-120.png",
+    "screenshotsFile": "marketplace/screenshots.json",
+    "screenshotSize": [1280, 800]
+  },
+
+  "distribution": {
+    "_comment": "Pick one before publishing. 'private' = visible only inside the publishing Workspace domain (no Google review; admins can install for everyone). 'unlisted' = Marketplace review + OAuth brand verification, installable by any Google account via the listing link.",
+    "visibility": "unlisted",
+    "privateDomain": null
+  }
+}
