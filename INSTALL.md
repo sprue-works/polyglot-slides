@@ -5,14 +5,16 @@ command line, no Apps Script knowledge required. It works today, before any
 Marketplace listing exists.
 
 > **Shelf life.** Everything in this document is an interim measure. Once the
-> add-on is published to a Workspace domain or the Marketplace (#4), install
-> becomes "an admin turns it on" or "click Install", and both paths below stop
-> being relevant — along with the template deck and `tools/sync-template.sh`.
+> add-on is published to a Workspace domain or the Marketplace (the in-repo
+> pieces are in `marketplace/`; the human steps are
+> [marketplace/RUNBOOK.md](marketplace/RUNBOOK.md)), install becomes "an admin
+> turns it on" or "click Install", and both paths below stop being relevant —
+> along with the template deck and `tools/sync-template.sh`.
 > What survives that transition is the
 > [verification checklist](#verification-checklist-second-google-account): the
 > functional sweep in it is about the add-on working for a **non-owner user**,
 > which is worth re-running against any new distribution mechanism. Delete the
-> rest when #4 lands rather than letting it rot.
+> rest when the listing goes live rather than letting it rot.
 
 There are two possible paths. **Path A (copy the template deck) is the
 recommended one**; Path B is kept as a documented alternative for the cases
