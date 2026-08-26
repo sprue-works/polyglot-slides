@@ -14,6 +14,12 @@
 - `tools/release.sh` + `deployment.json` — tagged-release pipeline (version +
   deploy); `.github/workflows/` runs it. README "Release pipeline" is the
   human-facing doc, including the secret setup and the manual remainder.
+- `marketplace/` — the Workspace Marketplace listing as data: `listing.json`
+  (what a human pastes into the Marketplace SDK / consent screen), the icon
+  and screenshots, and `RUNBOOK.md` (the click-through). `docs/` is the
+  GitHub Pages site (homepage + privacy + terms) brand verification needs.
+  `tools/check-listing.sh` is the contract: listing scopes == manifest scopes,
+  deployment pointer == `deployment.json`, assets exist at the right sizes.
 - This file — gotchas that aren't visible from the code.
 
 Two user-facing surfaces deliver messages differently and always have: sidebar
@@ -81,3 +87,18 @@ second-account checklist.
   listing.
 - `tools/test-release.sh` pins the exact clasp call sequence with a stub. Change
   the sequence deliberately and update the expectations together.
+
+## The listing is data the human pastes, and CI guards the paste
+
+Google has no write API for the Marketplace SDK listing or the OAuth consent
+screen, so `marketplace/listing.json` can't be *applied* — it's the paste
+source, and `tools/check-listing.sh` is what keeps the paste honest. Two
+consequences:
+
+- Changing `oauthScopes` in `appsscript.json` fails CI until `listing.json`
+  matches — on purpose. A scope change also needs the consent screen and the
+  Marketplace SDK updated by hand and triggers re-verification; the CI failure
+  is the reminder.
+- The listing points at `deployment.json#deploymentId`, never at the script's
+  HEAD or a version number. Don't "fix" a release by creating a new
+  deployment; that orphans every install.

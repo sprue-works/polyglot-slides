@@ -7,8 +7,10 @@ so it scales to many users without a shared limit.
 
 ## Install
 
-Not a developer? See **[INSTALL.md](INSTALL.md)** — copy one template deck, click
-through one authorization screen, done. No command line, no Apps Script editor.
+Marketplace listing: not live yet — see [Distribution](#distribution) for the
+status. Until then, **[INSTALL.md](INSTALL.md)** — copy one template deck,
+click through one authorization screen, done. No command line, no Apps Script
+editor.
 
 ## Modes
 
@@ -54,8 +56,11 @@ the sidebar, persisted via `UserProperties`; the offered list is
 - `src/appsscript.json` — manifest (scopes: current presentation only + container UI)
 - `tools/sync-template.sh` — push `src/` to the template deck's bound script
 - `tools/release.sh` — version + deploy for a tagged release (CI and local)
-- `tools/lint.sh`, `tools/lint-workflows.sh`, `tools/test-release.sh` — what
-  the CI workflow runs
+- `tools/check-listing.sh`, `tools/render-icons.sh` — Marketplace listing consistency check and icon rendering
+- `marketplace/` — Marketplace listing config, assets, and the publishing runbook
+- `docs/` — GitHub Pages site: homepage, privacy policy, terms (brand verification)
+- `tools/lint.sh`, `tools/lint-workflows.sh`, `tools/test-*.sh` — what the CI
+  workflow runs
 - `deployment.json` — the Apps Script deployment ID releases update in place
 - `.github/workflows/` — `ci.yml` (lint on PRs) and `deploy.yml` (push on
   `main`, version + deploy on `v*` tags)
@@ -92,27 +97,35 @@ After that, iterate with `clasp push` and reload the deck.
 
 ## Distribution
 
-**Today:** a template deck with the script container-bound to it. Recipients get
-a view-only link, do **File → Make a copy**, and the add-on comes along inside
-their copy — the full runbook, the alternative (shared script project + a
-per-deck test deployment), and the owner-side sharing steps are in
-[INSTALL.md](INSTALL.md).
+Target: the **Google Workspace Marketplace**, so a teacher installs with one
+click (or an admin installs it for the whole domain) and every install tracks
+the deployment in `deployment.json`, which tagged releases update in place.
 
-After changing `src/`, push the new version into the template so future copies
-carry it:
+What the repo holds — CI validates it (`tools/check-listing.sh`), a human
+pastes it:
 
-```bash
-tools/sync-template.sh
-```
+- `marketplace/listing.json` — everything the Marketplace SDK and OAuth
+  consent screen ask for: name, descriptions, category, URLs, scopes, the
+  distribution flavor, and a pointer at `deployment.json#deploymentId`.
+- `marketplace/description.md` — the store's detailed description.
+- `marketplace/assets/` — the icon (`icon.svg`, rendered to the required PNG
+  sizes by `tools/render-icons.sh`) and, once captured, the 1280×800
+  screenshots listed in `marketplace/screenshots.json`.
+- `docs/` — the homepage, privacy policy, and terms of service served by
+  GitHub Pages; brand verification requires them.
 
-Copies already made are frozen at the version they were copied from; that's
-inherent to the bound-script approach.
+What stays manual — Google has no write API for any of it — is a one-time
+click-through documented step by step in
+**[marketplace/RUNBOOK.md](marketplace/RUNBOOK.md)**: pick private-domain vs.
+unlisted, enable Pages, attach the script to a GCP project, fill the OAuth
+consent screen and Marketplace SDK from `listing.json`, capture screenshots,
+publish, and verify from a second account. The listing's deployment-ID field
+is set exactly once; after that, releases reach installed users with no
+listing change.
 
-**Planned:** publish privately to the target school's Workspace domain (no
-Google review needed) or as an unlisted Marketplace listing — the only route
-that gives everyone automatic updates. Not set up yet (#4). It will point at
-the deployment in `deployment.json`, which the release pipeline below keeps
-current.
+**Until the listing is live**, the template-deck flow in
+[INSTALL.md](INSTALL.md) remains the install path (and the dev/testing path
+afterwards); push `src/` changes into it with `tools/sync-template.sh`.
 
 ## Release pipeline
 
@@ -121,7 +134,7 @@ GitHub Actions does the pushing.
 
 | Event | Workflow | What happens |
 |---|---|---|
-| Pull request | `ci.yml` | App/JSON lint, Actions-aware workflow validation, and the stubbed release self-test |
+| Pull request | `ci.yml` | App/JSON and Marketplace-listing consistency checks, Actions-aware workflow validation, and stubbed self-tests for release/listing tooling |
 | Push to `main` | `deploy.yml` | `clasp push --force` — the script project's HEAD now matches `main` |
 | Tag `v*` pushed | `deploy.yml` | `tools/release.sh <tag>`: push, `clasp version "<tag>"`, then update the deployment in `deployment.json` to that numbered version (creating the deployment on the very first release) |
 
@@ -165,7 +178,7 @@ transferred).
 
 The refresh token stays valid until revoked or the account's password / 2SV
 setup changes; if a deploy fails on auth, redo steps 1–2. If the project's
-OAuth consent screen (set up for #4) is in *Testing*, Google expires
+OAuth consent screen (runbook step 3) is in *Testing*, Google expires
 refresh tokens after 7 days — the deploying account's login uses clasp's own
 client, not the project's, so that limit does not apply here.
 
@@ -179,10 +192,10 @@ has no API that a CI job could drive:
   Marketplace API is read-only for listings. The listing points at a
   deployment **by ID**, which is why releases update `deployment.json`'s
   deployment in place rather than creating new ones — the listing never needs
-  re-pointing. Listing text/assets are kept in-repo (#4) so a human can paste
-  them, but the paste is manual.
+  re-pointing. Listing text/assets are kept in `marketplace/` so a human can
+  paste them, but the paste is manual — [marketplace/RUNBOOK.md](marketplace/RUNBOOK.md).
 - **OAuth consent screen** (scopes, branding, verification status) and
-  **brand verification** for an unlisted listing.
+  **brand verification** for an unlisted listing (runbook steps 1 and 3).
 - **Attaching the script to a standard GCP project** (Apps Script editor →
   Project settings) — a prerequisite for Marketplace publishing.
 - **Test deployments** for editor add-ons (Apps Script UI only; see above).
@@ -190,4 +203,4 @@ has no API that a CI job could drive:
   (new scopes, name/branding changes). Bumping the code behind an existing
   deployment does not need re-review.
 - The **template deck** (`tools/sync-template.sh`) — its bound script is a
-  separate project with no CI hook, and it goes away once #4 lands.
+  separate project with no CI hook, and it goes away once the listing is live.
