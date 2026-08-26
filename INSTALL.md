@@ -234,16 +234,22 @@ by design.
 
 ## Verification checklist (second Google account)
 
-Path A's mechanics are documented by Google, but the acceptance criterion for
-issue #2 is a real non-owner account completing the flow from these
-instructions alone. That has **not** been done yet — it needs a second account,
-which this repository's tooling cannot supply.
+**Status: install verified.** On 2026-08-25 a second Google account — not the
+owner's, on a school Workspace domain — copied the template and installed the
+add-on successfully, which is what closed issue #2. That also settles the open
+question about domain policy: this domain does **not** block authorizing an
+unverified app, so Path A is viable there.
 
-Give the tester **only the template link** and a pointer to
+The functional sweep below was not all re-run by that account. Keep it as the
+**regression checklist for a non-owner user** — it is the part of this document
+worth carrying forward when packaging (#4) replaces the install steps above,
+since it tests the add-on's behavior for someone who is not the script's author.
+
+Give a tester **only the template link** and a pointer to
 [Path A](#path-a--copy-the-template-deck-recommended). Do not coach them; the
 point is to test the writing as much as the mechanics.
 
-The tester should, signed in as the second account:
+The tester should, signed in as a non-owner account:
 
 1. Open the template link — confirm it opens **read-only**.
 2. **File → Make a copy → Entire presentation** — confirm the copy lands in
