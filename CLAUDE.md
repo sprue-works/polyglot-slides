@@ -11,6 +11,9 @@
   checklist. **Interim by design** — see its shelf-life note; most of it is
   superseded when #4 lands.
 - `tools/sync-template.sh` — pushes `src/` into the template deck's bound script.
+- `tools/release.sh` + `deployment.json` — tagged-release pipeline (version +
+  deploy); `.github/workflows/` runs it. README "Release pipeline" is the
+  human-facing doc, including the secret setup and the manual remainder.
 - This file — gotchas that aren't visible from the code.
 
 Two user-facing surfaces deliver messages differently and always have: sidebar
@@ -56,3 +59,21 @@ The owner's account cannot exercise the flow that matters (a non-owner copying
 a view-only deck and hitting the unverified-app consent screen). Don't claim the
 install path is verified off owner-side testing; INSTALL.md carries the
 second-account checklist.
+
+## CI deploys authenticate as a user, and the deployment ID is load-bearing
+
+- Apps Script's API rejects service accounts for script projects, so
+  `deploy.yml` uses a copied `~/.clasprc.json` (secret `CLASPRC_JSON`) handed to
+  clasp 3 via the `clasp_config_auth` env var. The secret is the **whole** file
+  (`{"tokens":{"default":{...}}}`), not a token; clasp 3 also reads the legacy
+  `{token, oauth2ClientSettings}` shape, so a clasp 2 file works too. Don't
+  read the local `~/.clasprc.json` — it's a credential file.
+- The Marketplace listing (#4) references an Apps Script **deployment ID**, not
+  a version. `tools/release.sh` therefore *updates* the deployment in
+  `deployment.json` (`clasp redeploy <id> -V <n>`) rather than `clasp deploy`-ing
+  a new one each tag. An empty `deploymentId` means "create one and tell the
+  operator to commit it"; a release that creates a deployment when one already
+  exists means the ID was lost — fix `deployment.json`, don't re-point the
+  listing.
+- `tools/test-release.sh` pins the exact clasp call sequence with a stub. Change
+  the sequence deliberately and update the expectations together.

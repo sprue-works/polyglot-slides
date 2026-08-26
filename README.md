@@ -53,6 +53,11 @@ the sidebar, persisted via `UserProperties`; the offered list is
 - `src/Sidebar.html` — sidebar UI (language multi-select + mode buttons)
 - `src/appsscript.json` — manifest (scopes: current presentation only + container UI)
 - `tools/sync-template.sh` — push `src/` to the template deck's bound script
+- `tools/release.sh` — version + deploy for a tagged release (CI and local)
+- `tools/lint.sh`, `tools/test-release.sh` — what the CI workflow runs
+- `deployment.json` — the Apps Script deployment ID releases update in place
+- `.github/workflows/` — `ci.yml` (lint on PRs) and `deploy.yml` (push on
+  `main`, version + deploy on `v*` tags)
 - `INSTALL.md` — end-user install runbook (and the owner-side sharing setup)
 
 ## Develop
@@ -60,7 +65,10 @@ the sidebar, persisted via `UserProperties`; the offered list is
 ```bash
 clasp push        # upload src/ to the Apps Script project
 clasp open-script # open the project in the browser editor
+tools/lint.sh     # what CI runs: syntax-check src/, validate the JSON files
 ```
+
+Merging to `main` also pushes automatically — see [Release pipeline](#release-pipeline).
 
 ## Test on a real deck (one-time setup)
 
@@ -97,4 +105,84 @@ inherent to the bound-script approach.
 
 **Planned:** publish privately to the target school's Workspace domain (no
 Google review needed) or as an unlisted Marketplace listing — the only route
-that gives everyone automatic updates. Not set up yet (#4).
+that gives everyone automatic updates. Not set up yet (#4). It will point at
+the deployment in `deployment.json`, which the release pipeline below keeps
+current.
+
+## Release pipeline
+
+`main` is the source of truth for the Apps Script project in `.clasp.json`;
+GitHub Actions does the pushing.
+
+| Event | Workflow | What happens |
+|---|---|---|
+| Pull request | `ci.yml` | `tools/lint.sh` (syntax-check `src/`, validate JSON) + `tools/test-release.sh` |
+| Push to `main` | `deploy.yml` | `clasp push --force` — the script project's HEAD now matches `main` |
+| Tag `v*` pushed | `deploy.yml` | `tools/release.sh <tag>`: push, `clasp version "<tag>"`, then update the deployment in `deployment.json` to that numbered version (creating the deployment on the very first release) |
+
+Cut a release:
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0     # or: gh release create v1.0.0
+```
+
+The run's summary shows the version number and deployment ID. **After the first
+release**, copy the printed deployment ID into `deployment.json` and commit it —
+otherwise every release creates a fresh deployment instead of updating the one
+the Marketplace listing points at. `tools/release.sh v1.0.0` does the same
+thing locally with a `clasp login` session.
+
+### One-time setup (needs a human — CI cannot create secrets)
+
+The workflow authenticates as a real Google account: Apps Script's API does
+not accept service accounts for script projects, so a user OAuth refresh
+token is the only unattended option. That token grants **full Apps Script
+access to the owning account** — prefer a dedicated account that owns only
+this script project (the dev project must be shared with it as editor, or
+transferred).
+
+1. On a machine with clasp 3 installed, log in as the deploying account:
+   `clasp login` (add `--no-localhost` on a headless box). Check with
+   `clasp show-authorized-user`.
+2. Copy the resulting `~/.clasprc.json` **verbatim** — the whole file,
+   including `{"tokens":{"default":{...}}}` — into a repo secret named
+   **`CLASPRC_JSON`**: *Settings → Secrets and variables → Actions → New
+   repository secret*, or
+   `gh secret set CLASPRC_JSON < ~/.clasprc.json`.
+   The workflow writes the secret to a temp file and passes it to clasp via
+   `clasp_config_auth`.
+3. (Optional) The job runs in the `apps-script` environment. GitHub creates it
+   on the first run; add required reviewers or a `main`/tag deployment-branch
+   rule there if you want an approval gate on deploys.
+4. Push to `main` (or re-run the *Deploy* workflow from the Actions tab via
+   *Run workflow*) and confirm `clasp show-authorized-user` in the log shows
+   the expected account.
+
+The refresh token stays valid until revoked or the account's password / 2SV
+setup changes; if a deploy fails on auth, redo steps 1–2. If the project's
+OAuth consent screen (set up for #4) is in *Testing*, Google expires
+refresh tokens after 7 days — the deploying account's login uses clasp's own
+client, not the project's, so that limit does not apply here.
+
+### What stays manual
+
+Everything below lives in the Google Cloud console / Apps Script editor and
+has no API that a CI job could drive:
+
+- **Marketplace SDK configuration and listing** (app name, icon, screenshots,
+  description, visibility, the *Editor add-on* deployment ID). Google's
+  Marketplace API is read-only for listings. The listing points at a
+  deployment **by ID**, which is why releases update `deployment.json`'s
+  deployment in place rather than creating new ones — the listing never needs
+  re-pointing. Listing text/assets are kept in-repo (#4) so a human can paste
+  them, but the paste is manual.
+- **OAuth consent screen** (scopes, branding, verification status) and
+  **brand verification** for an unlisted listing.
+- **Attaching the script to a standard GCP project** (Apps Script editor →
+  Project settings) — a prerequisite for Marketplace publishing.
+- **Test deployments** for editor add-ons (Apps Script UI only; see above).
+- **Publishing / re-submitting** the listing after a change that needs review
+  (new scopes, name/branding changes). Bumping the code behind an existing
+  deployment does not need re-review.
+- The **template deck** (`tools/sync-template.sh`) — its bound script is a
+  separate project with no CI hook, and it goes away once #4 lands.
