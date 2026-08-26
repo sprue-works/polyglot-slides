@@ -51,6 +51,11 @@ fresh
 expect_fail "screenshot with wrong size" "expected 1280x800"
 
 fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));delete j.app.shortDescription;delete j.urls.homepage;fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "missing required fields report cleanly" "listing.app.shortDescription is missing"
+grep -q "TypeError" "$work/out" && fail "missing fields must not produce a stack trace"
+
+fresh
 rm "$work/repo/docs/privacy.html"
 expect_fail "privacy page missing" "privacy.html does not exist"
 

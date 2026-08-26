@@ -35,9 +35,12 @@ for (const [obj, keys, label] of [
 ]) {
   for (const k of keys) if (!obj || typeof obj[k] !== 'string' || !obj[k].trim()) fail(`listing.${label}.${k} is missing or empty`);
 }
-if (listing.app.shortDescription.length > 120) fail(`app.shortDescription is ${listing.app.shortDescription.length} chars; keep it under 120 for the store card`);
-if (!fs.existsSync(listing.app.detailedDescriptionFile)) fail(`detailedDescriptionFile ${listing.app.detailedDescriptionFile} does not exist`);
-else ok(`description file ${listing.app.detailedDescriptionFile}`);
+const app = listing.app || {};
+if (typeof app.shortDescription === 'string' && app.shortDescription.length > 120) fail(`app.shortDescription is ${app.shortDescription.length} chars; keep it under 120 for the store card`);
+if (typeof app.detailedDescriptionFile === 'string') {
+  if (!fs.existsSync(app.detailedDescriptionFile)) fail(`detailedDescriptionFile ${app.detailedDescriptionFile} does not exist`);
+  else ok(`description file ${app.detailedDescriptionFile}`);
+}
 
 // Scopes must match the manifest exactly (order-insensitive).
 const want = [...manifest.oauthScopes].sort();
@@ -88,10 +91,12 @@ for (const s of shots.screenshots || []) {
 if (!(shots.screenshots || []).length) console.log('note screenshots.json lists no screenshots yet; the store listing form requires at least one (RUNBOOK step 7)');
 
 // The homepage / privacy / terms URLs must be served from docs/.
-const base = listing.urls.homepage.replace(/\/$/, '');
+const urls = listing.urls || {};
+const base = typeof urls.homepage === 'string' ? urls.homepage.replace(/\/$/, '') : '';
 for (const [k, expectFile] of [['homepage', 'index.html'], ['privacyPolicy', 'privacy.html'], ['termsOfService', 'terms.html']]) {
-  const url = listing.urls[k];
-  if (!url.startsWith(base)) { fail(`urls.${k} (${url}) is not under urls.homepage (${base})`); continue; }
+  const url = urls[k];
+  if (typeof url !== 'string') continue; // already reported as missing above
+  if (!base || !url.startsWith(base)) { fail(`urls.${k} (${url}) is not under urls.homepage (${base})`); continue; }
   const rel = url.slice(base.length).replace(/^\//, '') || 'index.html';
   const file = path.join('docs', rel);
   if (!fs.existsSync(file)) fail(`urls.${k} -> ${file} does not exist`);

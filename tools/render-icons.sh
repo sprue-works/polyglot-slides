@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Render marketplace/assets/icon.svg to the PNG sizes the Marketplace SDK and
-# OAuth consent screen ask for. macOS-only (uses qlmanage + sips); on other
-# platforms use rsvg-convert or Inkscape and write the same filenames.
+# OAuth consent screen ask for. Uses rsvg-convert when installed (any
+# platform), otherwise falls back to macOS qlmanage + sips.
 #
 #   tools/render-icons.sh
 set -euo pipefail
