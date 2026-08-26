@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polyglot Slides — translate a Google Slides deck into many languages</title>
+<meta name="description" content="Polyglot Slides is a Google Slides add-on that duplicates selections, slides, or a whole deck with the text translated into the languages you choose.">
+<link rel="icon" href="icon.png">
+<style>
+  :root { --ink:#202124; --muted:#5f6368; --accent:#1a73e8; --bg:#fff; }
+  @media (prefers-color-scheme: dark) { :root { --ink:#e8eaed; --muted:#9aa0a6; --accent:#8ab4f8; --bg:#202124; } }
+  body { margin:0; font:17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color:var(--ink); background:var(--bg); }
+  main { max-width:44rem; margin:0 auto; padding:3rem 1.25rem 4rem; }
+  header { display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem; }
+  header img { width:64px; height:64px; border-radius:14px; }
+  h1 { font-size:2rem; margin:0; }
+  h2 { font-size:1.25rem; margin-top:2.25rem; }
+  p.lede { font-size:1.2rem; color:var(--muted); }
+  a { color:var(--accent); }
+  ul { padding-left:1.25rem; }
+  footer { margin-top:3rem; color:var(--muted); font-size:.9rem; border-top:1px solid #dadce0; padding-top:1rem; }
+  code { font-size:.95em; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="icon.png" alt="">
+    <h1>Polyglot Slides</h1>
+  </header>
+  <p class="lede">A Google Slides add-on that duplicates what you select — a few boxes, a slide, or the whole deck — with the text translated into the languages you choose.</p>
+
+  <h2>What it does</h2>
+  <ul>
+    <li><strong>Duplicate selection per language</strong> — one translated copy of the selected cluster per language, stacked below the originals. Highlighted text inside a box gets the translations appended as new paragraphs.</li>
+    <li><strong>Duplicate current slide per language</strong> — a translated copy of the slide per language, right after it.</li>
+    <li><strong>Duplicate all slides per language</strong> — the same for every slide, in order.</li>
+  </ul>
+  <p>Languages are picked once in the sidebar and remembered for you. Translation is Google Translate, through Google's own Apps Script service — nothing to sign up for, no cost.</p>
+
+  <h2>Install</h2>
+  <p id="install">Install from the Google Workspace Marketplace, then open any presentation and look under <strong>Extensions → Polyglot Slides</strong>. <em>(Listing link is added here once the listing is live — see the project README until then.)</em></p>
+
+  <h2>Privacy</h2>
+  <p>The add-on only reads and edits the presentation it is open in, only when you run it, and keeps nothing but your language preferences. Full details: <a href="privacy.html">Privacy policy</a> · <a href="terms.html">Terms of service</a>.</p>
+
+  <h2>Source and support</h2>
+  <p>Open source under the project's repository: <a href="https://github.com/maguerrieri/polyglot-slides">github.com/maguerrieri/polyglot-slides</a>. Questions and bug reports go to the <a href="https://github.com/maguerrieri/polyglot-slides/issues">issue tracker</a>.</p>
+
+  <footer>Polyglot Slides is an independent project by Mario Guerrieri and is not affiliated with or endorsed by Google. Google Slides and Google Workspace are trademarks of Google LLC.</footer>
+</main>
+</body>
+</html>

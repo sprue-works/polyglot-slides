@@ -15,7 +15,7 @@ for f in src/*.js; do
   fi
 done
 
-for f in src/appsscript.json .clasp.json deployment.json; do
+for f in src/appsscript.json .clasp.json deployment.json marketplace/listing.json marketplace/screenshots.json; do
   if node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$f"; then
     echo "ok   $f"
   else
