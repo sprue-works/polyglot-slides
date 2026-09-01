@@ -48,6 +48,9 @@ case "$MOCK_CASE:$method" in
   conflict-aaaa:GET)
     printf '%s\n' '{"success":true,"result":[{"id":"record-aaaa","type":"AAAA","name":"polyglot.sprue.works","content":"2001:db8::1","proxied":false,"ttl":1}]}'
     ;;
+  api-error:GET)
+    printf '%s\n' '{"success":false,"errors":[{"code":10000,"message":"Authentication error"}],"result":null}'
+    ;;
   multiple:GET)
     printf '%s\n' '{"success":true,"result":[{"id":"record-a","type":"A","name":"polyglot.sprue.works","content":"192.0.2.1","proxied":false,"ttl":1},{"id":"record-b","type":"AAAA","name":"polyglot.sprue.works","content":"2001:db8::1","proxied":false,"ttl":1}]}'
     ;;
@@ -112,6 +115,15 @@ for conflict_case in conflict conflict-aaaa multiple; do
   grep -R -q -E 'test-token-never-print|test-zone-never-print' "$work/stdout" "$work/stderr" && fail "$conflict_case must not print credentials"
 done
 grep -q 'multiple conflicting records' "$work/stderr" || fail "multiple-record error should explain the conflict"
+
+export MOCK_CASE=api-error
+: >"$CURL_LOG"
+if "$repo_root/tools/reconcile-pages-dns.sh" --check >"$work/stdout" 2>"$work/stderr"; then
+  fail "a Cloudflare API error should fail the run"
+fi
+grep -q 'Authentication error' "$work/stderr" || fail "API error should surface the Cloudflare message"
+grep -q '10000' "$work/stderr" || fail "API error should surface the Cloudflare code"
+grep -R -q -E 'test-token-never-print|test-zone-never-print' "$work/stdout" "$work/stderr" && fail "API error must not print credentials"
 
 unset CLOUDFLARE_API_TOKEN
 if "$repo_root/tools/reconcile-pages-dns.sh" --check >"$work/stdout" 2>"$work/stderr"; then
