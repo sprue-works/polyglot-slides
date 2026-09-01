@@ -43,28 +43,86 @@ The steps below are written for `unlisted` and mark what `private` skips.
 ## 1. Publish the static pages (GitHub Pages)
 
 The homepage, privacy policy, and terms of service in `docs/` are required
-fields on the consent screen and the listing. One-time, from a repo admin:
+fields on the consent screen and the listing. `docs/CNAME` pins the custom
+domain in the published branch so later Pages builds cannot silently clear it.
+
+### 1a. Enable Pages and record the custom domain
+
+One-time, from a repo admin:
 
 ```bash
-gh api -X POST repos/maguerrieri/polyglot-slides/pages \
+gh api -X POST repos/sprue-works/polyglot-slides/pages \
   -f build_type=legacy -f 'source[branch]=main' -f 'source[path]=/docs'
+
+gh api -X PUT repos/sprue-works/polyglot-slides/pages \
+  -f cname=polyglot.sprue.works
 ```
 
-(or *Settings → Pages → Deploy from a branch → `main` / `/docs`*). After the
-first build, confirm all three resolve:
+If Pages is already enabled, the first command returns an "already exists"
+error; confirm *Settings → Pages → Deploy from a branch → `main` / `/docs`*
+instead of recreating it.
 
-- https://maguerrieri.github.io/polyglot-slides/
-- https://maguerrieri.github.io/polyglot-slides/privacy.html
-- https://maguerrieri.github.io/polyglot-slides/terms.html
+### 1b. Bootstrap and reconcile Cloudflare DNS
 
-**Brand verification needs proof you own the homepage's domain.** For
-`github.io` that means a **URL-prefix property in Search Console** for
-`https://maguerrieri.github.io/polyglot-slides/`, verified by the HTML-file
-method (drop the file Google gives you into `docs/` and commit it). If Google
-rejects a `github.io` subdomain for ownership (it sometimes does for shared
-hosts), point Pages at a custom domain you control (`Settings → Pages → Custom
-domain`), update `listing.json` → `urls` to match, and verify that domain
-instead. *`private` skips this.*
+GitHub Pages needs exactly one DNS-only CNAME from `polyglot.sprue.works` to
+`sprue-works.github.io`. The manually dispatched `Pages DNS` workflow calls
+`tools/reconcile-pages-dns.sh`: `check` is read-only; `apply` creates a missing
+record or corrects a single drifted CNAME. It deliberately stops on A/AAAA,
+non-CNAME, or multiple records rather than deleting unrelated DNS.
+
+The token currently used by `maguerrieri/toolbox` cannot be read back or copied
+between repositories by GitHub or automation. A human must either enter the
+original token or rotate it:
+
+1. In Cloudflare, create an API token restricted to the `sprue.works` zone with
+   **Zone → DNS → Edit** and **Zone → Zone → Read** only. Do not use the Global
+   API Key.
+2. Copy the zone ID from the `sprue.works` zone overview into the non-secret
+   repository variable **`CLOUDFLARE_ZONE_ID`**.
+3. Store the token as the repository secret **`CLOUDFLARE_API_TOKEN`**. Enter it
+   directly in GitHub; never paste it into an issue, log, command argument, or
+   committed file.
+4. Run *Actions → Pages DNS → Run workflow → apply*, then run it again in
+   `check` mode to prove the result is idempotent.
+
+CLI equivalents when the values are already held securely in the shell are:
+
+```bash
+gh variable set CLOUDFLARE_ZONE_ID -R sprue-works/polyglot-slides
+gh secret set CLOUDFLARE_API_TOKEN -R sprue-works/polyglot-slides
+gh workflow run pages-dns.yml -R sprue-works/polyglot-slides -f mode=apply
+```
+
+Both `gh ... set` commands read the value from standard input; do not put the
+value on the command line.
+
+### 1c. Verify the organization domain and HTTPS
+
+To prevent another repository from claiming the hostname, an organization
+owner must open *Sprue Works organization Settings → Pages → Verified domains*,
+add `sprue.works`, and copy GitHub's generated TXT name and token into a
+DNS-only Cloudflare TXT record. The name/token are generated per organization
+and cannot be invented in this repository. Return to GitHub and click
+**Verify** after the TXT record resolves.
+
+After the Pages certificate reaches `approved`, enable HTTPS in *Settings →
+Pages* or with:
+
+```bash
+gh api -X PUT repos/sprue-works/polyglot-slides/pages -F https_enforced=true
+```
+
+Certificate provisioning can take time after DNS is correct. Confirm all three
+pages resolve with a valid certificate:
+
+- https://polyglot.sprue.works/
+- https://polyglot.sprue.works/privacy.html
+- https://polyglot.sprue.works/terms.html
+
+**Brand verification needs proof you own the homepage's domain.** Add
+`sprue.works` to Search Console and complete its DNS verification before the
+OAuth brand-verification step. This is separate from GitHub's organization
+domain verification above. *`private` skips the Google verification.*
 
 ## 2. Attach the script to a standard GCP project
 
@@ -95,7 +153,7 @@ platform → Branding / Audience / Data access* in newer consoles):
 | App home page | `urls.homepage` |
 | Privacy policy | `urls.privacyPolicy` |
 | Terms of service | `urls.termsOfService` |
-| Authorized domains | `maguerrieri.github.io` (or the custom domain from step 1) |
+| Authorized domains | `sprue.works` |
 | Developer contact | `app.developerEmail` |
 | Scopes | exactly `oauth.scopes` — add via *Add or remove scopes*, filter on `presentations.currentonly` and `script.container.ui` |
 

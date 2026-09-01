@@ -94,6 +94,11 @@ if (!(shots.screenshots || []).length) console.log('note screenshots.json lists 
 // The homepage / privacy / terms URLs must be served from docs/.
 const urls = listing.urls || {};
 const base = typeof urls.homepage === 'string' ? urls.homepage.replace(/\/$/, '') : '';
+const publicBase = 'https://polyglot.sprue.works';
+if (base !== publicBase) fail(`urls.homepage must use ${publicBase}/ (got ${urls.homepage})`);
+if (urls.support !== 'https://github.com/sprue-works/polyglot-slides/issues') {
+  fail(`urls.support must use the Sprue Works issue tracker (got ${urls.support})`);
+}
 for (const [k, expectFile] of [['homepage', 'index.html'], ['privacyPolicy', 'privacy.html'], ['termsOfService', 'terms.html']]) {
   const url = urls[k];
   if (typeof url !== 'string') continue; // already reported as missing above
@@ -105,6 +110,8 @@ for (const [k, expectFile] of [['homepage', 'index.html'], ['privacyPolicy', 'pr
   else ok(`urls.${k} -> ${file}`);
 }
 if (!fs.existsSync('docs/.nojekyll')) fail('docs/.nojekyll missing (GitHub Pages would run Jekyll over the site)');
+if (!fs.existsSync('docs/CNAME')) fail('docs/CNAME missing (Pages would lose the custom domain)');
+else if (fs.readFileSync('docs/CNAME', 'utf8').trim() !== 'polyglot.sprue.works') fail('docs/CNAME must contain polyglot.sprue.works');
 
 if (failures) { console.error(`${failures} listing check(s) failed`); process.exit(1); }
 console.log('listing checks passed');
