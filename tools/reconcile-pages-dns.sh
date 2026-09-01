@@ -52,8 +52,16 @@ cloudflare_request() { # cloudflare_request <method> <path> [json-payload]
 
 require_success() { # require_success <response>
   local response="$1"
+  local details
   if ! jq -e '.success == true' >/dev/null <<<"$response"; then
-    echo "Cloudflare API request failed" >&2
+    # Surface Cloudflare's own error text so an invalid token, a missing
+    # permission, or a bad zone is diagnosable. The API echoes no credentials.
+    details="$(jq -r '[.errors[]? | "\(.code // "?"): \(.message // "unknown error")"] | join("; ")' <<<"$response" 2>/dev/null || true)"
+    if [[ -n "$details" ]]; then
+      echo "Cloudflare API request failed: $details" >&2
+    else
+      echo "Cloudflare API request failed" >&2
+    fi
     exit 1
   fi
 }
