@@ -116,3 +116,9 @@ after identifying their owner.
 Keep `CLOUDFLARE_API_TOKEN` in GitHub Secrets and `CLOUDFLARE_ZONE_ID` in
 Actions Variables. The token needs only Zone:DNS:Edit and Zone:Read for
 `sprue.works`; never use or document the Global API Key.
+
+With legacy branch-based Pages, `PUT /repos/{owner}/{repo}/pages` with a new
+`cname` writes `docs/CNAME` directly to the configured publishing branch as an
+automatic `Create CNAME` commit when that file is absent. Prefer merging the
+intended `docs/CNAME` first. If Pages bootstrap must happen before the PR
+merges, fetch and rebase onto the automatic commit before pushing the PR branch.
