@@ -12,10 +12,10 @@
   },
 
   "urls": {
-    "homepage": "https://maguerrieri.github.io/polyglot-slides/",
-    "privacyPolicy": "https://maguerrieri.github.io/polyglot-slides/privacy.html",
-    "termsOfService": "https://maguerrieri.github.io/polyglot-slides/terms.html",
-    "support": "https://github.com/maguerrieri/polyglot-slides/issues"
+    "homepage": "https://polyglot.sprue.works/",
+    "privacyPolicy": "https://polyglot.sprue.works/privacy.html",
+    "termsOfService": "https://polyglot.sprue.works/terms.html",
+    "support": "https://github.com/sprue-works/polyglot-slides/issues"
   },
 
   "extension": {

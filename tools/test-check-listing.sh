@@ -68,4 +68,8 @@ fresh
 (cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.distribution.visibility="private";fs.writeFileSync(f,JSON.stringify(j))')
 expect_fail "private without domain" "privateDomain"
 
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.urls.homepage="https://example.com/";j.urls.privacyPolicy="https://example.com/privacy.html";j.urls.termsOfService="https://example.com/terms.html";fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "listing on an unverified host" "polyglot.sprue.works"
+
 echo "all check-listing.sh tests passed"
