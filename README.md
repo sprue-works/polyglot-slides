@@ -54,7 +54,8 @@ the sidebar, persisted via `UserProperties`; the offered list is
 - `src/appsscript.json` — manifest (scopes: current presentation only + container UI)
 - `tools/sync-template.sh` — push `src/` to the template deck's bound script
 - `tools/release.sh` — version + deploy for a tagged release (CI and local)
-- `tools/lint.sh`, `tools/test-release.sh` — what the CI workflow runs
+- `tools/lint.sh`, `tools/lint-workflows.sh`, `tools/test-release.sh` — what
+  the CI workflow runs
 - `deployment.json` — the Apps Script deployment ID releases update in place
 - `.github/workflows/` — `ci.yml` (lint on PRs) and `deploy.yml` (push on
   `main`, version + deploy on `v*` tags)
@@ -66,7 +67,11 @@ the sidebar, persisted via `UserProperties`; the offered list is
 clasp push        # upload src/ to the Apps Script project
 clasp open-script # open the project in the browser editor
 tools/lint.sh     # what CI runs: syntax-check src/, validate the JSON files
+tools/lint-workflows.sh # validate Actions syntax, expressions, and contexts
 ```
+
+Workflow validation uses `actionlint` when it is installed, or its official
+Docker image when Docker is available.
 
 Merging to `main` also pushes automatically — see [Release pipeline](#release-pipeline).
 
@@ -116,7 +121,7 @@ GitHub Actions does the pushing.
 
 | Event | Workflow | What happens |
 |---|---|---|
-| Pull request | `ci.yml` | `tools/lint.sh` (syntax-check `src/`, validate JSON) + `tools/test-release.sh` |
+| Pull request | `ci.yml` | App/JSON lint, Actions-aware workflow validation, and the stubbed release self-test |
 | Push to `main` | `deploy.yml` | `clasp push --force` — the script project's HEAD now matches `main` |
 | Tag `v*` pushed | `deploy.yml` | `tools/release.sh <tag>`: push, `clasp version "<tag>"`, then update the deployment in `deployment.json` to that numbered version (creating the deployment on the very first release) |
 

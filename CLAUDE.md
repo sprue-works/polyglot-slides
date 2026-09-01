@@ -68,6 +68,10 @@ second-account checklist.
   (`{"tokens":{"default":{...}}}`), not a token; clasp 3 also reads the legacy
   `{token, oauth2ClientSettings}` shape, so a clasp 2 file works too. Don't
   read the local `~/.clasprc.json` — it's a credential file.
+- GitHub Actions expression contexts are placement-sensitive: `runner.*` is
+  unavailable in job-level `env`, even though the file is valid YAML. Run
+  `tools/lint-workflows.sh` after workflow edits; it uses actionlint to catch
+  expression-context failures before GitHub rejects the workflow definition.
 - The Marketplace listing (#4) references an Apps Script **deployment ID**, not
   a version. `tools/release.sh` therefore *updates* the deployment in
   `deployment.json` (`clasp redeploy <id> -V <n>`) rather than `clasp deploy`-ing
