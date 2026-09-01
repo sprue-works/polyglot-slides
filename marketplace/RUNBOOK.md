@@ -151,21 +151,23 @@ The publishing account must:
    to a different account and does not carry over. Add the property from the
    publishing account and add its own TXT record — several verification TXT
    records on one domain coexist fine.
-3. **Manage the `help@sprue.works` Google Group.** The consent screen's *User
+3. **Manage the `help@sprue.works` and `contact@sprue.works` Google Groups.** The consent screen's *User
    support email* is a **dropdown**, not free text: it offers only the signed-in
    account's own address and Google Groups that account owns or manages. If
    `help@sprue.works` is missing from the dropdown, the account is not a
    manager/owner of the group.
 
-Create the group in **Admin console → Directory → Groups → Create group**
-(email `help@sprue.works`, add the publishing account as an owner). Then fix the
-**external-posting gotcha:** groups default to accepting posts only from inside
-the organization, which would **silently bounce a teacher's support email**. In
-the group's *Access settings*, set **Who can post** to *Anyone on the web* (or
-at minimum allow posting from outside the organization) and, under *Who can
-join / Membership*, keep external members off — external *posting* is the only
-relaxation needed. Send a test message from a non-`sprue.works` address and
-confirm it arrives before pasting the address anywhere.
+Create both groups in **Admin console → Directory → Groups → Create group**
+(`help@sprue.works` and `contact@sprue.works`, the publishing account as an
+owner of each). Then fix the **external-posting gotcha** on both: groups default
+to accepting posts only from inside the organization, which would **silently
+bounce a teacher's support email** — and, on `contact@`, Google's own
+verification questions, stalling the review with no signal. In each group's
+*Access settings*, set **Who can post** to *Anyone on the web* (or at minimum
+allow posting from outside the organization) and, under *Who can join /
+Membership*, keep external members off — external *posting* is the only
+relaxation needed. Send a test message from a non-`sprue.works` address to each
+and confirm it arrives before pasting the addresses anywhere.
 
 The two addresses in `listing.json` → `app` have different rules, which is why
 there are two:
@@ -173,7 +175,7 @@ there are two:
 | Field | Address | Rule |
 |---|---|---|
 | `app.supportEmail` | `help@sprue.works` | Public. Consent-screen *User support email* (dropdown: account or a managed Google Group) and Marketplace SDK *Developer email*. Shown to users. |
-| `app.contactEmail` | `mario@guerrieri.codes` | Private. Consent-screen *Developer contact information* (free text, any address, several allowed). Where Google emails about verification and project changes — must be read daily. |
+| `app.contactEmail` | `contact@sprue.works` | Not shown to users. Consent-screen *Developer contact information* (free text, several allowed). Where Google emails about verification and project changes — a group so no personal address is published; must be read daily. |
 
 `urls.support` stays the GitHub issues URL; that field is a link, not a mailbox.
 
@@ -208,7 +210,7 @@ platform → Branding / Audience / Data access* in newer consoles):
 | Privacy policy | `urls.privacyPolicy` |
 | Terms of service | `urls.termsOfService` |
 | Authorized domains | `sprue.works` |
-| Developer contact information | `app.contactEmail` — free text, any address, several allowed; this is where Google sends verification questions |
+| Developer contact information | `app.contactEmail` (`contact@sprue.works`) — free text, several allowed; this is where Google sends verification questions. Keep personal addresses out of it |
 | Scopes | exactly `oauth.scopes` — add via *Add or remove scopes*, filter on `presentations.currentonly` and `script.container.ui` |
 
 Both scopes are **non-sensitive**, so verification is **brand verification
