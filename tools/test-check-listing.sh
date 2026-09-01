@@ -56,6 +56,11 @@ expect_fail "missing required fields report cleanly" "listing.app.shortDescripti
 grep -q "TypeError" "$work/out" && fail "missing fields must not produce a stack trace"
 
 fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));delete j.assets.icon32;fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "missing asset path reports cleanly" "icon32: no file path given"
+grep -q "TypeError" "$work/out" && fail "missing asset path must not produce a stack trace"
+
+fresh
 rm "$work/repo/docs/privacy.html"
 expect_fail "privacy page missing" "privacy.html does not exist"
 
