@@ -10,7 +10,8 @@
 #   - the listing URLs point at pages that exist under docs/
 #   - the publisher identity is sprue.works: developerName and the public
 #     supportEmail's domain (brand verification checks these against the
-#     verified homepage domain); contactEmail may be any address
+#     verified homepage domain); contactEmail is on the domain too so no
+#     personal address is ever published
 #
 # Used by .github/workflows/ci.yml; run locally before pushing.
 set -euo pipefail
@@ -47,8 +48,8 @@ if (typeof app.detailedDescriptionFile === 'string') {
 
 // Publisher identity. Brand verification checks the publisher name, the public
 // support address, and the homepage domain for consistency, so all three live on
-// sprue.works. contactEmail is Google's private channel to the developer; any
-// address that is read daily is fine.
+// sprue.works. contactEmail is Google's private channel to the developer; it is
+// a domain group too, so no personal address is published.
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 if (app.developerName !== 'sprue.works') fail(`app.developerName must be exactly "sprue.works" (lowercase, with the dot; got ${JSON.stringify(app.developerName)})`);
 else ok('developerName is sprue.works');
@@ -59,6 +60,7 @@ if (typeof app.supportEmail === 'string') {
 }
 if (typeof app.contactEmail === 'string') {
   if (!emailRe.test(app.contactEmail)) fail(`app.contactEmail is not an email address (got ${app.contactEmail})`);
+  else if (!app.contactEmail.toLowerCase().endsWith('@sprue.works')) fail(`app.contactEmail must be an @sprue.works address, never a personal one (got ${app.contactEmail})`);
   else ok(`contactEmail ${app.contactEmail}`);
 }
 

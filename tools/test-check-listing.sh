@@ -85,6 +85,10 @@ fresh
 expect_fail "contact email malformed" "contactEmail is not an email address"
 
 fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.app.contactEmail="mario@guerrieri.codes";fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "personal contact email" "contactEmail must be an @sprue.works address"
+
+fresh
 (cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.app.developerEmail=j.app.supportEmail;delete j.app.supportEmail;delete j.app.contactEmail;fs.writeFileSync(f,JSON.stringify(j))')
 expect_fail "old single developerEmail shape" "listing.app.supportEmail is missing"
 grep -q "listing.app.contactEmail is missing" "$work/out" || { cat "$work/out"; fail "old shape must also report contactEmail missing"; }
