@@ -75,17 +75,36 @@ fi
 [ ! -s "$CLASP_LOG" ] || fail "case 3: clasp must not be called without a tag"
 echo "ok   missing tag is rejected before touching clasp"
 
-# --- Case 4: clasp version returns garbage -> fail before deploying.
+# --- Case 4: malformed deployment.json -> fail before touching clasp.
 export CLASP_LOG="$work/log4"; : >"$CLASP_LOG"
+echo '{"deploymentId":' >"$work/repo/deployment.json"
+if (cd "$work/repo" && tools/release.sh v1.2.0 >/dev/null 2>&1); then
+  fail "case 4: malformed deployment.json should fail"
+fi
+[ ! -s "$CLASP_LOG" ] || fail "case 4: clasp must not be called with malformed deployment.json"
+echo "ok   malformed deployment.json is rejected before touching clasp"
+
+# --- Case 5: missing deploymentId -> fail before touching clasp.
+export CLASP_LOG="$work/log5"; : >"$CLASP_LOG"
+echo '{}' >"$work/repo/deployment.json"
+if (cd "$work/repo" && tools/release.sh v1.2.0 >/dev/null 2>&1); then
+  fail "case 5: missing deploymentId should fail"
+fi
+[ ! -s "$CLASP_LOG" ] || fail "case 5: clasp must not be called without deploymentId"
+echo "ok   missing deploymentId is rejected before touching clasp"
+
+# --- Case 6: clasp version returns garbage -> fail before deploying.
+export CLASP_LOG="$work/log6"; : >"$CLASP_LOG"
+echo '{"deploymentId": "AKfycb-existing"}' >"$work/repo/deployment.json"
 cat >"$work/bin/clasp" <<'STUB'
 #!/usr/bin/env bash
 echo "$*" >>"$CLASP_LOG"
 case "$1" in version) echo '{}' ;; esac
 STUB
 if (cd "$work/repo" && tools/release.sh v1.2.0 >/dev/null 2>&1); then
-  fail "case 4: unparseable version output should fail"
+  fail "case 6: unparseable version output should fail"
 fi
-grep -q '^deploy\|^redeploy' "$CLASP_LOG" && fail "case 4: must not deploy without a version number"
+grep -Eq '^(deploy|redeploy)' "$CLASP_LOG" && fail "case 6: must not deploy without a version number"
 echo "ok   bad clasp version output aborts before deploying"
 
 echo "all release.sh tests passed"
