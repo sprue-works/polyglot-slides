@@ -22,9 +22,9 @@ expect_pass() { # expect_pass <label>
   (cd "$work/repo" && tools/check-listing.sh >"$work/out" 2>&1) || { cat "$work/out"; fail "$1: expected pass"; }
   echo "ok   $1 passes"
 }
-expect_fail() { # expect_fail <label> <grep-pattern>
+expect_fail() { # expect_fail <label> <literal-substring>
   if (cd "$work/repo" && tools/check-listing.sh >"$work/out" 2>&1); then cat "$work/out"; fail "$1: expected failure"; fi
-  grep -q "$2" "$work/out" || { cat "$work/out"; fail "$1: failure message should mention '$2'"; }
+  grep -qF "$2" "$work/out" || { cat "$work/out"; fail "$1: failure message should mention '$2'"; }
   echo "ok   $1 is rejected"
 }
 
