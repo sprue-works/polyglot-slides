@@ -45,6 +45,9 @@ case "$MOCK_CASE:$method" in
   conflict:GET)
     printf '%s\n' '{"success":true,"result":[{"id":"record-a","type":"A","name":"polyglot.sprue.works","content":"192.0.2.1","proxied":false,"ttl":1}]}'
     ;;
+  conflict-aaaa:GET)
+    printf '%s\n' '{"success":true,"result":[{"id":"record-aaaa","type":"AAAA","name":"polyglot.sprue.works","content":"2001:db8::1","proxied":false,"ttl":1}]}'
+    ;;
   multiple:GET)
     printf '%s\n' '{"success":true,"result":[{"id":"record-a","type":"A","name":"polyglot.sprue.works","content":"192.0.2.1","proxied":false,"ttl":1},{"id":"record-b","type":"AAAA","name":"polyglot.sprue.works","content":"2001:db8::1","proxied":false,"ttl":1}]}'
     ;;
@@ -68,6 +71,7 @@ run_case() { # run_case <case> <mode>
 run_case correct --check
 [[ $(wc -l <"$CURL_LOG") -eq 1 ]] || fail "correct record should only be read"
 grep -q 'already correct' "$work/stdout" || fail "correct record should report a no-op"
+grep -R -q 'test-token-never-print\|test-zone-never-print' "$work/stdout" "$work/stderr" && fail "no-op must not print credentials"
 
 export MOCK_CASE=missing
 : >"$CURL_LOG"
@@ -75,30 +79,39 @@ if "$repo_root/tools/reconcile-pages-dns.sh" --check >"$work/stdout" 2>"$work/st
   fail "check mode should fail when the record is missing"
 fi
 [[ $(wc -l <"$CURL_LOG") -eq 1 ]] || fail "check mode must not create a missing record"
+grep -R -q 'test-token-never-print\|test-zone-never-print' "$work/stdout" "$work/stderr" && fail "missing check must not print credentials"
 
 run_case missing --apply
 grep -q $'^POST\t' "$CURL_LOG" || fail "apply mode should create a missing record"
 grep -q '"type":"CNAME"' "$CURL_LOG" || fail "create payload should use CNAME"
 grep -q '"content":"sprue-works.github.io"' "$CURL_LOG" || fail "create payload should use the Pages target"
 grep -q '"proxied":false' "$CURL_LOG" || fail "create payload should remain DNS-only"
+grep -R -q 'test-token-never-print\|test-zone-never-print' "$work/stdout" "$work/stderr" && fail "create must not print credentials"
+
+export MOCK_CASE=drifted
+: >"$CURL_LOG"
+if "$repo_root/tools/reconcile-pages-dns.sh" --check >"$work/stdout" 2>"$work/stderr"; then
+  fail "check mode should fail when the CNAME has drifted"
+fi
+[[ $(wc -l <"$CURL_LOG") -eq 1 ]] || fail "check mode must not reconcile drift"
+grep -q 'does not match' "$work/stderr" || fail "drift check should explain the mismatch"
+grep -R -q 'test-token-never-print\|test-zone-never-print' "$work/stdout" "$work/stderr" && fail "drift check must not print credentials"
 
 run_case drifted --apply
 grep -q $'^PATCH\t' "$CURL_LOG" || fail "apply mode should reconcile a drifted CNAME"
 grep -q '"ttl":1' "$CURL_LOG" || fail "reconcile payload should use automatic TTL"
+grep -R -q 'test-token-never-print\|test-zone-never-print' "$work/stdout" "$work/stderr" && fail "reconcile must not print credentials"
 
-for conflict_case in conflict multiple; do
+for conflict_case in conflict conflict-aaaa multiple; do
   export MOCK_CASE="$conflict_case"
   : >"$CURL_LOG"
   if "$repo_root/tools/reconcile-pages-dns.sh" --apply >"$work/stdout" 2>"$work/stderr"; then
     fail "$conflict_case records should stop reconciliation"
   fi
   [[ $(wc -l <"$CURL_LOG") -eq 1 ]] || fail "$conflict_case records must not be mutated"
+  grep -R -q 'test-token-never-print\|test-zone-never-print' "$work/stdout" "$work/stderr" && fail "$conflict_case must not print credentials"
 done
 grep -q 'multiple conflicting records' "$work/stderr" || fail "multiple-record error should explain the conflict"
-
-if grep -R -q 'test-token-never-print\|test-zone-never-print' "$work/stdout" "$work/stderr"; then
-  fail "credentials must never be printed"
-fi
 
 unset CLOUDFLARE_API_TOKEN
 if "$repo_root/tools/reconcile-pages-dns.sh" --check >"$work/stdout" 2>"$work/stderr"; then

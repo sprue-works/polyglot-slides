@@ -82,15 +82,19 @@ original token or rotate it:
 3. Store the token as the repository secret **`CLOUDFLARE_API_TOKEN`**. Enter it
    directly in GitHub; never paste it into an issue, log, command argument, or
    committed file.
-4. Run *Actions → Pages DNS → Run workflow → apply*, then run it again in
-   `check` mode to prove the result is idempotent.
+4. In *Settings → Environments*, confirm the **`pages-dns`** environment allows
+   deployments only from the selected branch `main`. The workflow also checks
+   out `main` explicitly, so a manual dispatch from another ref cannot substitute
+   code that receives the token.
+5. Run *Actions → Pages DNS → Run workflow → apply* against `main`, then run it
+   again in `check` mode to prove the result is idempotent.
 
 CLI equivalents when the values are already held securely in the shell are:
 
 ```bash
 gh variable set CLOUDFLARE_ZONE_ID -R sprue-works/polyglot-slides
 gh secret set CLOUDFLARE_API_TOKEN -R sprue-works/polyglot-slides
-gh workflow run pages-dns.yml -R sprue-works/polyglot-slides -f mode=apply
+gh workflow run pages-dns.yml -R sprue-works/polyglot-slides --ref main -f mode=apply
 ```
 
 Both `gh ... set` commands read the value from standard input; do not put the
