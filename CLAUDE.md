@@ -128,7 +128,7 @@ merges, fetch and rebase onto the automatic commit before pushing the PR branch.
 GitHub only requests the managed certificate when the custom domain is *saved
 while DNS already resolves*. If the domain was configured before the CNAME
 existed (the normal order for this repo: Pages first, `pages-dns.yml` after
-merge), `https_certificate` stays `null` indefinitely — 30+ minutes observed —
+merge), `https_certificate` stayed `null` for 30+ minutes with no sign of progress,
 and re-sending the same `cname` does nothing. Clear it and re-add it, all
 against `PUT /repos/{owner}/{repo}/pages`:
 
