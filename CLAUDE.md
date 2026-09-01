@@ -122,3 +122,12 @@ With legacy branch-based Pages, `PUT /repos/{owner}/{repo}/pages` with a new
 automatic `Create CNAME` commit when that file is absent. Prefer merging the
 intended `docs/CNAME` first. If Pages bootstrap must happen before the PR
 merges, fetch and rebase onto the automatic commit before pushing the PR branch.
+
+GitHub only requests the managed certificate when the custom domain is *saved
+while DNS already resolves*. If the domain was configured before the CNAME
+existed (the normal order for this repo: Pages first, `pages-dns.yml` after
+merge), `https_certificate` stays `null` indefinitely — 30+ minutes observed —
+and a plain re-`PUT` of the same `cname` does nothing. Clear it and re-add it:
+`PUT /pages {"cname":null}`, then `PUT /pages {"cname":"polyglot.sprue.works"}`;
+the cert reached `approved` within a minute. Then `PUT /pages
+{"https_enforced":true}`.
