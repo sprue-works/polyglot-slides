@@ -11,7 +11,7 @@ Paste sources, so nothing is retyped:
 
 | What Google asks for | Where it lives in the repo |
 |---|---|
-| App name, short description, category, developer contact | `marketplace/listing.json` → `app` |
+| App name, short description, category, developer name, support + contact emails | `marketplace/listing.json` → `app` |
 | Detailed description | `marketplace/description.md` |
 | Homepage / privacy policy / terms URLs | `listing.json` → `urls` (served from `docs/` by GitHub Pages) |
 | OAuth scopes | `listing.json` → `oauth.scopes` (== `src/appsscript.json`) |
@@ -31,7 +31,7 @@ Two options; `listing.json` → `distribution.visibility` records the choice.
 |---|---|---|
 | Who can install | Users (and admins, for everyone) in **one** Workspace domain | Anyone with the listing link; not searchable |
 | Google review | None | Marketplace listing review + OAuth brand verification |
-| Publishing account | Must be a user **in that domain** with the *Marketplace publisher* role → hand the finished project to the school's IT | Any Google account (Mario's) |
+| Publishing account | Must be a user **in that domain** with the *Marketplace publisher* role → hand the finished project to the school's IT | The `@sprue.works` publishing account (see "Publishing account" below) |
 | Consent screen | Internal user type, no verification | External, verified |
 | Time to live | Same day | Typically 3–5 business days per review round |
 
@@ -131,12 +131,59 @@ pages resolve with a valid certificate:
 OAuth brand-verification step. This is separate from GitHub's organization
 domain verification above. *`private` skips the Google verification.*
 
+## Publishing account and support group (prerequisite for steps 2–5)
+
+Do everything from step 2 on as **one `@sprue.works` Google Workspace
+account** — not a gmail address and not a personal domain. `sprue.works` is
+already a Workspace domain, so no workaround account is needed. Google's
+OAuth **brand verification** checks that the publisher name, the support
+email, and the verified homepage domain agree; `listing.json` puts all three on
+`sprue.works`, and a personal or gmail address fronting a `sprue.works`
+homepage is the mismatch that costs a 3–5 day review round trip.
+
+The publishing account must:
+
+1. **Own the GCP project** from step 2 (create it while signed in as that
+   account, or be granted *Owner*), and hold the *Marketplace publisher*
+   ability that comes with owning the project's Marketplace SDK.
+2. **Verify `sprue.works` in Search Console itself.** Verification is per
+   account: the `google-site-verification` TXT already on the domain may belong
+   to a different account and does not carry over. Add the property from the
+   publishing account and add its own TXT record — several verification TXT
+   records on one domain coexist fine.
+3. **Manage the `help@sprue.works` Google Group.** The consent screen's *User
+   support email* is a **dropdown**, not free text: it offers only the signed-in
+   account's own address and Google Groups that account owns or manages. If
+   `help@sprue.works` is missing from the dropdown, the account is not a
+   manager/owner of the group.
+
+Create the group in **Admin console → Directory → Groups → Create group**
+(email `help@sprue.works`, add the publishing account as an owner). Then fix the
+**external-posting gotcha:** groups default to accepting posts only from inside
+the organization, which would **silently bounce a teacher's support email**. In
+the group's *Access settings*, set **Who can post** to *Anyone on the web* (or
+at minimum allow posting from outside the organization) and, under *Who can
+join / Membership*, keep external members off — external *posting* is the only
+relaxation needed. Send a test message from a non-`sprue.works` address and
+confirm it arrives before pasting the address anywhere.
+
+The two addresses in `listing.json` → `app` have different rules, which is why
+there are two:
+
+| Field | Address | Rule |
+|---|---|---|
+| `app.supportEmail` | `help@sprue.works` | Public. Consent-screen *User support email* (dropdown: account or a managed Google Group) and Marketplace SDK *Developer email*. Shown to users. |
+| `app.contactEmail` | `mario@guerrieri.codes` | Private. Consent-screen *Developer contact information* (free text, any address, several allowed). Where Google emails about verification and project changes — must be read daily. |
+
+`urls.support` stays the GitHub issues URL; that field is a link, not a mailbox.
+
 ## 2. Attach the script to a standard GCP project
 
 Apps Script projects get a hidden default GCP project; Marketplace publishing
 needs a standard one.
 
-1. [console.cloud.google.com](https://console.cloud.google.com) → create a
+1. [console.cloud.google.com](https://console.cloud.google.com), signed in as
+   the `@sprue.works` publishing account → create a
    project (suggested name `polyglot-slides`). Note its **project number**
    (Dashboard, not the ID). No billing account needed.
 2. Apps Script editor for the script in `.clasp.json` (`clasp open-script`)
@@ -155,13 +202,13 @@ platform → Branding / Audience / Data access* in newer consoles):
 |---|---|
 | User type | `unlisted`: **External**. `private`: **Internal** |
 | App name | `listing.json` → `app.name` |
-| User support email | `app.developerEmail` |
+| User support email | `app.supportEmail` (`help@sprue.works`). **Dropdown**, not free text — lists only the signed-in account and Google Groups it owns/manages. If the group is absent, fix the group membership (prerequisite above); do not fall back to a personal address |
 | App logo | `marketplace/assets/icon-120.png` |
 | App home page | `urls.homepage` |
 | Privacy policy | `urls.privacyPolicy` |
 | Terms of service | `urls.termsOfService` |
 | Authorized domains | `sprue.works` |
-| Developer contact | `app.developerEmail` |
+| Developer contact information | `app.contactEmail` — free text, any address, several allowed; this is where Google sends verification questions |
 | Scopes | exactly `oauth.scopes` — add via *Add or remove scopes*, filter on `presentations.currentonly` and `script.container.ui` |
 
 Both scopes are **non-sensitive**, so verification is **brand verification
@@ -185,7 +232,7 @@ it uses clasp's own client).
 | App integration | **Editor add-on** → tick **Slides** |
 | Slides add-on script | *Deployment ID* — `deployment.json` → `deploymentId` (**not** the script ID, not HEAD) |
 | OAuth scopes | the same two scopes, verbatim |
-| Developer name / website / email | `app.developerName`, `urls.homepage`, `app.developerEmail` |
+| Developer name / website / email | `app.developerName` (`sprue.works`, exactly that casing), `urls.homepage`, `app.supportEmail` (`help@sprue.works`) |
 
 Save. The deployment ID field is why `tools/release.sh` **updates** the
 deployment in `deployment.json` instead of creating a new one per tag: later
@@ -208,7 +255,8 @@ v1.0.0`, then commit the ID the run prints — README "Release pipeline").
 | Detailed description | `marketplace/description.md` (Markdown is not rendered; paste as plain text, keep the blank lines) |
 | Application icons | `icon-128.png`, `icon-32.png` |
 | Screenshots | from step 7 (at least one) |
-| Support links | Terms `urls.termsOfService`, Privacy `urls.privacyPolicy`, Support `urls.support` |
+| Support links | Terms `urls.termsOfService`, Privacy `urls.privacyPolicy`, Support `urls.support` (the issue tracker URL, not an email) |
+| Developer name / email | `app.developerName` / `app.supportEmail` (prefilled from step 4 in most consoles; confirm they still read `sprue.works` / `help@sprue.works`) |
 | Regions | all |
 
 ## 6. Publish
@@ -256,4 +304,5 @@ without copying anything. Re-run INSTALL.md's functional checklist from there.
 | Code in `src/` | push on merge; tag → new version behind the same deployment | nothing — installed users get it |
 | `oauthScopes` in `appsscript.json` | CI fails until `listing.json` matches | update consent screen + Marketplace SDK scopes; re-verification |
 | Name, icon, description | `check-listing.sh` validates the files | re-paste (steps 3–5); name/logo changes re-trigger brand verification |
+| `developerName`, `supportEmail`, `contactEmail` | `check-listing.sh` enforces `sprue.works` / an `@sprue.works` support address | re-paste (steps 3–5); a publisher-name or support-email change re-triggers brand verification |
 | `deployment.json` ID | releases update that deployment | only if the ID changes: re-paste in step 4 (avoid — see CLAUDE.md) |
