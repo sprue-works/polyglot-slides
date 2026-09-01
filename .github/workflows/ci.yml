@@ -20,5 +20,7 @@ jobs:
           node-version: '22'
       - name: Syntax-check Apps Script sources
         run: tools/lint.sh
+      - name: Validate GitHub Actions workflows
+        run: tools/lint-workflows.sh
       - name: Release script self-test (stubbed clasp)
         run: tools/test-release.sh

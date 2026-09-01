@@ -29,9 +29,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: apps-script
-    env:
-      clasp_config_auth: ${{ runner.temp }}/clasprc.json
     steps:
+      - name: Configure clasp auth path
+        run: echo "clasp_config_auth=$RUNNER_TEMP/clasprc.json" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
