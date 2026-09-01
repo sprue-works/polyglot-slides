@@ -23,10 +23,13 @@ jobs:
   reconcile:
     name: 'Cloudflare CNAME (${{ inputs.mode }})'
     runs-on: ubuntu-latest
+    environment: 'pages-dns'
     env:
       CLOUDFLARE_API_TOKEN: '${{ secrets.CLOUDFLARE_API_TOKEN }}'
       CLOUDFLARE_ZONE_ID: '${{ vars.CLOUDFLARE_ZONE_ID }}'
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: 'main'
       - name: 'Check or reconcile DNS'
         run: 'tools/reconcile-pages-dns.sh --${{ inputs.mode }}'
