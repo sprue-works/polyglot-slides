@@ -102,3 +102,17 @@ consequences:
 - The listing points at `deployment.json#deploymentId`, never at the script's
   HEAD or a version number. Don't "fix" a release by creating a new
   deployment; that orphans every install.
+
+## The Pages hostname is one DNS-only CNAME
+
+`polyglot.sprue.works` must be exactly one Cloudflare CNAME to
+`sprue-works.github.io` with `proxied=false`. Cloudflare proxying hides the
+Pages target and can block GitHub's domain verification and managed-certificate
+provisioning. `tools/reconcile-pages-dns.sh` is intentionally conservative:
+it creates a missing record and repairs one existing CNAME, but refuses to
+delete or overwrite conflicting A/AAAA/multiple records. Resolve those by hand
+after identifying their owner.
+
+Keep `CLOUDFLARE_API_TOKEN` in GitHub Secrets and `CLOUDFLARE_ZONE_ID` in
+Actions Variables. The token needs only Zone:DNS:Edit and Zone:Read for
+`sprue.works`; never use or document the Global API Key.
