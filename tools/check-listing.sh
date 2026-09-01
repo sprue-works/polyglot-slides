@@ -54,7 +54,7 @@ if (app.developerName !== 'sprue.works') fail(`app.developerName must be exactly
 else ok('developerName is sprue.works');
 if (typeof app.supportEmail === 'string') {
   if (!emailRe.test(app.supportEmail)) fail(`app.supportEmail is not an email address (got ${app.supportEmail})`);
-  else if (!app.supportEmail.endsWith('@sprue.works')) fail(`app.supportEmail must be an @sprue.works address (the consent-screen dropdown only offers the publishing account or a Google Group it manages; got ${app.supportEmail})`);
+  else if (!app.supportEmail.toLowerCase().endsWith('@sprue.works')) fail(`app.supportEmail must be an @sprue.works address (the consent-screen dropdown only offers the publishing account or a Google Group it manages; got ${app.supportEmail})`);
   else ok(`supportEmail ${app.supportEmail}`);
 }
 if (typeof app.contactEmail === 'string') {
