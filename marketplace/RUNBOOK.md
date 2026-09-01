@@ -60,7 +60,10 @@ gh api -X PUT repos/sprue-works/polyglot-slides/pages \
 
 If Pages is already enabled, the first command returns an "already exists"
 error; confirm *Settings → Pages → Deploy from a branch → `main` / `/docs`*
-instead of recreating it.
+instead of recreating it. On legacy branch-based Pages, the custom-domain API
+creates `docs/CNAME` directly on `main` as an automatic `Create CNAME` commit if
+the file is absent. Merge the intended `docs/CNAME` first when possible; if the
+API runs first, fetch that commit and rebase any open setup PR onto it.
 
 ### 1b. Bootstrap and reconcile Cloudflare DNS
 
