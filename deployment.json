@@ -1,4 +1,4 @@
 {
   "_comment": "Apps Script deployment that tagged releases update in place. Its ID is what the Marketplace SDK listing (#4) points at, so it must stay stable. Empty until the first tagged release creates it -- then commit the ID tools/release.sh prints.",
-  "deploymentId": ""
+  "deploymentId": "AKfycbwWWj0b5fZPw1Dg1I-0EhNdFqXR10EIBVCXeXdNyPoXzGTMy5-aJauYlrvSv-U8u_UT"
 }
