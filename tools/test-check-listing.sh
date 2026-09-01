@@ -72,4 +72,21 @@ fresh
 (cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.urls.homepage="https://example.com/";j.urls.privacyPolicy="https://example.com/privacy.html";j.urls.termsOfService="https://example.com/terms.html";fs.writeFileSync(f,JSON.stringify(j))')
 expect_fail "listing on an unverified host" "polyglot.sprue.works"
 
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.app.developerName="Sprue Works";fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "publisher name not stylized sprue.works" 'developerName must be exactly "sprue.works"'
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.app.supportEmail="someone@gmail.com";fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "support email off the sprue.works domain" "supportEmail must be an @sprue.works address"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.app.contactEmail="not-an-address";fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "contact email malformed" "contactEmail is not an email address"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.app.developerEmail=j.app.supportEmail;delete j.app.supportEmail;delete j.app.contactEmail;fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "old single developerEmail shape" "listing.app.supportEmail is missing"
+grep -q "listing.app.contactEmail is missing" "$work/out" || { cat "$work/out"; fail "old shape must also report contactEmail missing"; }
+
 echo "all check-listing.sh tests passed"

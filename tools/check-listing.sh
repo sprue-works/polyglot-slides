@@ -8,6 +8,9 @@
 #   - the listing's deployment reference resolves to deployment.json
 #   - every referenced asset exists, is a PNG, and has the declared size
 #   - the listing URLs point at pages that exist under docs/
+#   - the publisher identity is sprue.works: developerName and the public
+#     supportEmail's domain (brand verification checks these against the
+#     verified homepage domain); contactEmail may be any address
 #
 # Used by .github/workflows/ci.yml; run locally before pushing.
 set -euo pipefail
@@ -30,7 +33,7 @@ ok('marketplace/listing.json, screenshots.json parse');
 
 // Required text fields.
 for (const [obj, keys, label] of [
-  [listing.app, ['name', 'shortDescription', 'detailedDescriptionFile', 'category', 'developerName', 'developerEmail'], 'app'],
+  [listing.app, ['name', 'shortDescription', 'detailedDescriptionFile', 'category', 'developerName', 'supportEmail', 'contactEmail'], 'app'],
   [listing.urls, ['homepage', 'privacyPolicy', 'termsOfService', 'support'], 'urls'],
 ]) {
   for (const k of keys) if (!obj || typeof obj[k] !== 'string' || !obj[k].trim()) fail(`listing.${label}.${k} is missing or empty`);
@@ -40,6 +43,23 @@ if (typeof app.shortDescription === 'string' && app.shortDescription.length > 12
 if (typeof app.detailedDescriptionFile === 'string') {
   if (!fs.existsSync(app.detailedDescriptionFile)) fail(`detailedDescriptionFile ${app.detailedDescriptionFile} does not exist`);
   else ok(`description file ${app.detailedDescriptionFile}`);
+}
+
+// Publisher identity. Brand verification checks the publisher name, the public
+// support address, and the homepage domain for consistency, so all three live on
+// sprue.works. contactEmail is Google's private channel to the developer; any
+// address that is read daily is fine.
+const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+if (app.developerName !== 'sprue.works') fail(`app.developerName must be exactly "sprue.works" (lowercase, with the dot; got ${JSON.stringify(app.developerName)})`);
+else ok('developerName is sprue.works');
+if (typeof app.supportEmail === 'string') {
+  if (!emailRe.test(app.supportEmail)) fail(`app.supportEmail is not an email address (got ${app.supportEmail})`);
+  else if (!app.supportEmail.endsWith('@sprue.works')) fail(`app.supportEmail must be an @sprue.works address (the consent-screen dropdown only offers the publishing account or a Google Group it manages; got ${app.supportEmail})`);
+  else ok(`supportEmail ${app.supportEmail}`);
+}
+if (typeof app.contactEmail === 'string') {
+  if (!emailRe.test(app.contactEmail)) fail(`app.contactEmail is not an email address (got ${app.contactEmail})`);
+  else ok(`contactEmail ${app.contactEmail}`);
 }
 
 // Scopes must match the manifest exactly (order-insensitive).
