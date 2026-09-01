@@ -57,13 +57,15 @@ the sidebar, persisted via `UserProperties`; the offered list is
 - `tools/sync-template.sh` — push `src/` to the template deck's bound script
 - `tools/release.sh` — version + deploy for a tagged release (CI and local)
 - `tools/check-listing.sh`, `tools/render-icons.sh` — Marketplace listing consistency check and icon rendering
+- `tools/reconcile-pages-dns.sh` — idempotent Cloudflare check/apply for the DNS-only Pages CNAME
 - `marketplace/` — Marketplace listing config, assets, and the publishing runbook
 - `docs/` — GitHub Pages site: homepage, privacy policy, terms (brand verification)
 - `tools/lint.sh`, `tools/lint-workflows.sh`, `tools/test-*.sh` — what the CI
   workflow runs
 - `deployment.json` — the Apps Script deployment ID releases update in place
-- `.github/workflows/` — `ci.yml` (lint on PRs) and `deploy.yml` (push on
-  `main`, version + deploy on `v*` tags)
+- `.github/workflows/` — `ci.yml` (lint on PRs), `deploy.yml` (push on
+  `main`, version + deploy on `v*` tags), and `pages-dns.yml` (manual
+  Cloudflare CNAME check/apply)
 - `INSTALL.md` — end-user install runbook (and the owner-side sharing setup)
 
 ## Develop
