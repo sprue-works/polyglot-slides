@@ -95,7 +95,7 @@ if (!(shots.screenshots || []).length) console.log('note screenshots.json lists 
 const urls = listing.urls || {};
 const base = typeof urls.homepage === 'string' ? urls.homepage.replace(/\/$/, '') : '';
 const publicBase = 'https://polyglot.sprue.works';
-if (base !== publicBase) fail(`urls.homepage must use ${publicBase}/ (got ${urls.homepage})`);
+if (urls.homepage !== `${publicBase}/`) fail(`urls.homepage must be exactly ${publicBase}/ (got ${urls.homepage})`);
 if (urls.support !== 'https://github.com/sprue-works/polyglot-slides/issues') {
   fail(`urls.support must use the Sprue Works issue tracker (got ${urls.support})`);
 }
