@@ -13,7 +13,7 @@ fi
 
 if command -v docker >/dev/null 2>&1; then
   exec docker run --rm \
-    --volume "$repo_root:/repo" \
+    --volume "$repo_root:/repo:ro" \
     --workdir /repo \
     "$actionlint_image" -color "$@"
 fi
