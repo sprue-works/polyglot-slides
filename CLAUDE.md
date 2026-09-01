@@ -19,7 +19,9 @@
   and screenshots, and `RUNBOOK.md` (the click-through). `docs/` is the
   GitHub Pages site (homepage + privacy + terms) brand verification needs.
   `tools/check-listing.sh` is the contract: listing scopes == manifest scopes,
-  deployment pointer == `deployment.json`, assets exist at the right sizes.
+  deployment pointer == `deployment.json`, assets exist at the right sizes,
+  publisher is `sprue.works` with an `@sprue.works` support address (brand
+  verification checks name, support email, and homepage domain agree).
 - This file — gotchas that aren't visible from the code.
 
 Two user-facing surfaces deliver messages differently and always have: sidebar

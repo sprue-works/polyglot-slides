@@ -107,8 +107,10 @@ What the repo holds — CI validates it (`tools/check-listing.sh`), a human
 pastes it:
 
 - `marketplace/listing.json` — everything the Marketplace SDK and OAuth
-  consent screen ask for: name, descriptions, category, URLs, scopes, the
-  distribution flavor, and a pointer at `deployment.json#deploymentId`.
+  consent screen ask for: name, descriptions, category, publisher identity
+  (`sprue.works`, with `help@sprue.works` as the public support address and a
+  separate developer-contact address), URLs, scopes, the distribution flavor,
+  and a pointer at `deployment.json#deploymentId`.
 - `marketplace/description.md` — the store's detailed description.
 - `marketplace/assets/` — the icon (`icon.svg`, rendered to the required PNG
   sizes by `tools/render-icons.sh`) and, once captured, the 1280×800
