@@ -29,7 +29,10 @@ json_field() { # json_field <key> <json>
   node -e 'const v = JSON.parse(process.argv[2])[process.argv[1]]; if (v === undefined || v === null) process.exit(1); process.stdout.write(String(v))' "$1" "$2"
 }
 
-deployment_id="$(json_field deploymentId "$(cat deployment.json)" || true)"
+if ! deployment_id="$(json_field deploymentId "$(cat deployment.json)")"; then
+  echo "error: deployment.json must be valid JSON with a deploymentId value" >&2
+  exit 1
+fi
 
 echo "==> Pushing src/ to the script project"
 clasp push --force
