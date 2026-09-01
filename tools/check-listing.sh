@@ -72,6 +72,7 @@ function pngSize(file) {
   return [b.readUInt32BE(16), b.readUInt32BE(20)];
 }
 function checkPng(file, w, h, label) {
+  if (typeof file !== 'string' || !file) return fail(`${label}: no file path given`);
   if (!fs.existsSync(file)) return fail(`${label}: ${file} does not exist`);
   const size = pngSize(file);
   if (!size) return fail(`${label}: ${file} is not a PNG`);

@@ -1,4 +1,8 @@
 {
-  "_comment": "Store-listing screenshots, in display order. Each must be 1280x800 PNG (the Marketplace SDK also accepts 640x400). Capture per marketplace/RUNBOOK.md step 7, drop the files in marketplace/assets/, and list them here; tools/check-listing.sh verifies each file exists and has the right dimensions. Empty list = not captured yet (allowed, but the listing form requires at least one).",
-  "screenshots": []
+  "_comment": "Store-listing screenshots, in display order. Each must be 1280x800 PNG (the Marketplace SDK also accepts 640x400). Capture per marketplace/RUNBOOK.md step 7, drop the files in marketplace/assets/, and list them here; tools/check-listing.sh verifies each file exists and has the right dimensions.",
+  "screenshots": [
+    { "file": "marketplace/assets/screenshot-1.png", "caption": "Sidebar open with languages selected, beside an untranslated slide" },
+    { "file": "marketplace/assets/screenshot-2.png", "caption": "A slide after Duplicate selection per language: originals plus the translated clusters below" },
+    { "file": "marketplace/assets/screenshot-3.png", "caption": "The Extensions > Polyglot Slides menu" }
+  ]
 }
