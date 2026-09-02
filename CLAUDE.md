@@ -143,6 +143,14 @@ dimensions-only check that way (#27). The script now rewrites the root
 whose artwork doesn't reach all four quadrants. Don't infer a render is right
 from its pixel size — open the PNG.
 
+QuickLook also mishandles a **non-square viewBox**: `banner.svg` (viewBox
+220×140) thumbnailed at an intrinsic 880×560 came out 880×642, scaled
+non-uniformly and clipped at the sides (#31). `render-icons.sh` therefore pads
+the scratch copy's viewBox to a square (`0 -40 220 220`) at a square intrinsic
+size, renders, and crops the banner band back out with `sips -c … --cropOffset`
+before downsampling. Keep the viewBox aspect equal to the intrinsic aspect,
+and square, whenever qlmanage is the renderer.
+
 ## The Pages hostname is one DNS-only CNAME
 
 `polyglot.sprue.works` must be exactly one Cloudflare CNAME to
