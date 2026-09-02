@@ -105,6 +105,19 @@ consequences:
   HEAD or a version number. Don't "fix" a release by creating a new
   deployment; that orphans every install.
 
+## QuickLook thumbnails don't scale SVGs with an intrinsic size
+
+`tools/render-icons.sh` falls back to macOS `qlmanage -t -s 512` when
+`rsvg-convert` is missing. QuickLook draws the SVG at its **intrinsic**
+`width`/`height` (128×128 on `icon.svg`) onto the requested canvas without
+scaling, so the mark lands in the top-left quarter of a 512×512 white square
+and `sips -z` then shrinks that whole padded canvas. Every icon PNG passed the
+dimensions-only check that way (#27). The script now rewrites the root
+`width`/`height` to the render size in a scratch copy before thumbnailing, and
+`tools/png-check.js` (shared with `tools/check-listing.sh`) fails any icon
+whose artwork doesn't reach all four quadrants. Don't infer a render is right
+from its pixel size — open the PNG.
+
 ## The Pages hostname is one DNS-only CNAME
 
 `polyglot.sprue.works` must be exactly one Cloudflare CNAME to
