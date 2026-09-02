@@ -126,4 +126,20 @@ fresh
 expect_fail "old single developerEmail shape" "listing.app.supportEmail is missing"
 grep -q "listing.app.contactEmail is missing" "$work/out" || { cat "$work/out"; fail "old shape must also report contactEmail missing"; }
 
+fresh
+rm "$work/repo/marketplace/assets/banner-220x140.png"
+expect_fail "missing card banner" "banner-220x140.png does not exist"
+
+fresh
+cp "$work/repo/marketplace/assets/icon-128.png" "$work/repo/marketplace/assets/banner-220x140.png"
+expect_fail "wrong card banner size" "expected 220x140"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));delete j.app.postInstallTip;fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "missing post-install tip" "listing.app.postInstallTip is missing"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.app.postInstallTip="x".repeat(201);fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "over-long post-install tip" "postInstallTip is 201 chars"
+
 echo "all check-listing.sh tests passed"
