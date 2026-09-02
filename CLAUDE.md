@@ -19,7 +19,8 @@
   and screenshots, and `RUNBOOK.md` (the click-through). `docs/` is the
   GitHub Pages site (homepage + privacy + terms) brand verification needs.
   `tools/check-listing.sh` is the contract: listing scopes == manifest scopes,
-  deployment pointer == `deployment.json`, assets exist at the right sizes,
+  deployment pointer == `deployment.json` (a check aimed at a field the
+  Editor-add-on console form doesn't consume — see #29), assets exist at the right sizes,
   publisher is `sprue.works` with an `@sprue.works` support address (brand
   verification checks name, support email, and homepage domain agree).
 - This file — gotchas that aren't visible from the code.
@@ -68,7 +69,7 @@ a view-only deck and hitting the unverified-app consent screen). Don't claim the
 install path is verified off owner-side testing; INSTALL.md carries the
 second-account checklist.
 
-## CI deploys authenticate as a user, and the deployment ID is load-bearing
+## CI deploys authenticate as a user, and the deployment ID is *not* what the Marketplace pins
 
 - Apps Script's API rejects service accounts for script projects, so
   `deploy.yml` uses a copied `~/.clasprc.json` (secret `CLASPRC_JSON`) handed to
@@ -80,13 +81,26 @@ second-account checklist.
   unavailable in job-level `env`, even though the file is valid YAML. Run
   `tools/lint-workflows.sh` after workflow edits; it uses actionlint to catch
   expression-context failures before GitHub rejects the workflow definition.
-- The Marketplace listing (#4) references an Apps Script **deployment ID**, not
-  a version. `tools/release.sh` therefore *updates* the deployment in
-  `deployment.json` (`clasp redeploy <id> -V <n>`) rather than `clasp deploy`-ing
-  a new one each tag. An empty `deploymentId` means "create one and tell the
-  operator to commit it"; a release that creates a deployment when one already
-  exists means the ID was lost — fix `deployment.json`, don't re-point the
-  listing.
+- **Corrected 2026-09-02 (#19):** the Marketplace SDK App Configuration for an
+  *Editor add-on* pins **Project Script ID + script version number**, and has
+  no deployment-ID field at all — that field exists only for the *Google
+  Workspace add-on* integration type, a different architecture (`addOns`
+  manifest block, card UI) this add-on does not use. Google's docs: "to
+  publish an Editor add-on, you must provide the project script ID and
+  version", and to ship an update, "update the version number on the App
+  Configuration page". Earlier notes here claimed the listing points at a
+  deployment ID and that releases reach installed users automatically; both
+  were wrong. The real path is: tag → `tools/release.sh` creates version *n*
+  → **a human bumps *Slides add-on script version* to *n*** in App
+  Configuration (RUNBOOK §4). A version bump alone does not trigger
+  Marketplace re-review; users don't reinstall. Reworking `release.sh`,
+  `deployment.json`, and `check-listing.sh` around the version number is #29.
+- Until #29 lands, `tools/release.sh` still *updates* the deployment in
+  `deployment.json` (`clasp redeploy <id> -V <n>`) rather than `clasp
+  deploy`-ing a new one each tag, and `check-listing.sh` still asserts the
+  listing's pointer at it. Harmless (the Marketplace ignores that deployment),
+  but don't read it as the thing that ships code to users — the version
+  number is. The number a release prints is the one to paste.
 - `tools/test-release.sh` pins the exact clasp call sequence with a stub. Change
   the sequence deliberately and update the expectations together.
 
@@ -101,9 +115,20 @@ consequences:
   matches — on purpose. A scope change also needs the consent screen and the
   Marketplace SDK updated by hand and triggers re-verification; the CI failure
   is the reminder.
-- The listing points at `deployment.json#deploymentId`, never at the script's
-  HEAD or a version number. Don't "fix" a release by creating a new
-  deployment; that orphans every install.
+- The Editor-add-on listing is pinned to the **script ID plus a version
+  number** (RUNBOOK §4), not to `deployment.json#deploymentId` and not to
+  HEAD. A tagged release does nothing for installed users until that version
+  field is bumped by hand; `listing.json`'s `extension.deployment` pointer is
+  legacy until #29 replaces it with the script ID + published version.
+- Console facts the runbook now carries because they aren't in Google's docs:
+  Apps Script refuses *Change GCP project* until the target project has a
+  saved OAuth consent screen (so consent screen before attach);
+  `script.container.ui` is absent from the *Add or remove scopes* table and
+  must be pasted into *Manually add scopes*; it is classified **sensitive**
+  (sensitive-scope verification — justification + demo video — not brand
+  verification alone; CASA is for *restricted* scopes only); the Marketplace
+  SDK has no left-nav entry (its API Library page → *Manage*); App visibility
+  Private/Public is irreversible once saved. GCP project number: 556097262294.
 
 ## QuickLook thumbnails don't scale SVGs with an intrinsic size
 

@@ -17,8 +17,8 @@ Paste sources, so nothing is retyped:
 | OAuth scopes | `listing.json` → `oauth.scopes` (== `src/appsscript.json`) |
 | App icon 128×128 / 32×32, consent-screen logo 120×120 | `marketplace/assets/icon-*.png` |
 | Screenshots 1280×800 | `marketplace/assets/` + `marketplace/screenshots.json` (step 7) |
-| Editor add-on deployment ID | `deployment.json` → `deploymentId` |
-| Script ID / GCP project number | `.clasp.json` → `scriptId`; project number from step 2 |
+| Editor add-on *Project Script ID* + *script version* | `.clasp.json` → `scriptId`; the version number the latest `tools/release.sh` run printed (step 4 — **not** `deployment.json`, which the Editor-add-on form never asks for) |
+| GCP project number | `556097262294` (step 2) |
 
 `tools/check-listing.sh` (run by CI) fails if any of those drift from the
 code, so treat the repo as authoritative and re-paste when it changes.
@@ -229,9 +229,12 @@ is non-sensitive). Sensitive-scope verification therefore applies, not brand
 verification alone: Google's reviewers expect a **written justification** for
 the scope (why the add-on needs to draw a sidebar in the Slides UI — that is
 what the scope is; it reads no user data) and a **demo video of the consent
-flow** from a test account, and the review is slower than a pure brand check —
-plan on **weeks**, not days. What it
-is **not** is a CASA security assessment; that is required only for
+flow** from a test account. Google's own budget is "typically 3–5 business
+days" for the sensitive-scope review, but it only starts once branding is
+published, each reviewer question is a fresh round through
+`contact@sprue.works`, and this is what the 3–5-day estimates elsewhere in
+this repo never accounted for — so plan on **weeks end to end**, not days.
+What it is **not** is a CASA security assessment; that is required only for
 *restricted* scopes, and neither of ours is restricted. Draft the
 justification before submitting (step 6) so the reviewer's first email does
 not cost a round trip.
@@ -273,18 +276,37 @@ SDK*) and click **Manage**, then the **App Configuration** tab:
 |---|---|
 | App visibility | `distribution.visibility`: **Private** (own domain) or **Public** with *Unlisted* checked. **Private vs Public is irreversible once saved** — the SDK will not let you switch later; only the *Unlisted* checkbox under Public can be changed afterwards. Get `listing.json` → `distribution.visibility` right before clicking Save |
 | Installation settings | **Individual + Admin install** (admins can push to a whole domain) |
-| App integration | **Editor add-on** → tick **Slides** |
-| Slides add-on script | *Deployment ID* — `deployment.json` → `deploymentId` (**not** the script ID, not HEAD) |
+| App integration | **Editor add-on** → tick **Slides**. Do **not** tick *Google Workspace add-on* — that is a different architecture (an `addOns` manifest block, card-based UI) and this add-on is a classic Editor add-on (`createAddonMenu` + HtmlService sidebar) |
+| Slides add-on Project Script ID | `.clasp.json` → `scriptId` (`1kDYoA2yi66enrdzqpVhjTaMKJjALmGg2fwCAzGRHmTnIe0QIrb24uxuE`) |
+| Slides add-on script version | the **version number** to serve — the one `tools/release.sh` printed for the latest tag (Apps Script editor → *Deploy → Manage deployments* → the deployment → *Configuration* shows it). Entered as `1` on 2026-09-02 |
 | OAuth scopes | the same two scopes, verbatim |
 | Developer name / website / email | `app.developerName` (`sprue.works`, exactly that casing), `urls.homepage`, `app.supportEmail` (`help@sprue.works`) |
 
-Save. The deployment ID field is why `tools/release.sh` **updates** the
-deployment in `deployment.json` instead of creating a new one per tag: later
-releases change what that ID serves without touching this form.
+Save. Configuration saved as a draft 2026-09-02 with script ID + version 1.
 
-**Prerequisite:** `deployment.json` must have a real `deploymentId`. If it is
-still empty, cut the first release first (`git tag v1.0.0 && git push origin
-v1.0.0`, then commit the ID the run prints — README "Release pipeline").
+**There is no deployment ID field on this path.** Google's docs are explicit:
+"to publish an Editor add-on, you must provide the project script ID and
+version"; a deployment ID is what a *Google Workspace add-on* is published
+by. The deployment-ID field only appears if you tick *Google Workspace
+add-on*, which this add-on is not. Earlier revisions of this runbook, of
+`README.md`, and of `CLAUDE.md` said the listing points at
+`deployment.json` → `deploymentId`; that was wrong for this add-on type.
+
+**Consequence for releases — a version number is pinned, not a moving
+target.** Google's update procedure for a published Editor add-on is: create
+a new version, then "update the version number on the App Configuration page
+of the Google Workspace Marketplace SDK". So a tagged release (`tools/
+release.sh`) does *not* reach installed users by itself: someone must come
+back to this form and bump *Slides add-on script version* to the new number.
+Changing only that field is not in Google's list of changes that trigger a
+new Marketplace review (those are the *App Details* text fields and adding a
+new integration type), and users do not reinstall — but if the release added
+scopes they re-authorize, and the consent screen + this form's scope list
+must be updated first. The deployment that `deployment.json` names is still
+updated by every release (harmless, and what `clasp` needs a deployment for)
+but nothing in the Marketplace reads it. Reworking the release pipeline and
+`tools/check-listing.sh` around the version number is tracked in the
+follow-up issue #29.
 
 ## 5. Store listing
 
@@ -350,8 +372,8 @@ without copying anything. Re-run INSTALL.md's functional checklist from there.
 
 | Change | CI does | Human does |
 |---|---|---|
-| Code in `src/` | push on merge; tag → new version behind the same deployment | nothing — installed users get it |
+| Code in `src/` | push on merge; tag → new numbered version (and updates the deployment in `deployment.json`, which the Marketplace ignores) | **bump *Slides add-on script version* in step 4 to the new number** — until then installed users keep the old version. No re-review for a version bump alone |
 | `oauthScopes` in `appsscript.json` | CI fails until `listing.json` matches | update consent screen + Marketplace SDK scopes; re-verification |
 | Name, icon, description | `check-listing.sh` validates the files | re-paste (steps 3–5); name/logo changes re-trigger brand verification |
 | `developerName`, `supportEmail`, `contactEmail` | `check-listing.sh` enforces `sprue.works` / an `@sprue.works` support address | re-paste (steps 3–5); a publisher-name or support-email change re-triggers brand verification |
-| `deployment.json` ID | releases update that deployment | only if the ID changes: re-paste in step 4 (avoid — see CLAUDE.md) |
+| `deployment.json` ID | releases update that deployment | nothing — the Editor-add-on listing does not reference it (see step 4) |
