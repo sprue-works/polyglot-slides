@@ -38,7 +38,7 @@ json_field() { # json_field <key> <json>
 # before touching clasp so a broken listing fails fast and leaves no stray
 # version behind.
 listing_file="marketplace/listing.json"
-if ! published="$(node -e 'const v = JSON.parse(process.argv[1]).extension?.publishedVersion; if (!Number.isInteger(v) || v < 1) process.exit(1); process.stdout.write(String(v))' "$(cat "$listing_file")" 2>/dev/null)"; then
+if ! published="$(node -e 'const v = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).extension?.publishedVersion; if (!Number.isInteger(v) || v < 1) process.exit(1); process.stdout.write(String(v))' "$listing_file" 2>/dev/null)"; then
   echo "error: $listing_file must be valid JSON with a positive-integer extension.publishedVersion" >&2
   exit 1
 fi
