@@ -63,6 +63,9 @@ jobs:
       # The Editor-add-on listing pins a version number, so the release is not
       # live until someone bumps it in App Configuration. Make that step a
       # visible, assignable issue instead of a line in this run's summary.
+      # A re-run of the same tag cuts yet another version, so if that tag's
+      # issue is still open, comment the new number on it rather than opening
+      # a duplicate.
       - name: Open tracking issue for the manual version bump (tag)
         if: github.ref_type == 'tag' && steps.release.outputs.version != steps.release.outputs.published_version
         env:
@@ -72,6 +75,14 @@ jobs:
           PUBLISHED: ${{ steps.release.outputs.published_version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          title_prefix="release $TAG: bump Slides add-on script version to"
+          existing="$(gh issue list --state open --search "\"$title_prefix\" in:title" --json number,title \
+            | jq -r --arg p "$title_prefix" '[.[] | select(.title | startswith($p))] | .[0].number // empty')"
+          if [ -n "$existing" ]; then
+            echo "Tracking issue #$existing is still open for $TAG; noting the new version there."
+            gh issue comment "$existing" --body "Re-run of \`$TAG\` ([run]($RUN_URL)) created Apps Script version \`$VERSION\`; pin that number instead of the one above."
+            exit 0
+          fi
           cat >"$RUNNER_TEMP/bump-issue.md" <<EOF
           Release \`$TAG\` created Apps Script version \`$VERSION\` ([run]($RUN_URL)). The Marketplace SDK still pins version \`$PUBLISHED\` (\`marketplace/listing.json\` → \`extension.publishedVersion\`), so installed users do not have this release yet.
 
