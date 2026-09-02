@@ -15,7 +15,7 @@ fresh() {
   cp -R "$repo_root/marketplace" "$repo_root/docs" "$work/repo/"
   cp "$repo_root/tools/check-listing.sh" "$repo_root/tools/png-check.js" "$work/repo/tools/"
   cp "$repo_root/src/appsscript.json" "$work/repo/src/"
-  cp "$repo_root/deployment.json" "$work/repo/"
+  cp "$repo_root/.clasp.json" "$work/repo/"
 }
 
 expect_pass() { # expect_pass <label>
@@ -35,8 +35,29 @@ fresh
 expect_fail "manifest scope not in listing" "scopes differ"
 
 fresh
-(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.extension.deployment.source="somewhere-else.json";fs.writeFileSync(f,JSON.stringify(j))')
-expect_fail "deployment reference not deployment.json" "deployment.json#deploymentId"
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.extension.script.source="somewhere-else.json";fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "script reference not .clasp.json" ".clasp.json#scriptId"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f=".clasp.json",j=JSON.parse(fs.readFileSync(f));delete j.scriptId;fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "clasp project without a scriptId" ".clasp.json has no scriptId"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.extension.publishedVersion="1";fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "publishedVersion as a string" "publishedVersion must be a positive integer"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.extension.publishedVersion=0;fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "publishedVersion zero" "publishedVersion must be a positive integer"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));delete j.extension.publishedVersion;fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "publishedVersion missing" "publishedVersion must be a positive integer"
+
+fresh
+# The pre-#29 shape: a pointer at a deployment ID the Editor-add-on form never reads.
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.extension.deployment={source:"deployment.json",field:"deploymentId"};fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "legacy deployment pointer" "listing.extension.deployment is obsolete"
 
 fresh
 rm "$work/repo/marketplace/assets/icon-32.png"
