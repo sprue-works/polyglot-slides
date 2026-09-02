@@ -7,6 +7,10 @@
 #   - listing OAuth scopes == src/appsscript.json oauthScopes
 #   - the listing's deployment reference resolves to deployment.json
 #   - every referenced asset exists, is a PNG, and has the declared size
+#   - every icon's artwork fills its canvas (tools/png-check.js), and
+#     docs/icon.png is the same pixels as icon-128.png -- a renderer that
+#     thumbnails the SVG at its intrinsic size passes the size check with the
+#     mark in one corner (#27)
 #   - the listing URLs point at pages that exist under docs/
 #   - the publisher identity is sprue.works: developerName and the public
 #     supportEmail's domain (brand verification checks these against the
@@ -25,6 +29,7 @@ let failures = 0;
 const fail = (msg) => { console.error('FAIL ' + msg); failures++; };
 const ok = (msg) => console.log('ok   ' + msg);
 const readJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
+const { checkCoverage } = require(path.resolve('tools/png-check.js'));
 
 const listing = readJson('marketplace/listing.json');
 const manifest = readJson('src/appsscript.json');
@@ -93,18 +98,30 @@ function pngSize(file) {
   if (b.length < 24 || b.toString('hex', 0, 8) !== '89504e470d0a1a0a') return null;
   return [b.readUInt32BE(16), b.readUInt32BE(20)];
 }
-function checkPng(file, w, h, label) {
+function checkPng(file, w, h, label, { content = false } = {}) {
   if (typeof file !== 'string' || !file) return fail(`${label}: no file path given`);
   if (!fs.existsSync(file)) return fail(`${label}: ${file} does not exist`);
   const size = pngSize(file);
   if (!size) return fail(`${label}: ${file} is not a PNG`);
   if (size[0] !== w || size[1] !== h) return fail(`${label}: ${file} is ${size[0]}x${size[1]}, expected ${w}x${h}`);
-  ok(`${label} ${file} (${w}x${h})`);
+  if (content) {
+    // Icons: the mark must fill the canvas, not sit in one quadrant.
+    let reason;
+    try { reason = checkCoverage(file); } catch (e) { reason = e.message; }
+    if (reason) return fail(`${label}: ${file} ${reason}`);
+  }
+  ok(`${label} ${file} (${w}x${h}${content ? ', artwork fills the canvas' : ''})`);
 }
 const a = listing.assets || {};
-checkPng(a.icon128, 128, 128, 'icon128');
-checkPng(a.icon32, 32, 32, 'icon32');
-checkPng(a.consentLogo120, 120, 120, 'consentLogo120');
+checkPng(a.icon128, 128, 128, 'icon128', { content: true });
+checkPng(a.icon32, 32, 32, 'icon32', { content: true });
+checkPng(a.consentLogo120, 120, 120, 'consentLogo120', { content: true });
+// The homepage serves its own copy of the 128px icon; render-icons.sh writes it.
+checkPng('docs/icon.png', 128, 128, 'docs icon', { content: true });
+if (typeof a.icon128 === 'string' && fs.existsSync(a.icon128) && fs.existsSync('docs/icon.png')
+    && !fs.readFileSync(a.icon128).equals(fs.readFileSync('docs/icon.png'))) {
+  fail(`docs/icon.png differs from ${a.icon128}; re-run tools/render-icons.sh so the homepage shows the same icon`);
+}
 const [sw, sh] = a.screenshotSize || [1280, 800];
 if (a.screenshotsFile !== 'marketplace/screenshots.json') fail('assets.screenshotsFile must be marketplace/screenshots.json');
 for (const s of shots.screenshots || []) {
