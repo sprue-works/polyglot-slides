@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 140" width="220" height="140">
+  <!-- Polyglot Slides Application Card Banner (Marketplace Store Listing,
+       220x140). Landscape sibling of icon.svg: same gradient ground, same
+       slide + stacked translated copy + "A / 文" speech-bubble mark, laid out
+       for a wide card. No wordmark: the card renders the app name and
+       developer underneath. Render with tools/render-icons.sh. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a73e8"/>
+      <stop offset="1" stop-color="#7b42f6"/>
+    </linearGradient>
+  </defs>
+  <rect width="220" height="140" fill="url(#g)"/>
+  <g transform="translate(-8 -6)">
+  <!-- back slide (translated copy) -->
+  <rect x="64" y="22" width="104" height="72" rx="8" fill="#ffffff" fill-opacity="0.35"/>
+  <!-- front slide -->
+  <rect x="46" y="42" width="104" height="72" rx="8" fill="#ffffff"/>
+  <rect x="58" y="56" width="48" height="9" rx="4.5" fill="#1a73e8"/>
+  <rect x="58" y="74" width="76" height="6" rx="3" fill="#9aa0a6"/>
+  <rect x="58" y="88" width="62" height="6" rx="3" fill="#9aa0a6"/>
+  <!-- language mark -->
+  <circle cx="160" cy="100" r="30" fill="#ffffff"/>
+  <text x="143" y="111" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#1a73e8">A</text>
+  <text x="161" y="112" font-family="'PingFang SC','Noto Sans CJK SC',sans-serif" font-size="27" fill="#7b42f6">文</text>
+  </g>
+</svg>
