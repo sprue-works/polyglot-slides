@@ -11,16 +11,18 @@
   checklist. **Interim by design** — see its shelf-life note; most of it is
   superseded when #4 lands.
 - `tools/sync-template.sh` — pushes `src/` into the template deck's bound script.
-- `tools/release.sh` + `deployment.json` — tagged-release pipeline (version +
-  deploy); `.github/workflows/` runs it. README "Release pipeline" is the
+- `tools/release.sh` — tagged-release pipeline (push + numbered version;
+  nothing is deployed); `.github/workflows/deploy.yml` runs it and opens the
+  "bump script version" tracking issue. README "Release pipeline" is the
   human-facing doc, including the secret setup and the manual remainder.
 - `marketplace/` — the Workspace Marketplace listing as data: `listing.json`
   (what a human pastes into the Marketplace SDK / consent screen), the icon
   and screenshots, and `RUNBOOK.md` (the click-through). `docs/` is the
   GitHub Pages site (homepage + privacy + terms) brand verification needs.
   `tools/check-listing.sh` is the contract: listing scopes == manifest scopes,
-  deployment pointer == `deployment.json` (a check aimed at a field the
-  Editor-add-on console form doesn't consume — see #29), assets exist at the right sizes,
+  script reference resolves to `.clasp.json#scriptId` and `publishedVersion`
+  is a positive integer (the two fields the Editor-add-on console form
+  consumes), assets exist at the right sizes,
   publisher is `sprue.works` with an `@sprue.works` support address (brand
   verification checks name, support email, and homepage domain agree).
 - This file — gotchas that aren't visible from the code.
@@ -93,14 +95,20 @@ second-account checklist.
   were wrong. The real path is: tag → `tools/release.sh` creates version *n*
   → **a human bumps *Slides add-on script version* to *n*** in App
   Configuration (RUNBOOK §4). A version bump alone does not trigger
-  Marketplace re-review; users don't reinstall. Reworking `release.sh`,
-  `deployment.json`, and `check-listing.sh` around the version number is #29.
-- Until #29 lands, `tools/release.sh` still *updates* the deployment in
-  `deployment.json` (`clasp redeploy <id> -V <n>`) rather than `clasp
-  deploy`-ing a new one each tag, and `check-listing.sh` still asserts the
-  listing's pointer at it. Harmless (the Marketplace ignores that deployment),
-  but don't read it as the thing that ships code to users — the version
-  number is. The number a release prints is the one to paste.
+  Marketplace re-review; users don't reinstall.
+- **Since #29** the pipeline matches that: `tools/release.sh` is `clasp push`
+  + `clasp version` and nothing else — no deployment, no `deployment.json`
+  (the old deployment still exists in Apps Script, orphaned and harmless).
+  `marketplace/listing.json` → `extension.publishedVersion` records the
+  version **currently pinned in the console** — what *is* live, not what
+  should be. Deliberately so: the repo can't write the console, so a
+  release-side bump would assert something untrue exactly in the window that
+  matters, and this way "publishedVersion < latest release" is a true,
+  checkable statement that the manual step is owed. After pasting the new
+  number into App Configuration, commit the same number to
+  `publishedVersion`. The tag workflow opens a tracking issue with that
+  two-step checklist whenever the new version differs from the pinned one;
+  the step summary carries the same text.
 - `tools/test-release.sh` pins the exact clasp call sequence with a stub. Change
   the sequence deliberately and update the expectations together.
 
@@ -116,10 +124,11 @@ consequences:
   Marketplace SDK updated by hand and triggers re-verification; the CI failure
   is the reminder.
 - The Editor-add-on listing is pinned to the **script ID plus a version
-  number** (RUNBOOK §4), not to `deployment.json#deploymentId` and not to
-  HEAD. A tagged release does nothing for installed users until that version
-  field is bumped by hand; `listing.json`'s `extension.deployment` pointer is
-  legacy until #29 replaces it with the script ID + published version.
+  number** (RUNBOOK §4), not to a deployment and not to HEAD. A tagged
+  release does nothing for installed users until that version field is
+  bumped by hand; `listing.json`'s `extension.script` + `publishedVersion`
+  mirror the two console fields, and `check-listing.sh` rejects the old
+  `extension.deployment` pointer if it ever comes back.
 - Console facts the runbook now carries because they aren't in Google's docs:
   Apps Script refuses *Change GCP project* until the target project has a
   saved OAuth consent screen (so consent screen before attach);
