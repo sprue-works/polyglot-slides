@@ -17,7 +17,7 @@ Paste sources, so nothing is retyped:
 | OAuth scopes | `listing.json` → `oauth.scopes` (== `src/appsscript.json`) |
 | App icon 128×128 / 32×32, consent-screen logo 120×120 | `marketplace/assets/icon-*.png` |
 | Screenshots 1280×800 | `marketplace/assets/` + `marketplace/screenshots.json` (step 7) |
-| Editor add-on *Project Script ID* + *script version* | `.clasp.json` → `scriptId`; the version number the latest `tools/release.sh` run printed (step 4 — **not** `deployment.json`, which the Editor-add-on form never asks for) |
+| Editor add-on *Project Script ID* + *script version* | `.clasp.json` → `scriptId` (`listing.json` → `extension.script` points there); the version number the latest `tools/release.sh` run printed, recorded after pasting as `listing.json` → `extension.publishedVersion` (step 4). No deployment ID: the Editor-add-on form never asks for one |
 | GCP project number | `556097262294` (step 2) |
 
 `tools/check-listing.sh` (run by CI) fails if any of those drift from the
@@ -283,7 +283,7 @@ SDK*) and click **Manage**, then the **App Configuration** tab:
 | Installation settings | **Individual + Admin install** (admins can push to a whole domain) |
 | App integration | **Editor add-on** → tick **Slides**. Do **not** tick *Google Workspace add-on* — that is a different architecture (an `addOns` manifest block, card-based UI) and this add-on is a classic Editor add-on (`createAddonMenu` + HtmlService sidebar) |
 | Slides add-on Project Script ID | `.clasp.json` → `scriptId` (`1kDYoA2yi66enrdzqpVhjTaMKJjALmGg2fwCAzGRHmTnIe0QIrb24uxuE`) |
-| Slides add-on script version | the **version number** to serve — the one `tools/release.sh` printed for the latest tag (Apps Script editor → *Deploy → Manage deployments* → the deployment → *Configuration* shows it). Entered as `1` on 2026-09-02 |
+| Slides add-on script version | the **version number** to serve — the one `tools/release.sh` printed for the latest tag (`clasp versions` lists them all). Entered as `1` on 2026-09-02; `listing.json` → `extension.publishedVersion` records whatever is entered here |
 | OAuth scopes | the same two scopes, verbatim |
 | Developer name / website / email | `app.developerName` (`sprue.works`, exactly that casing), `urls.homepage`, `app.supportEmail` (`help@sprue.works`) |
 
@@ -294,8 +294,9 @@ Save. Configuration saved as a draft 2026-09-02 with script ID + version 1.
 version"; a deployment ID is what a *Google Workspace add-on* is published
 by. The deployment-ID field only appears if you tick *Google Workspace
 add-on*, which this add-on is not. Earlier revisions of this runbook, of
-`README.md`, and of `CLAUDE.md` said the listing points at
-`deployment.json` → `deploymentId`; that was wrong for this add-on type.
+`README.md`, and of `CLAUDE.md` said the listing points at a
+`deployment.json` → `deploymentId`; that was wrong for this add-on type, and
+#29 removed the file and the deployment step from the release pipeline.
 
 **Consequence for releases — a version number is pinned, not a moving
 target.** Google's update procedure for a published Editor add-on is: create
@@ -307,11 +308,17 @@ Changing only that field is not in Google's list of changes that trigger a
 new Marketplace review (those are the *App Details* text fields and adding a
 new integration type), and users do not reinstall — but if the release added
 scopes they re-authorize, and the consent screen + this form's scope list
-must be updated first. The deployment that `deployment.json` names is still
-updated by every release — harmless, but nothing in the Marketplace reads
-it. Reworking the release pipeline and
-`tools/check-listing.sh` around the version number is tracked in the
-follow-up issue #29.
+must be updated first.
+
+The pipeline makes that step hard to forget: each tag's `deploy.yml` run
+opens an issue titled *release vX: bump Slides add-on script version to N*
+and prints the same checklist in its step summary. Work it in this order:
+
+1. Enter `N` in this form's *Slides add-on script version* and Save.
+2. Set `extension.publishedVersion` to `N` in `marketplace/listing.json` and
+   commit (closing the issue). That field records what is **live** in this
+   form, so it changes only after the paste — a `publishedVersion` behind
+   the latest release is the honest signal that step 1 is still owed.
 
 ## 5. Store listing
 
@@ -380,8 +387,7 @@ without copying anything. Re-run INSTALL.md's functional checklist from there.
 
 | Change | CI does | Human does |
 |---|---|---|
-| Code in `src/` | push on merge; tag → new numbered version (and updates the deployment in `deployment.json`, which the Marketplace ignores) | **bump *Slides add-on script version* in step 4 to the new number** — until then installed users keep the old version. No re-review for a version bump alone |
+| Code in `src/` | push on merge; tag → new numbered version + a tracking issue for the bump | **bump *Slides add-on script version* in step 4 to the new number, then commit it as `listing.json` → `extension.publishedVersion`** — until then installed users keep the old version. No re-review for a version bump alone |
 | `oauthScopes` in `appsscript.json` | CI fails until `listing.json` matches | update consent screen + Marketplace SDK scopes; re-verification |
 | Name, icon, description | `check-listing.sh` validates the files | re-paste (steps 3–5); name/logo changes re-trigger brand verification |
 | `developerName`, `supportEmail`, `contactEmail` | `check-listing.sh` enforces `sprue.works` / an `@sprue.works` support address | re-paste (steps 3–5); a publisher-name or support-email change re-triggers brand verification |
-| `deployment.json` ID | releases update that deployment | nothing — the Editor-add-on listing does not reference it (see step 4) |

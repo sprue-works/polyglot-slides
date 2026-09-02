@@ -55,17 +55,16 @@ the sidebar, persisted via `UserProperties`; the offered list is
 - `src/Sidebar.html` — sidebar UI (language multi-select + mode buttons)
 - `src/appsscript.json` — manifest (scopes: current presentation only + container UI)
 - `tools/sync-template.sh` — push `src/` to the template deck's bound script
-- `tools/release.sh` — version + deploy for a tagged release (CI and local)
+- `tools/release.sh` — cut a numbered script version for a tagged release (CI and local)
 - `tools/check-listing.sh`, `tools/render-icons.sh` — Marketplace listing consistency check and icon rendering; both use `tools/png-check.js` to verify the icon artwork fills its canvas
 - `tools/reconcile-pages-dns.sh` — idempotent Cloudflare check/apply for the DNS-only Pages CNAME
 - `marketplace/` — Marketplace listing config, assets, and the publishing runbook
 - `docs/` — GitHub Pages site: homepage, privacy policy, terms (brand verification)
 - `tools/lint.sh`, `tools/lint-workflows.sh`, `tools/test-*.sh` — what the CI
   workflow runs
-- `deployment.json` — the Apps Script deployment releases update in place (not
-  what the Marketplace listing pins — see "Release pipeline")
 - `.github/workflows/` — `ci.yml` (lint on PRs), `deploy.yml` (push on
-  `main`, version + deploy on `v*` tags), and `pages-dns.yml` (manual
+  `main`; on `v*` tags cut a version and open the "bump script version"
+  tracking issue), and `pages-dns.yml` (manual
   Cloudflare CNAME check/apply)
 - `INSTALL.md` — end-user install runbook (and the owner-side sharing setup)
 
@@ -113,8 +112,9 @@ pastes it:
   consent screen ask for: name, descriptions, category, publisher identity
   (`sprue.works`, with `help@sprue.works` as the public support address and a
   separate developer-contact address), URLs, scopes, the distribution flavor,
-  and a legacy pointer at `deployment.json#deploymentId` (the Editor-add-on
-  form actually takes the script ID + a version number — #29 reworks this).
+  and what the Editor-add-on form pins: the script ID (a reference to
+  `.clasp.json`) plus `publishedVersion`, the script version number
+  currently entered in App Configuration.
 - `marketplace/description.md` — the store's detailed description.
 - `marketplace/assets/` — the icon (`icon.svg`, rendered to the required PNG
   sizes plus `docs/icon.png` by `tools/render-icons.sh`) and, once captured, the 1280×800
@@ -144,7 +144,7 @@ GitHub Actions does the pushing.
 |---|---|---|
 | Pull request | `ci.yml` | App/JSON and Marketplace-listing consistency checks, Actions-aware workflow validation, and stubbed self-tests for release/listing tooling |
 | Push to `main` | `deploy.yml` | `clasp push --force` — the script project's HEAD now matches `main` |
-| Tag `v*` pushed | `deploy.yml` | `tools/release.sh <tag>`: push, `clasp version "<tag>"`, then update the deployment in `deployment.json` to that numbered version (creating the deployment on the very first release). **The version number it prints is what a human then pastes into Marketplace SDK → App Configuration → *Slides add-on script version*** (RUNBOOK §4) — the Marketplace pins a version, not the deployment |
+| Tag `v*` pushed | `deploy.yml` | `tools/release.sh <tag>`: push, then `clasp version "<tag>"`. Nothing is deployed — the Marketplace pins a version *number*. **The number it prints is what a human then pastes into Marketplace SDK → App Configuration → *Slides add-on script version*** (RUNBOOK §4); the workflow opens a tracking issue for that bump |
 
 Cut a release:
 
@@ -152,16 +152,21 @@ Cut a release:
 git tag v1.0.0 && git push origin v1.0.0     # or: gh release create v1.0.0
 ```
 
-The run's summary shows the version number and deployment ID. **After every
-release**, bump *Slides add-on script version* in the Marketplace SDK App
-Configuration to the printed version number — installed users stay on the old
-version until then (Google: "update the version number on the App
-Configuration page"; no Marketplace re-review for that alone). **After the
-first release**, also copy the printed deployment ID into `deployment.json`
-and commit it so later releases update one deployment instead of creating
-new ones; that deployment is *not* what the Marketplace serves (#29 revisits
-whether to keep it). `tools/release.sh v1.0.0` does the same thing locally
-with a `clasp login` session.
+The run's summary shows the new version number next to the one currently
+pinned (`marketplace/listing.json` → `extension.publishedVersion`), and the
+workflow opens an issue titled *release vX: bump Slides add-on script version
+to N*. **After every release**, work that issue:
+
+1. Marketplace SDK → App Configuration → *Slides add-on script version*: enter
+   the new number and Save. Installed users stay on the old version until
+   then (Google: "update the version number on the App Configuration page";
+   no Marketplace re-review for that alone).
+2. Set `extension.publishedVersion` in `marketplace/listing.json` to the same
+   number and commit. The repo records what is *live*, so a `publishedVersion`
+   behind the latest release is the visible sign that step 1 is still owed.
+
+`tools/release.sh v1.0.0` does the same thing locally with a `clasp login`
+session (it prints the same instructions but opens no issue).
 
 ### One-time setup (needs a human — CI cannot create secrets)
 
