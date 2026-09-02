@@ -4,8 +4,8 @@ Everything the repo can hold for the Workspace Marketplace listing is in this
 directory; everything below is what a **human with the right Google account**
 still has to click through. Google exposes no write API for the Marketplace
 SDK listing or the OAuth consent screen, so this is a paste-from-repo job, not
-a CI job. Budget an hour of clicking plus (unlisted path only) a few business
-days of Google review.
+a CI job. Budget an hour of clicking plus (unlisted path only) several weeks
+of Google review (step 3 explains why).
 
 Paste sources, so nothing is retyped:
 
@@ -30,10 +30,10 @@ Two options; `listing.json` → `distribution.visibility` records the choice.
 | | **`private`** — one school domain | **`unlisted`** — any Google account |
 |---|---|---|
 | Who can install | Users (and admins, for everyone) in **one** Workspace domain | Anyone with the listing link; not searchable |
-| Google review | None | Marketplace listing review + OAuth brand verification |
+| Google review | None | Marketplace listing review + OAuth verification (brand + one sensitive scope) |
 | Publishing account | Must be a user **in that domain** with the *Marketplace publisher* role → hand the finished project to the school's IT | The `@sprue.works` publishing account (see "Publishing account" below) |
 | Consent screen | Internal user type, no verification | External, verified |
-| Time to live | Same day | Typically 3–5 business days per review round |
+| Time to live | Same day | Marketplace listing review: a few business days. OAuth verification: `script.container.ui` is a **sensitive** scope, so plan on weeks (step 3) |
 
 The question to answer with the requesting teacher: *are all the teachers on
 the same school Workspace domain?* Yes → `private` (set
@@ -139,7 +139,7 @@ already a Workspace domain, so no workaround account is needed. Google's
 OAuth **brand verification** checks that the publisher name, the support
 email, and the verified homepage domain agree; `listing.json` puts all three on
 `sprue.works`, and a personal or gmail address fronting a `sprue.works`
-homepage is the mismatch that costs a 3–5 day review round trip.
+homepage is the mismatch that costs a full review round trip.
 
 The publishing account must:
 
@@ -179,26 +179,36 @@ there are two:
 
 `urls.support` stays the GitHub issues URL; that field is a link, not a mailbox.
 
-## 2. Attach the script to a standard GCP project
+## 2. Create a standard GCP project and enable the APIs
 
 Apps Script projects get a hidden default GCP project; Marketplace publishing
-needs a standard one.
+needs a standard one. **Order matters:** the Apps Script editor refuses
+*Change project* until the target project already has a configured OAuth
+consent screen, so this step only *creates* the project — the consent screen
+is step 3 and the attach is step 3b. (The original runbook attached first and
+failed exactly there.)
 
 1. [console.cloud.google.com](https://console.cloud.google.com), signed in as
    the `@sprue.works` publishing account → create a
    project (suggested name `polyglot-slides`). Note its **project number**
    (Dashboard, not the ID). No billing account needed.
-2. Apps Script editor for the script in `.clasp.json` (`clasp open-script`)
-   → ⚙️ **Project settings → Google Cloud Platform (GCP) project → Change
-   project** → paste the project number.
-3. In the GCP project, **APIs & Services → Library**, enable:
-   - **Google Workspace Marketplace SDK**
+
+   Done 2026-09-02: the project is **`polyglot-slides`, project number
+   `556097262294`**. That number is what step 3b pastes and what
+   `https://console.cloud.google.com/...?project=556097262294` links need.
+2. In the GCP project, **APIs & Services → Library**, enable:
+   - **Google Workspace Marketplace SDK** — its Library page
+     ([direct link](https://console.cloud.google.com/apis/api/appsmarket-component.googleapis.com/googleapps_sdk?project=556097262294))
+     is also the only way *into* the SDK later: there is no left-nav entry;
+     click **Manage** on that page to reach *App Configuration* / *Store
+     Listing* (steps 4–5).
    - **Apps Script API** (already on if CI deploys work)
 
 ## 3. OAuth consent screen
 
 **APIs & Services → OAuth consent screen** (now under *Google Auth
-platform → Branding / Audience / Data access* in newer consoles):
+platform → Branding / Audience / Data access* in newer consoles). Configure
+this *before* step 3b — Apps Script checks for it:
 
 | Field | Value |
 |---|---|
@@ -211,25 +221,57 @@ platform → Branding / Audience / Data access* in newer consoles):
 | Terms of service | `urls.termsOfService` |
 | Authorized domains | `sprue.works` |
 | Developer contact information | `app.contactEmail` (`contact@sprue.works`) — free text, several allowed; this is where Google sends verification questions. Keep personal addresses out of it |
-| Scopes | exactly `oauth.scopes` — add via *Add or remove scopes*, filter on `presentations.currentonly` and `script.container.ui` |
+| Scopes | exactly `oauth.scopes`. *Data access → Add or remove scopes*: `presentations.currentonly` is in the filter table, but **`script.container.ui` is not listed there at all** — paste it into the **Manually add scopes** box at the bottom of the panel and click *Add to table*, then *Update* and **Save**. Confirm both rows appear before leaving the page |
 
-Both scopes are **non-sensitive**, so verification is **brand verification
-only** — no CASA security assessment. Leave the app in **Testing** until the
-listing is ready, then **Publish app** and **Prepare for verification** →
-submit. Google emails questions to the developer contact; the usual asks are
-a demo video of the consent flow and proof of domain ownership (step 1).
+**`script.container.ui` is classified as a *sensitive* scope** (it lands in
+the *Your sensitive scopes* section of the table; `presentations.currentonly`
+is non-sensitive). Sensitive-scope verification therefore applies, not brand
+verification alone: Google's reviewers expect a **written justification** for
+the scope (why the add-on needs to draw a sidebar in the Slides UI — that is
+what the scope is; it reads no user data) and a **demo video of the consent
+flow** from a test account, and the review is slower than a pure brand check —
+plan on **weeks**, not days. What it
+is **not** is a CASA security assessment; that is required only for
+*restricted* scopes, and neither of ours is restricted. Draft the
+justification before submitting (step 6) so the reviewer's first email does
+not cost a round trip.
+
+Leave the app in **Testing** until the listing is ready, then **Publish app**
+and **Prepare for verification** → submit. Google emails questions to the
+developer contact; proof of domain ownership (step 1) is the other usual ask.
+
+**Brand verification needs domain control, not a company.** It checks that
+the publisher name, support address, and homepage all sit on a domain the
+account has verified — no registered legal entity is required. Separately,
+the submission flow may ask for an **EU Digital Services Act trader-status
+declaration**; for a free add-on from an unregistered brand answer
+**non-trader** (revisit if the add-on is ever monetized).
 
 While the consent screen is in *Testing* only listed test users can authorize
 (and refresh tokens expire after 7 days — the CI deploy account is unaffected;
 it uses clasp's own client).
 
+## 3b. Attach the script to the GCP project
+
+Now that the project has a consent screen, Apps Script will accept it:
+
+Apps Script editor for the script in `.clasp.json` (`clasp open-script`) →
+⚙️ **Project settings → Google Cloud Platform (GCP) project → Change
+project** → paste the project number (`556097262294`). If this is refused,
+the consent screen in step 3 is not saved yet.
+
+Done 2026-09-02 for the script in `.clasp.json`.
+
 ## 4. Marketplace SDK configuration
 
-**APIs & Services → Google Workspace Marketplace SDK → App Configuration**:
+There is no left-nav entry for the SDK. Open its API Library page
+([direct link](https://console.cloud.google.com/apis/api/appsmarket-component.googleapis.com/googleapps_sdk?project=556097262294),
+or *APIs & Services → Enabled APIs & services → Google Workspace Marketplace
+SDK*) and click **Manage**, then the **App Configuration** tab:
 
 | Field | Value |
 |---|---|
-| App visibility | `distribution.visibility`: **Private** (own domain) or **Public** with *Unlisted* checked |
+| App visibility | `distribution.visibility`: **Private** (own domain) or **Public** with *Unlisted* checked. **Private vs Public is irreversible once saved** — the SDK will not let you switch later; only the *Unlisted* checkbox under Public can be changed afterwards. Get `listing.json` → `distribution.visibility` right before clicking Save |
 | Installation settings | **Individual + Admin install** (admins can push to a whole domain) |
 | App integration | **Editor add-on** → tick **Slides** |
 | Slides add-on script | *Deployment ID* — `deployment.json` → `deploymentId` (**not** the script ID, not HEAD) |
@@ -267,10 +309,15 @@ v1.0.0`, then commit the ID the run prints — README "Release pipeline").
   an admin can install it for everyone from **Admin console → Apps → Google
   Workspace Marketplace apps**.
 - `unlisted`: **Submit for review** (the *Publish* button becomes *Submit*).
-  Expect 3–5 business days. Common rejections: screenshots that don't show
-  the add-on in Slides, a consent screen still in Testing, homepage missing
-  the privacy link (ours has it). Fix and resubmit; the review thread is in
-  the Marketplace SDK page.
+  Two reviews run: the Marketplace listing review (a few business days) and
+  the OAuth verification from step 3, which is a **sensitive-scope** review
+  because of `script.container.ui` — expect Google to ask for the scope
+  justification and a consent-flow demo video, and expect **several weeks**
+  end to end rather than 3–5 days. The submission may also present the EU
+  DSA trader-status question (step 3: non-trader). Common Marketplace
+  rejections: screenshots that don't show the add-on in Slides, a consent
+  screen still in Testing, homepage missing the privacy link (ours has it).
+  Fix and resubmit; the review thread is in the Marketplace SDK page.
 
 Once live, the listing URL is
 `https://workspace.google.com/marketplace/app/polyglot_slides/<app-id>`.
