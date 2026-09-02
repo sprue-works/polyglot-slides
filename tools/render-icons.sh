@@ -30,8 +30,12 @@ elif command -v qlmanage >/dev/null 2>&1 && command -v sips >/dev/null 2>&1; the
   render=512
   sed -E "s/(<svg[^>]*[[:space:]])width=\"[^\"]*\"/\1width=\"$render\"/; s/(<svg[^>]*[[:space:]])height=\"[^\"]*\"/\1height=\"$render\"/" \
     "$svg" >"$work/icon.svg"
-  grep -q "width=\"$render\"" "$work/icon.svg" && grep -q "height=\"$render\"" "$work/icon.svg" \
-    || { echo "error: could not rewrite the <svg> root width/height in $svg" >&2; exit 1; }
+  # Verify the *root* tag carries the new size, not just some element in the file.
+  root_tag="$(tr '\n' ' ' <"$work/icon.svg" | grep -oE '<svg[^>]*>' | head -1)"
+  case "$root_tag" in
+    *" width=\"$render\""*" height=\"$render\""* | *" height=\"$render\""*" width=\"$render\""*) ;;
+    *) echo "error: could not rewrite the <svg> root width/height in $svg (root tag: $root_tag)" >&2; exit 1 ;;
+  esac
   qlmanage -t -s "$render" -o "$work" "$work/icon.svg" >/dev/null 2>&1
   src="$work/icon.svg.png"
   [ -f "$src" ] || { echo "error: qlmanage produced no output" >&2; exit 1; }
