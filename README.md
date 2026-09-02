@@ -56,7 +56,7 @@ the sidebar, persisted via `UserProperties`; the offered list is
 - `src/appsscript.json` — manifest (scopes: current presentation only + container UI)
 - `tools/sync-template.sh` — push `src/` to the template deck's bound script
 - `tools/release.sh` — version + deploy for a tagged release (CI and local)
-- `tools/check-listing.sh`, `tools/render-icons.sh`, `tools/png-check.js` — Marketplace listing consistency check, icon rendering, and the icon content guard both share
+- `tools/check-listing.sh`, `tools/render-icons.sh` — Marketplace listing consistency check and icon rendering; both use `tools/png-check.js` to verify the icon artwork fills its canvas
 - `tools/reconcile-pages-dns.sh` — idempotent Cloudflare check/apply for the DNS-only Pages CNAME
 - `marketplace/` — Marketplace listing config, assets, and the publishing runbook
 - `docs/` — GitHub Pages site: homepage, privacy policy, terms (brand verification)

@@ -23,27 +23,38 @@ function decodePng(file) {
   const b = fs.readFileSync(file);
   if (b.length < 8 || b.toString('hex', 0, 8) !== '89504e470d0a1a0a') throw new Error(`${file}: not a PNG`);
   let off = 8, width = 0, height = 0, depth = 0, colorType = 0, interlace = 0;
-  let palette = null, trns = null;
+  let palette = null, trns = null, sawIhdr = false, sawIend = false;
   const idat = [];
   while (off + 8 <= b.length) {
     const len = b.readUInt32BE(off);
     const type = b.toString('latin1', off + 4, off + 8);
+    if (off + 12 + len > b.length) throw new Error(`${file}: truncated PNG (${type} chunk runs past end of file)`);
     const data = b.subarray(off + 8, off + 8 + len);
     if (type === 'IHDR') {
+      if (len !== 13) throw new Error(`${file}: malformed IHDR chunk (${len} bytes)`);
       width = data.readUInt32BE(0); height = data.readUInt32BE(4);
       depth = data[8]; colorType = data[9]; interlace = data[12];
+      sawIhdr = true;
     } else if (type === 'PLTE') palette = Buffer.from(data);
     else if (type === 'tRNS') trns = Buffer.from(data);
     else if (type === 'IDAT') idat.push(data);
-    else if (type === 'IEND') break;
+    else if (type === 'IEND') { sawIend = true; break; }
     off += 12 + len;
   }
+  if (!sawIhdr) throw new Error(`${file}: no IHDR chunk`);
+  if (!sawIend) throw new Error(`${file}: no IEND chunk (truncated PNG)`);
+  if (!idat.length) throw new Error(`${file}: no IDAT chunks`);
+  if (!width || !height) throw new Error(`${file}: zero-sized image`);
   if (depth !== 8) throw new Error(`${file}: only 8-bit PNGs are supported (got ${depth}-bit)`);
   if (interlace !== 0) throw new Error(`${file}: interlaced PNGs are not supported`);
   const channels = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 }[colorType];
   if (!channels) throw new Error(`${file}: unsupported color type ${colorType}`);
+  if (colorType === 3 && !palette) throw new Error(`${file}: palette image without a PLTE chunk`);
   const raw = zlib.inflateSync(Buffer.concat(idat));
   const stride = width * channels;
+  if (raw.length !== (stride + 1) * height) {
+    throw new Error(`${file}: decompressed image data is ${raw.length} bytes, expected ${(stride + 1) * height}`);
+  }
   const px = Buffer.alloc(stride * height);
   let prev = Buffer.alloc(stride);
   for (let y = 0, p = 0; y < height; y++) {
