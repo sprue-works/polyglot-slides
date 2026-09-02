@@ -56,7 +56,7 @@ the sidebar, persisted via `UserProperties`; the offered list is
 - `src/appsscript.json` — manifest (scopes: current presentation only + container UI)
 - `tools/sync-template.sh` — push `src/` to the template deck's bound script
 - `tools/release.sh` — version + deploy for a tagged release (CI and local)
-- `tools/check-listing.sh`, `tools/render-icons.sh` — Marketplace listing consistency check and icon rendering
+- `tools/check-listing.sh`, `tools/render-icons.sh`, `tools/png-check.js` — Marketplace listing consistency check, icon rendering, and the icon content guard both share
 - `tools/reconcile-pages-dns.sh` — idempotent Cloudflare check/apply for the DNS-only Pages CNAME
 - `marketplace/` — Marketplace listing config, assets, and the publishing runbook
 - `docs/` — GitHub Pages site: homepage, privacy policy, terms (brand verification)
@@ -113,7 +113,7 @@ pastes it:
   and a pointer at `deployment.json#deploymentId`.
 - `marketplace/description.md` — the store's detailed description.
 - `marketplace/assets/` — the icon (`icon.svg`, rendered to the required PNG
-  sizes by `tools/render-icons.sh`) and, once captured, the 1280×800
+  sizes plus `docs/icon.png` by `tools/render-icons.sh`) and, once captured, the 1280×800
   screenshots listed in `marketplace/screenshots.json`.
 - `docs/` — the homepage, privacy policy, and terms of service served by
   GitHub Pages; brand verification requires them.
