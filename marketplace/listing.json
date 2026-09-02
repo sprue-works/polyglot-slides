@@ -24,7 +24,7 @@
     "type": "editorAddOn",
     "application": "slides",
     "deployment": {
-      "_comment": "The Marketplace SDK 'Editor add-on' field takes an Apps Script deployment ID. Read it from deployment.json (tools/release.sh updates that deployment in place on every tagged release, so the listing never needs re-pointing).",
+      "_comment": "LEGACY POINTER (#29). The Marketplace SDK Editor-add-on form has no deployment-ID field: it pins the Project Script ID (.clasp.json#scriptId) plus a script VERSION NUMBER, which a human bumps after each release (RUNBOOK section 4). tools/check-listing.sh still asserts this pointer resolves, so it stays until #29 replaces it with the script ID + published version.",
       "source": "deployment.json",
       "field": "deploymentId"
     },
@@ -32,12 +32,12 @@
   },
 
   "oauth": {
-    "_comment": "Must equal src/appsscript.json oauthScopes exactly; check-listing.sh fails otherwise. Both are non-sensitive scopes, so verification needs brand verification only (no security assessment).",
+    "_comment": "Must equal src/appsscript.json oauthScopes exactly; check-listing.sh fails otherwise. Google classifies script.container.ui as SENSITIVE (seen in the consent-screen Data access table, 2026-09-02), so OAuth verification is brand verification plus sensitive-scope review (justification + demo video). Neither scope is restricted, so no CASA security assessment.",
     "scopes": [
       "https://www.googleapis.com/auth/presentations.currentonly",
       "https://www.googleapis.com/auth/script.container.ui"
     ],
-    "sensitive": false,
+    "sensitive": true,
     "restricted": false
   },
 

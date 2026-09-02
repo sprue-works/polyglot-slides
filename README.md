@@ -62,7 +62,8 @@ the sidebar, persisted via `UserProperties`; the offered list is
 - `docs/` — GitHub Pages site: homepage, privacy policy, terms (brand verification)
 - `tools/lint.sh`, `tools/lint-workflows.sh`, `tools/test-*.sh` — what the CI
   workflow runs
-- `deployment.json` — the Apps Script deployment ID releases update in place
+- `deployment.json` — the Apps Script deployment releases update in place (not
+  what the Marketplace listing pins — see "Release pipeline")
 - `.github/workflows/` — `ci.yml` (lint on PRs), `deploy.yml` (push on
   `main`, version + deploy on `v*` tags), and `pages-dns.yml` (manual
   Cloudflare CNAME check/apply)
@@ -100,8 +101,10 @@ After that, iterate with `clasp push` and reload the deck.
 ## Distribution
 
 Target: the **Google Workspace Marketplace**, so a teacher installs with one
-click (or an admin installs it for the whole domain) and every install tracks
-the deployment in `deployment.json`, which tagged releases update in place.
+click (or an admin installs it for the whole domain). Every install runs the
+**script version number** pinned in the Marketplace SDK App Configuration;
+a tagged release creates the next number, and a human bumps the pin
+(`marketplace/RUNBOOK.md` §4).
 
 What the repo holds — CI validates it (`tools/check-listing.sh`), a human
 pastes it:
@@ -110,7 +113,8 @@ pastes it:
   consent screen ask for: name, descriptions, category, publisher identity
   (`sprue.works`, with `help@sprue.works` as the public support address and a
   separate developer-contact address), URLs, scopes, the distribution flavor,
-  and a pointer at `deployment.json#deploymentId`.
+  and a legacy pointer at `deployment.json#deploymentId` (the Editor-add-on
+  form actually takes the script ID + a version number — #29 reworks this).
 - `marketplace/description.md` — the store's detailed description.
 - `marketplace/assets/` — the icon (`icon.svg`, rendered to the required PNG
   sizes plus `docs/icon.png` by `tools/render-icons.sh`) and, once captured, the 1280×800
@@ -123,9 +127,9 @@ click-through documented step by step in
 **[marketplace/RUNBOOK.md](marketplace/RUNBOOK.md)**: pick private-domain vs.
 unlisted, enable Pages, attach the script to a GCP project, fill the OAuth
 consent screen and Marketplace SDK from `listing.json`, capture screenshots,
-publish, and verify from a second account. The listing's deployment-ID field
-is set exactly once; after that, releases reach installed users with no
-listing change.
+publish, and verify from a second account. The listing pins a **script
+version number**; after each release someone bumps that field (no re-review
+for a version bump alone) before installed users see the new code.
 
 **Until the listing is live**, the template-deck flow in
 [INSTALL.md](INSTALL.md) remains the install path (and the dev/testing path
@@ -140,7 +144,7 @@ GitHub Actions does the pushing.
 |---|---|---|
 | Pull request | `ci.yml` | App/JSON and Marketplace-listing consistency checks, Actions-aware workflow validation, and stubbed self-tests for release/listing tooling |
 | Push to `main` | `deploy.yml` | `clasp push --force` — the script project's HEAD now matches `main` |
-| Tag `v*` pushed | `deploy.yml` | `tools/release.sh <tag>`: push, `clasp version "<tag>"`, then update the deployment in `deployment.json` to that numbered version (creating the deployment on the very first release) |
+| Tag `v*` pushed | `deploy.yml` | `tools/release.sh <tag>`: push, `clasp version "<tag>"`, then update the deployment in `deployment.json` to that numbered version (creating the deployment on the very first release). **The version number it prints is what a human then pastes into Marketplace SDK → App Configuration → *Slides add-on script version*** (RUNBOOK §4) — the Marketplace pins a version, not the deployment |
 
 Cut a release:
 
@@ -148,11 +152,16 @@ Cut a release:
 git tag v1.0.0 && git push origin v1.0.0     # or: gh release create v1.0.0
 ```
 
-The run's summary shows the version number and deployment ID. **After the first
-release**, copy the printed deployment ID into `deployment.json` and commit it —
-otherwise every release creates a fresh deployment instead of updating the one
-the Marketplace listing points at. `tools/release.sh v1.0.0` does the same
-thing locally with a `clasp login` session.
+The run's summary shows the version number and deployment ID. **After every
+release**, bump *Slides add-on script version* in the Marketplace SDK App
+Configuration to the printed version number — installed users stay on the old
+version until then (Google: "update the version number on the App
+Configuration page"; no Marketplace re-review for that alone). **After the
+first release**, also copy the printed deployment ID into `deployment.json`
+and commit it so later releases update one deployment instead of creating
+new ones; that deployment is *not* what the Marketplace serves (#29 revisits
+whether to keep it). `tools/release.sh v1.0.0` does the same thing locally
+with a `clasp login` session.
 
 ### One-time setup (needs a human — CI cannot create secrets)
 
@@ -192,19 +201,22 @@ Everything below lives in the Google Cloud console / Apps Script editor and
 has no API that a CI job could drive:
 
 - **Marketplace SDK configuration and listing** (app name, icon, screenshots,
-  description, visibility, the *Editor add-on* deployment ID). Google's
-  Marketplace API is read-only for listings. The listing points at a
-  deployment **by ID**, which is why releases update `deployment.json`'s
-  deployment in place rather than creating new ones — the listing never needs
-  re-pointing. Listing text/assets are kept in `marketplace/` so a human can
-  paste them, but the paste is manual — [marketplace/RUNBOOK.md](marketplace/RUNBOOK.md).
+  description, visibility, the *Editor add-on* script ID + **script version
+  number**). Google's Marketplace API is read-only for listings. The Editor
+  add-on form pins a version *number* (there is no deployment-ID field on that
+  path — that belongs to the *Google Workspace add-on* type), so **every
+  release needs a human to bump the version in App Configuration**. Listing
+  text/assets are kept in `marketplace/` so a human can paste them, but the
+  paste is manual — [marketplace/RUNBOOK.md](marketplace/RUNBOOK.md).
 - **OAuth consent screen** (scopes, branding, verification status) and
-  **brand verification** for an unlisted listing (runbook steps 1 and 3).
+  **OAuth verification** for an unlisted listing — brand verification plus
+  sensitive-scope review, because `script.container.ui` is classified
+  sensitive (runbook steps 1 and 3).
 - **Attaching the script to a standard GCP project** (Apps Script editor →
   Project settings) — a prerequisite for Marketplace publishing.
 - **Test deployments** for editor add-ons (Apps Script UI only; see above).
 - **Publishing / re-submitting** the listing after a change that needs review
-  (new scopes, name/branding changes). Bumping the code behind an existing
-  deployment does not need re-review.
+  (new scopes, name/branding changes). Bumping the pinned script version
+  number does not need re-review, but it is still a console edit per release.
 - The **template deck** (`tools/sync-template.sh`) — its bound script is a
   separate project with no CI hook, and it goes away once the listing is live.
