@@ -7,7 +7,9 @@
 #   - listing OAuth scopes == src/appsscript.json oauthScopes
 #   - the listing's deployment reference resolves to deployment.json
 #   - every referenced asset exists, is a PNG, and has the declared size
-#   - every icon's artwork fills its canvas (tools/png-check.js), and
+#   - the 220x140 card banner exists at exactly that size (#31)
+#   - the Store Listing post-install tip is present and within a sane length
+#   - every icon's (and the banner's) artwork fills its canvas (tools/png-check.js), and
 #     docs/icon.png is the same pixels as icon-128.png -- a renderer that
 #     thumbnails the SVG at its intrinsic size passes the size check with the
 #     mark in one corner (#27)
@@ -46,6 +48,13 @@ for (const [obj, keys, label] of [
 }
 const app = listing.app || {};
 if (typeof app.shortDescription === 'string' && app.shortDescription.length > 120) fail(`app.shortDescription is ${app.shortDescription.length} chars; keep it under 120 for the store card`);
+// Post-install tip: required by the Store Listing form (#31). Google documents no
+// limit for this field; 200 mirrors the documented shortDescription limit and
+// is the conservative cap until a real one turns up.
+const POST_INSTALL_TIP_MAX = 200;
+if (typeof app.postInstallTip !== 'string' || !app.postInstallTip.trim()) fail('listing.app.postInstallTip is missing or empty (the Store Listing form requires it)');
+else if (app.postInstallTip.length > POST_INSTALL_TIP_MAX) fail(`app.postInstallTip is ${app.postInstallTip.length} chars; keep it at most ${POST_INSTALL_TIP_MAX} (Google truncates it)`);
+else ok(`postInstallTip (${app.postInstallTip.length} chars)`);
 if (typeof app.detailedDescriptionFile === 'string') {
   if (!fs.existsSync(app.detailedDescriptionFile)) fail(`detailedDescriptionFile ${app.detailedDescriptionFile} does not exist`);
   else ok(`description file ${app.detailedDescriptionFile}`);
@@ -116,6 +125,9 @@ const a = listing.assets || {};
 checkPng(a.icon128, 128, 128, 'icon128', { content: true });
 checkPng(a.icon32, 32, 32, 'icon32', { content: true });
 checkPng(a.consentLogo120, 120, 120, 'consentLogo120', { content: true });
+// Application card banner: the Store Listing requires exactly 220x140 (#31).
+// The gradient ground fills every quadrant, so the icon coverage check applies unchanged.
+checkPng(a.cardBanner220, 220, 140, 'cardBanner220', { content: true });
 // The homepage serves its own copy of the 128px icon; render-icons.sh writes it.
 checkPng('docs/icon.png', 128, 128, 'docs icon', { content: true });
 if (typeof a.icon128 === 'string' && fs.existsSync(a.icon128) && fs.existsSync('docs/icon.png')

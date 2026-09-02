@@ -325,6 +325,8 @@ follow-up issue #29.
 | Short description | `app.shortDescription` |
 | Detailed description | `marketplace/description.md` (Markdown is not rendered; paste as plain text, keep the blank lines) |
 | Application icons | `icon-128.png`, `icon-32.png` |
+| Application card banner | `assets.cardBanner220` → `marketplace/assets/banner-220x140.png` (required, exactly 220×140; rendered from `banner.svg` by `tools/render-icons.sh`) |
+| Post-install tip | `app.postInstallTip` (required; names the Extensions menu path, so re-check it if the menu labels in `src/Code.js` change) |
 | Screenshots | from step 7 (at least one) |
 | Support links | Terms `urls.termsOfService`, Privacy `urls.privacyPolicy`, Support `urls.support` (the issue tracker URL, not an email) |
 | Developer name / email | `app.developerName` / `app.supportEmail` (prefilled from step 4 in most consoles; confirm they still read `sprue.works` / `help@sprue.works`) |
