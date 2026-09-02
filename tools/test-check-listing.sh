@@ -66,7 +66,8 @@ quarter_icon "$work/repo/marketplace/assets/icon-120.png" 120
 expect_fail "icon artwork in the top-left quarter" "artwork does not fill the canvas"
 
 fresh
-head -c 3000 "$repo_root/marketplace/assets/icon-128.png" >"$work/repo/marketplace/assets/icon-128.png"
+src="$repo_root/marketplace/assets/icon-128.png"
+head -c "$(( $(wc -c <"$src") / 2 ))" "$src" >"$work/repo/marketplace/assets/icon-128.png"
 expect_fail "truncated icon is a clear failure, not a coverage verdict" "truncated PNG"
 
 fresh
