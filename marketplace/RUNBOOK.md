@@ -295,16 +295,16 @@ add-on*, which this add-on is not. Earlier revisions of this runbook, of
 **Consequence for releases — a version number is pinned, not a moving
 target.** Google's update procedure for a published Editor add-on is: create
 a new version, then "update the version number on the App Configuration page
-of the Google Workspace Marketplace SDK". So a tagged release (`tools/
-release.sh`) does *not* reach installed users by itself: someone must come
+of the Google Workspace Marketplace SDK". So a tagged release
+(`tools/release.sh`) does *not* reach installed users by itself: someone must come
 back to this form and bump *Slides add-on script version* to the new number.
 Changing only that field is not in Google's list of changes that trigger a
 new Marketplace review (those are the *App Details* text fields and adding a
 new integration type), and users do not reinstall — but if the release added
 scopes they re-authorize, and the consent screen + this form's scope list
 must be updated first. The deployment that `deployment.json` names is still
-updated by every release (harmless, and what `clasp` needs a deployment for)
-but nothing in the Marketplace reads it. Reworking the release pipeline and
+updated by every release — harmless, but nothing in the Marketplace reads
+it. Reworking the release pipeline and
 `tools/check-listing.sh` around the version number is tracked in the
 follow-up issue #29.
 
