@@ -49,7 +49,10 @@ function decodePng(file) {
   if (interlace !== 0) throw new Error(`${file}: interlaced PNGs are not supported`);
   const channels = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 }[colorType];
   if (!channels) throw new Error(`${file}: unsupported color type ${colorType}`);
-  if (colorType === 3 && !palette) throw new Error(`${file}: palette image without a PLTE chunk`);
+  if (colorType === 3) {
+    if (!palette) throw new Error(`${file}: palette image without a PLTE chunk`);
+    if (palette.length % 3 !== 0 || !palette.length) throw new Error(`${file}: malformed PLTE chunk (${palette.length} bytes)`);
+  }
   const raw = zlib.inflateSync(Buffer.concat(idat));
   const stride = width * channels;
   if (raw.length !== (stride + 1) * height) {
@@ -87,7 +90,9 @@ function decodePng(file) {
     else if (colorType === 2) { rgba[o] = px[s]; rgba[o + 1] = px[s + 1]; rgba[o + 2] = px[s + 2]; rgba[o + 3] = 255; }
     else if (colorType === 0) { rgba[o] = rgba[o + 1] = rgba[o + 2] = px[s]; rgba[o + 3] = 255; }
     else if (colorType === 4) { rgba[o] = rgba[o + 1] = rgba[o + 2] = px[s]; rgba[o + 3] = px[s + 1]; }
-    else { const k = px[s]; rgba[o] = palette[k * 3]; rgba[o + 1] = palette[k * 3 + 1]; rgba[o + 2] = palette[k * 3 + 2];
+    else { const k = px[s];
+      if (k * 3 >= palette.length) throw new Error(`${file}: palette index ${k} out of range (${palette.length / 3} entries)`);
+      rgba[o] = palette[k * 3]; rgba[o + 1] = palette[k * 3 + 1]; rgba[o + 2] = palette[k * 3 + 2];
       rgba[o + 3] = trns && k < trns.length ? trns[k] : 255; }
   }
   return { width, height, rgba };
