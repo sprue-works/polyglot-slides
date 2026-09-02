@@ -13,7 +13,7 @@ fresh() {
   rm -rf "$work/repo"
   mkdir -p "$work/repo/tools" "$work/repo/src"
   cp -R "$repo_root/marketplace" "$repo_root/docs" "$work/repo/"
-  cp "$repo_root/tools/check-listing.sh" "$work/repo/tools/"
+  cp "$repo_root/tools/check-listing.sh" "$repo_root/tools/png-check.js" "$work/repo/tools/"
   cp "$repo_root/src/appsscript.json" "$work/repo/src/"
   cp "$repo_root/deployment.json" "$work/repo/"
 }
@@ -45,6 +45,34 @@ expect_fail "missing icon" "icon-32.png does not exist"
 fresh
 cp "$work/repo/marketplace/assets/icon-48.png" "$work/repo/marketplace/assets/icon-32.png"
 expect_fail "wrong icon size" "expected 32x32"
+
+# A PNG of the right size whose artwork sits in the top-left quarter on white:
+# what qlmanage produces from the 128x128-intrinsic SVG (#27).
+quarter_icon() { # quarter_icon <out.png> <size>
+  node -e '
+    const fs=require("fs"),zlib=require("zlib"),[out,n]=[process.argv[1],+process.argv[2]];
+    const crcT=[...Array(256)].map((_,i)=>{let c=i;for(let k=0;k<8;k++)c=c&1?0xedb88320^(c>>>1):c>>>1;return c>>>0;});
+    const crc=b=>{let c=~0;for(const x of b)c=crcT[(c^x)&255]^(c>>>8);return (~c)>>>0;};
+    const chunk=(t,d)=>{const l=Buffer.alloc(4);l.writeUInt32BE(d.length);const td=Buffer.concat([Buffer.from(t),d]);const c=Buffer.alloc(4);c.writeUInt32BE(crc(td));return Buffer.concat([l,td,c]);};
+    const raw=Buffer.alloc((n*4+1)*n,255);
+    for(let y=0;y<n;y++){raw[y*(n*4+1)]=0;for(let x=0;x<n;x++){const o=y*(n*4+1)+1+x*4;if(x<n/2&&y<n/2){raw[o]=0x1a;raw[o+1]=0x73;raw[o+2]=0xe8;}}}
+    const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(n,0);ihdr.writeUInt32BE(n,4);ihdr[8]=8;ihdr[9]=6;
+    fs.writeFileSync(out,Buffer.concat([Buffer.from("89504e470d0a1a0a","hex"),chunk("IHDR",ihdr),chunk("IDAT",zlib.deflateSync(raw)),chunk("IEND",Buffer.alloc(0))]));
+  ' "$1" "$2"
+}
+
+fresh
+quarter_icon "$work/repo/marketplace/assets/icon-120.png" 120
+expect_fail "icon artwork in the top-left quarter" "artwork does not fill the canvas"
+
+fresh
+quarter_icon "$work/repo/docs/icon.png" 128
+expect_fail "homepage icon artwork in the top-left quarter" "docs icon: docs/icon.png artwork does not fill"
+
+fresh
+# Same image, one trailing byte after IEND: dimensions and content still pass.
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="docs/icon.png";fs.writeFileSync(f,Buffer.concat([fs.readFileSync(f),Buffer.from([0])]))')
+expect_fail "homepage icon differs from icon-128" "docs/icon.png differs from marketplace/assets/icon-128.png"
 
 fresh
 (cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/screenshots.json",j=JSON.parse(fs.readFileSync(f));j.screenshots=["marketplace/assets/icon-128.png"];fs.writeFileSync(f,JSON.stringify(j))')
