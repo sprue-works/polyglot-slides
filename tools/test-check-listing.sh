@@ -66,6 +66,10 @@ quarter_icon "$work/repo/marketplace/assets/icon-120.png" 120
 expect_fail "icon artwork in the top-left quarter" "artwork does not fill the canvas"
 
 fresh
+head -c 3000 "$repo_root/marketplace/assets/icon-128.png" >"$work/repo/marketplace/assets/icon-128.png"
+expect_fail "truncated icon is a clear failure, not a coverage verdict" "truncated PNG"
+
+fresh
 quarter_icon "$work/repo/docs/icon.png" 128
 expect_fail "homepage icon artwork in the top-left quarter" "docs icon: docs/icon.png artwork does not fill"
 
