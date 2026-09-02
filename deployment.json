@@ -1,4 +1,0 @@
-{
-  "_comment": "Apps Script deployment that tagged releases update in place. NOT what the Marketplace listing points at: the Editor-add-on App Configuration pins the script ID plus a version number (RUNBOOK section 4; #29 decides whether this file stays). Keep it stable anyway so releases update one deployment instead of creating new ones.",
-  "deploymentId": "AKfycbwWWj0b5fZPw1Dg1I-0EhNdFqXR10EIBVCXeXdNyPoXzGTMy5-aJauYlrvSv-U8u_UT"
-}

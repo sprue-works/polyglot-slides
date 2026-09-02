@@ -1,8 +1,11 @@
 # Deploys src/ to the Apps Script project in .clasp.json.
 #
 #   push to main  -> clasp push (HEAD of the script project == main)
-#   tag v*        -> clasp push + clasp version + deploy that version
-#                    (tools/release.sh; see README "Release pipeline")
+#   tag v*        -> clasp push + clasp version (tools/release.sh), then open
+#                    a tracking issue: the Marketplace SDK pins a script
+#                    VERSION NUMBER that a human must bump by hand before
+#                    installed users get the release (README "Release
+#                    pipeline", marketplace/RUNBOOK.md section 4)
 #
 # Auth: the CLASPRC_JSON repo secret holds the contents of a ~/.clasprc.json
 # produced by `clasp login`. It is written to a temp file and handed to clasp
@@ -19,6 +22,7 @@ on:
 
 permissions:
   contents: read
+  issues: write   # the tag job opens the "bump script version" tracking issue
 
 # Never let two deploys interleave (a main push racing a tag release).
 concurrency:
@@ -52,9 +56,33 @@ jobs:
       - name: Push to Apps Script (main)
         if: github.ref_type == 'branch'
         run: clasp push --force
-      - name: Version + deploy (tag)
+      - name: Cut script version (tag)
         if: github.ref_type == 'tag'
+        id: release
         run: tools/release.sh "$GITHUB_REF_NAME"
+      # The Editor-add-on listing pins a version number, so the release is not
+      # live until someone bumps it in App Configuration. Make that step a
+      # visible, assignable issue instead of a line in this run's summary.
+      - name: Open tracking issue for the manual version bump (tag)
+        if: github.ref_type == 'tag' && steps.release.outputs.version != steps.release.outputs.published_version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.release.outputs.version }}
+          PUBLISHED: ${{ steps.release.outputs.published_version }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          cat >"$RUNNER_TEMP/bump-issue.md" <<EOF
+          Release \`$TAG\` created Apps Script version \`$VERSION\` ([run]($RUN_URL)). The Marketplace SDK still pins version \`$PUBLISHED\` (\`marketplace/listing.json\` → \`extension.publishedVersion\`), so installed users do not have this release yet.
+
+          - [ ] Marketplace SDK → App Configuration → **Slides add-on script version**: enter \`$VERSION\`, Save (\`marketplace/RUNBOOK.md\` §4; a version bump alone triggers no re-review)
+          - [ ] Set \`extension.publishedVersion\` to \`$VERSION\` in \`marketplace/listing.json\` and commit, closing this issue
+
+          Opened automatically by \`.github/workflows/deploy.yml\`.
+          EOF
+          gh issue create \
+            --title "release $TAG: bump Slides add-on script version to $VERSION" \
+            --body-file "$RUNNER_TEMP/bump-issue.md"
       - name: Scrub credentials
         if: always()
         run: rm -f "$clasp_config_auth"

@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # Self-test for tools/release.sh against a stubbed clasp (no network, no auth).
-# Asserts the exact clasp command sequence for both the first release
-# (deployment.json empty -> create) and a steady-state release (redeploy).
+# Asserts the exact clasp command sequence (push, then version -- nothing is
+# deployed: the Marketplace pins a version number) and that the release tells
+# the operator which number to paste into App Configuration.
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
-# Minimal copy of the repo: the script, a src/, and a deployment.json we control.
-mkdir -p "$work/repo/tools" "$work/repo/src" "$work/bin"
+# Minimal copy of the repo: the script, a src/, and a listing.json we control.
+mkdir -p "$work/repo/tools" "$work/repo/src" "$work/repo/marketplace" "$work/bin"
 cp "$repo_root/tools/release.sh" "$work/repo/tools/"
 echo 'function f() {}' >"$work/repo/src/Code.js"
 
@@ -19,8 +20,6 @@ cat >"$work/bin/clasp" <<'STUB'
 echo "$*" >>"$CLASP_LOG"
 case "$1" in
   version) echo '{"versionNumber": 7}' ;;
-  deploy) echo '{"deploymentId": "AKfycb-new", "versionNumber": 7, "description": "v1.0.0"}' ;;
-  redeploy) echo '{"deploymentId": "AKfycb-existing", "versionNumber": 7, "description": "v1.1.0"}' ;;
 esac
 STUB
 chmod +x "$work/bin/clasp"
@@ -34,77 +33,73 @@ assert_log() { # assert_log <expected-lines-file>
   fi
 }
 
-# --- Case 1: first release, no deployment yet -> clasp deploy creates one.
+set_published() { # set_published <json-value>
+  printf '{"extension": {"publishedVersion": %s}}' "$1" >"$work/repo/marketplace/listing.json"
+}
+
+# --- Case 1: a release pushes, cuts a version, and tells the operator what to paste.
 export CLASP_LOG="$work/log1"; : >"$CLASP_LOG"
-echo '{"deploymentId": ""}' >"$work/repo/deployment.json"
+set_published 3
 export GITHUB_OUTPUT="$work/out1"; : >"$GITHUB_OUTPUT"
-unset GITHUB_STEP_SUMMARY
-(cd "$work/repo" && tools/release.sh v1.0.0 >"$work/stdout1" 2>"$work/stderr1")
+export GITHUB_STEP_SUMMARY="$work/summary1"; : >"$GITHUB_STEP_SUMMARY"
+(cd "$work/repo" && tools/release.sh v1.1.0 >"$work/stdout1" 2>"$work/stderr1")
 cat >"$work/expect1" <<'EXP'
 push --force
-version --json v1.0.0
-deploy --versionNumber 7 --description v1.0.0 --json
+version --json v1.1.0
 EXP
 assert_log "$work/expect1"
 grep -q '^version=7$' "$GITHUB_OUTPUT" || fail "case 1: version output missing"
-grep -q '^deployment_id=AKfycb-new$' "$GITHUB_OUTPUT" || fail "case 1: deployment_id output missing"
-grep -q '^deployment_created=true$' "$GITHUB_OUTPUT" || fail "case 1: deployment_created should be true"
-grep -q 'AKfycb-new' "$work/stderr1" || fail "case 1: should tell the operator to commit the new deployment ID"
-echo "ok   first release creates the deployment"
+grep -q '^published_version=3$' "$GITHUB_OUTPUT" || fail "case 1: published_version output missing"
+grep -q 'deployment' "$GITHUB_OUTPUT" && fail "case 1: no deployment outputs should remain"
+grep -q 'Slides add-on script version' "$GITHUB_STEP_SUMMARY" || fail "case 1: summary must name the console field to bump"
+grep -q 'enter `7`' "$GITHUB_STEP_SUMMARY" || fail "case 1: summary must say which number to paste"
+grep -q 'publishedVersion` to `7`' "$GITHUB_STEP_SUMMARY" || fail "case 1: summary must say to commit publishedVersion"
+grep -q 'stay on version 3' "$GITHUB_STEP_SUMMARY" || fail "case 1: summary must show the currently pinned version"
+grep -q 'Slides add-on script version' "$work/stdout1" || fail "case 1: terminal output must carry the same instruction"
+echo "ok   release pushes, versions, and surfaces the manual bump"
 
-# --- Case 2: deployment.json set -> redeploy that deployment, never create.
+# --- Case 2: no tag argument -> usage error, no clasp calls.
 export CLASP_LOG="$work/log2"; : >"$CLASP_LOG"
-echo '{"deploymentId": "AKfycb-existing"}' >"$work/repo/deployment.json"
-export GITHUB_OUTPUT="$work/out2"; : >"$GITHUB_OUTPUT"
-(cd "$work/repo" && tools/release.sh v1.1.0 >"$work/stdout2" 2>"$work/stderr2")
-cat >"$work/expect2" <<'EXP'
-push --force
-version --json v1.1.0
-redeploy AKfycb-existing --versionNumber 7 --description v1.1.0 --json
-EXP
-assert_log "$work/expect2"
-grep -q '^deployment_id=AKfycb-existing$' "$GITHUB_OUTPUT" || fail "case 2: deployment_id output wrong"
-grep -q '^deployment_created=false$' "$GITHUB_OUTPUT" || fail "case 2: deployment_created should be false"
-echo "ok   later release updates the existing deployment"
-
-# --- Case 3: no tag argument -> usage error, no clasp calls.
-export CLASP_LOG="$work/log3"; : >"$CLASP_LOG"
+unset GITHUB_OUTPUT GITHUB_STEP_SUMMARY
 if (cd "$work/repo" && tools/release.sh >/dev/null 2>&1); then
-  fail "case 3: missing tag should fail"
+  fail "case 2: missing tag should fail"
 fi
-[ ! -s "$CLASP_LOG" ] || fail "case 3: clasp must not be called without a tag"
+[ ! -s "$CLASP_LOG" ] || fail "case 2: clasp must not be called without a tag"
 echo "ok   missing tag is rejected before touching clasp"
 
-# --- Case 4: malformed deployment.json -> fail before touching clasp.
-export CLASP_LOG="$work/log4"; : >"$CLASP_LOG"
-echo '{"deploymentId":' >"$work/repo/deployment.json"
+# --- Case 3: malformed listing.json -> fail before touching clasp.
+export CLASP_LOG="$work/log3"; : >"$CLASP_LOG"
+echo '{"extension":' >"$work/repo/marketplace/listing.json"
 if (cd "$work/repo" && tools/release.sh v1.2.0 >/dev/null 2>&1); then
-  fail "case 4: malformed deployment.json should fail"
+  fail "case 3: malformed listing.json should fail"
 fi
-[ ! -s "$CLASP_LOG" ] || fail "case 4: clasp must not be called with malformed deployment.json"
-echo "ok   malformed deployment.json is rejected before touching clasp"
+[ ! -s "$CLASP_LOG" ] || fail "case 3: clasp must not be called with malformed listing.json"
+echo "ok   malformed listing.json is rejected before touching clasp"
 
-# --- Case 5: missing deploymentId -> fail before touching clasp.
+# --- Case 4: publishedVersion missing or not a positive integer -> fail before clasp.
+for bad in '"1"' 0 -2 1.5 null; do
+  export CLASP_LOG="$work/log4"; : >"$CLASP_LOG"
+  set_published "$bad"
+  if (cd "$work/repo" && tools/release.sh v1.2.0 >/dev/null 2>&1); then
+    fail "case 4: publishedVersion $bad should fail"
+  fi
+  [ ! -s "$CLASP_LOG" ] || fail "case 4: clasp must not be called with publishedVersion $bad"
+done
+echo "ok   bad publishedVersion is rejected before touching clasp"
+
+# --- Case 5: clasp version returns garbage -> fail, and no summary is written.
 export CLASP_LOG="$work/log5"; : >"$CLASP_LOG"
-echo '{}' >"$work/repo/deployment.json"
-if (cd "$work/repo" && tools/release.sh v1.2.0 >/dev/null 2>&1); then
-  fail "case 5: missing deploymentId should fail"
-fi
-[ ! -s "$CLASP_LOG" ] || fail "case 5: clasp must not be called without deploymentId"
-echo "ok   missing deploymentId is rejected before touching clasp"
-
-# --- Case 6: clasp version returns garbage -> fail before deploying.
-export CLASP_LOG="$work/log6"; : >"$CLASP_LOG"
-echo '{"deploymentId": "AKfycb-existing"}' >"$work/repo/deployment.json"
+set_published 3
+export GITHUB_STEP_SUMMARY="$work/summary5"; : >"$GITHUB_STEP_SUMMARY"
 cat >"$work/bin/clasp" <<'STUB'
 #!/usr/bin/env bash
 echo "$*" >>"$CLASP_LOG"
 case "$1" in version) echo '{}' ;; esac
 STUB
 if (cd "$work/repo" && tools/release.sh v1.2.0 >/dev/null 2>&1); then
-  fail "case 6: unparseable version output should fail"
+  fail "case 5: unparseable version output should fail"
 fi
-grep -Eq '^(deploy|redeploy)' "$CLASP_LOG" && fail "case 6: must not deploy without a version number"
-echo "ok   bad clasp version output aborts before deploying"
+[ ! -s "$GITHUB_STEP_SUMMARY" ] || fail "case 5: must not write a summary without a version number"
+echo "ok   bad clasp version output aborts before reporting"
 
 echo "all release.sh tests passed"
