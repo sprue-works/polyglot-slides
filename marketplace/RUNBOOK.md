@@ -248,7 +248,12 @@ the publisher name, support address, and homepage all sit on a domain the
 account has verified — no registered legal entity is required. Separately,
 the submission flow may ask for an **EU Digital Services Act trader-status
 declaration**; for a free add-on from an unregistered brand answer
-**non-trader** (revisit if the add-on is ever monetized).
+**non-trader** (revisit if the add-on is ever monetized). Answer it rather
+than skipping: an undeclared status shows as "Trader status unspecified" on
+the public listing. Separately, the Marketplace program policies require the
+*listing* to state the developer's legal business name and a physical
+business address — a listing-content rule, not an entity check; decide what
+address `sprue.works` publishes before step 5.
 
 While the consent screen is in *Testing* only listed test users can authorize
 (and refresh tokens expire after 7 days — the CI deploy account is unaffected;
@@ -324,6 +329,7 @@ follow-up issue #29.
 | Support links | Terms `urls.termsOfService`, Privacy `urls.privacyPolicy`, Support `urls.support` (the issue tracker URL, not an email) |
 | Developer name / email | `app.developerName` / `app.supportEmail` (prefilled from step 4 in most consoles; confirm they still read `sprue.works` / `help@sprue.works`) |
 | Regions | all |
+| Developer legal name / physical address | required by the Marketplace program policies for every listing (see step 3). Use the `sprue.works` details settled there |
 
 ## 6. Publish
 
