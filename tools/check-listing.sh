@@ -49,8 +49,9 @@ for (const [obj, keys, label] of [
 const app = listing.app || {};
 if (typeof app.shortDescription === 'string' && app.shortDescription.length > 120) fail(`app.shortDescription is ${app.shortDescription.length} chars; keep it under 120 for the store card`);
 // Post-install tip: required by the Store Listing form (#31). Google documents no
-// limit for this field; 200 mirrors the documented shortDescription limit and
-// is the conservative cap until a real one turns up.
+// limit for this field; 200 is the limit Google documents for the store short
+// description (this repo holds its own shortDescription tighter, at 120) and is
+// the conservative cap until a real one turns up.
 const POST_INSTALL_TIP_MAX = 200;
 if (typeof app.postInstallTip !== 'string' || !app.postInstallTip.trim()) fail('listing.app.postInstallTip is missing or empty (the Store Listing form requires it)');
 else if (app.postInstallTip.length > POST_INSTALL_TIP_MAX) fail(`app.postInstallTip is ${app.postInstallTip.length} chars; keep it at most ${POST_INSTALL_TIP_MAX} (Google truncates it)`);

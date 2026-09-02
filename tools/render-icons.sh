@@ -61,11 +61,14 @@ elif command -v qlmanage >/dev/null 2>&1 && command -v sips >/dev/null 2>&1; the
   pad_y=$(((banner_w - banner_h) / 2))           # 40, in SVG user units
   sed -E "s/(<svg[^>]*[[:space:]])viewBox=\"0 0 $banner_w $banner_h\"/\1viewBox=\"0 -$pad_y $banner_w $banner_w\"/; s/(<svg[^>]*[[:space:]])width=\"[^\"]*\"/\1width=\"$side\"/; s/(<svg[^>]*[[:space:]])height=\"[^\"]*\"/\1height=\"$side\"/" \
     "$banner_svg" >"$work/banner.svg"
+  # Attribute order is not significant in SVG, so check each one on its own.
   root_tag="$(tr '\n' ' ' <"$work/banner.svg" | grep -oE '<svg[^>]*>' | head -1)"
-  case "$root_tag" in
-    *" viewBox=\"0 -$pad_y $banner_w $banner_w\""*" width=\"$side\""*" height=\"$side\""*) ;;
-    *) echo "error: could not rewrite the <svg> root viewBox/width/height in $banner_svg (root tag: $root_tag)" >&2; exit 1 ;;
-  esac
+  for attr in " viewBox=\"0 -$pad_y $banner_w $banner_w\"" " width=\"$side\"" " height=\"$side\""; do
+    case "$root_tag" in
+      *"$attr"*) ;;
+      *) echo "error: could not rewrite the <svg> root viewBox/width/height in $banner_svg (missing$attr; root tag: $root_tag)" >&2; exit 1 ;;
+    esac
+  done
   qlmanage -t -s "$side" -o "$work" "$work/banner.svg" >/dev/null 2>&1
   bsrc="$work/banner.svg.png"
   [ -f "$bsrc" ] || { echo "error: qlmanage produced no banner output" >&2; exit 1; }

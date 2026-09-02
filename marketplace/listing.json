@@ -11,7 +11,7 @@
     "_emailComment": "Two addresses because Google asks for two with different rules. supportEmail is the public one (consent-screen 'User support email', Marketplace SDK developer email): a dropdown limited to the publishing account itself or a Google Group it manages, so it is the help@sprue.works group. contactEmail is the consent-screen 'Developer contact information': free text, where Google emails about verification and project changes. Also a Google Group, so no personal address is published and readers can be added later; it must accept external posts or Google's mail bounces silently.",
     "supportEmail": "help@sprue.works",
     "contactEmail": "contact@sprue.works",
-    "_postInstallTipComment": "Store Listing 'Post-install tip' (required). Shown to users right after install, so it names the exact menu path from src/Code.js. Google documents no length limit for this field (the sibling shortDescription is documented at 200); check-listing.sh caps it at 200 as the conservative analog.",
+    "_postInstallTipComment": "Store Listing 'Post-install tip' (required). Shown to users right after install, so it names the exact menu path from src/Code.js. Google documents no length limit for this field; check-listing.sh caps it at 200, the limit Google documents for the store's short description (this repo holds shortDescription itself tighter, at 120, for card layout).",
     "postInstallTip": "Open a deck, then Extensions → Polyglot Slides → Open sidebar to pick your languages."
   },
 
