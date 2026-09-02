@@ -1,5 +1,5 @@
 {
-  "_comment": "Source of truth for the Google Workspace Marketplace SDK listing and the OAuth consent screen. Nothing here is applied automatically -- Google exposes no write API for either -- but a human pastes from this file (see marketplace/RUNBOOK.md), and tools/check-listing.sh keeps it consistent with src/appsscript.json, deployment.json, and the assets it references.",
+  "_comment": "Source of truth for the Google Workspace Marketplace SDK listing and the OAuth consent screen. Nothing here is applied automatically -- Google exposes no write API for either -- but a human pastes from this file (see marketplace/RUNBOOK.md), and tools/check-listing.sh keeps it consistent with src/appsscript.json, .clasp.json, and the assets it references.",
 
   "app": {
     "name": "Polyglot Slides",
@@ -25,12 +25,13 @@
   "extension": {
     "type": "editorAddOn",
     "application": "slides",
-    "deployment": {
-      "_comment": "LEGACY POINTER (#29). The Marketplace SDK Editor-add-on form has no deployment-ID field: it pins the Project Script ID (.clasp.json#scriptId) plus a script VERSION NUMBER, which a human bumps after each release (RUNBOOK section 4). tools/check-listing.sh still asserts this pointer resolves, so it stays until #29 replaces it with the script ID + published version.",
-      "source": "deployment.json",
-      "field": "deploymentId"
+    "script": {
+      "_comment": "What the Marketplace SDK App Configuration form for an Editor add-on actually pins: the Project Script ID (this reference resolves to .clasp.json#scriptId) plus a script VERSION NUMBER (publishedVersion below). There is no deployment-ID field on that path -- that belongs to the Google Workspace add-on integration type, which this add-on is not.",
+      "source": ".clasp.json",
+      "field": "scriptId"
     },
-    "scriptProject": ".clasp.json#scriptId"
+    "_publishedVersionComment": "The script version number currently entered as 'Slides add-on script version' in App Configuration -- what IS live, not what should be. A tagged release (tools/release.sh) creates the next version and opens a tracking issue; the human who bumps the console field then sets this to the same number and commits, so the repo records the pin and the gap between the latest release and this value is the outstanding manual step (RUNBOOK section 4).",
+    "publishedVersion": 1
   },
 
   "oauth": {

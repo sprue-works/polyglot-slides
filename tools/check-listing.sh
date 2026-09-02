@@ -5,7 +5,10 @@
 #
 #   - marketplace/listing.json and screenshots.json parse
 #   - listing OAuth scopes == src/appsscript.json oauthScopes
-#   - the listing's deployment reference resolves to deployment.json
+#   - the listing pins what the Editor-add-on App Configuration form takes:
+#     a script reference that resolves to .clasp.json#scriptId, and a
+#     publishedVersion that is a positive integer (the script version number
+#     currently entered in the console -- RUNBOOK section 4)
 #   - every referenced asset exists, is a PNG, and has the declared size
 #   - the 220x140 card banner exists at exactly that size (#31)
 #   - the Store Listing post-install tip is present and within a sane length
@@ -35,7 +38,7 @@ const { checkCoverage } = require(path.resolve('tools/png-check.js'));
 
 const listing = readJson('marketplace/listing.json');
 const manifest = readJson('src/appsscript.json');
-const deployment = readJson('deployment.json');
+const clasp = readJson('.clasp.json');
 const shots = readJson('marketplace/screenshots.json');
 ok('marketplace/listing.json, screenshots.json parse');
 
@@ -86,15 +89,21 @@ if (JSON.stringify(want) !== JSON.stringify(have)) {
   fail(`listing.oauth.scopes differ from src/appsscript.json oauthScopes\n     manifest: ${want.join(', ')}\n     listing:  ${have.join(', ')}`);
 } else ok(`OAuth scopes match src/appsscript.json (${want.length})`);
 
-// Deployment reference: the listing points at deployment.json's deploymentId.
-const dep = listing.extension?.deployment || {};
-if (dep.source !== 'deployment.json' || dep.field !== 'deploymentId') {
-  fail(`listing.extension.deployment must reference deployment.json#deploymentId (got ${JSON.stringify(dep)})`);
-} else if (!(dep.field in deployment)) {
-  fail(`deployment.json has no "${dep.field}" field`);
-} else if (!deployment.deploymentId) {
-  ok('deployment reference resolves (deployment.json#deploymentId is still empty -- set by the first tagged release)');
-} else ok(`deployment reference resolves to ${deployment.deploymentId}`);
+// What the Editor-add-on App Configuration form pins: the Project Script ID
+// and a script version number. (No deployment ID -- that field belongs to the
+// Google Workspace add-on integration type.)
+const ext = listing.extension || {};
+const script = ext.script || {};
+if (script.source !== '.clasp.json' || script.field !== 'scriptId') {
+  fail(`listing.extension.script must reference .clasp.json#scriptId (got ${JSON.stringify(script)})`);
+} else if (typeof clasp.scriptId !== 'string' || !clasp.scriptId.trim()) {
+  fail('.clasp.json has no scriptId; the Marketplace SDK needs the Project Script ID');
+} else ok(`script reference resolves to .clasp.json#scriptId (${clasp.scriptId})`);
+if ('deployment' in ext) fail('listing.extension.deployment is obsolete: the Editor-add-on form pins a script version number, not a deployment ID (RUNBOOK section 4)');
+const pv = ext.publishedVersion;
+if (!Number.isInteger(pv) || pv < 1) {
+  fail(`listing.extension.publishedVersion must be a positive integer, the script version number entered in App Configuration (got ${JSON.stringify(pv)})`);
+} else ok(`publishedVersion ${pv} (the version pinned in App Configuration; bump after each release per RUNBOOK section 4)`);
 if (listing.extension?.type !== 'editorAddOn' || listing.extension?.application !== 'slides') fail('listing.extension must be an editorAddOn for slides');
 
 // Distribution choice.
