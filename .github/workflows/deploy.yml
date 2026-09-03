@@ -22,7 +22,6 @@ on:
 
 permissions:
   contents: read
-  issues: write   # the tag job opens the "bump script version" tracking issue
 
 # Never let two deploys interleave (a main push racing a tag release).
 concurrency:
@@ -33,6 +32,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: apps-script
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      published_version: ${{ steps.release.outputs.published_version }}
     steps:
       - name: Configure clasp auth path
         run: echo "clasp_config_auth=$RUNNER_TEMP/clasprc.json" >> "$GITHUB_ENV"
@@ -60,19 +62,30 @@ jobs:
         if: github.ref_type == 'tag'
         id: release
         run: tools/release.sh "$GITHUB_REF_NAME"
-      # The Editor-add-on listing pins a version number, so the release is not
-      # live until someone bumps it in App Configuration. Make that step a
-      # visible, assignable issue instead of a line in this run's summary.
-      # A re-run of the same tag cuts yet another version, so if that tag's
-      # issue is still open, comment the new number on it rather than opening
-      # a duplicate.
-      - name: Open tracking issue for the manual version bump (tag)
-        if: github.ref_type == 'tag' && steps.release.outputs.version != steps.release.outputs.published_version
+      - name: Scrub credentials
+        if: always()
+        run: rm -f "$clasp_config_auth"
+
+  # The Editor-add-on listing pins a version number, so the release is not
+  # live until someone bumps it in App Configuration. Make that step a
+  # visible, assignable issue instead of a line in the run summary. Its own
+  # job so `issues: write` never reaches the credential-holding deploy job or
+  # the push-to-main path. A re-run of the same tag cuts yet another version,
+  # so if that tag's issue is still open, rewrite it rather than duplicating.
+  track-version-bump:
+    needs: deploy
+    if: github.ref_type == 'tag' && needs.deploy.outputs.version != needs.deploy.outputs.published_version
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the tracking issue for the manual version bump
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
-          VERSION: ${{ steps.release.outputs.version }}
-          PUBLISHED: ${{ steps.release.outputs.published_version }}
+          VERSION: ${{ needs.deploy.outputs.version }}
+          PUBLISHED: ${{ needs.deploy.outputs.published_version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           # Who gets the paste in their inbox: whoever pushed the tag, since
           # GitHub's assignment email carries the full body. The Actions variable
@@ -103,6 +116,3 @@ jobs:
           else
             gh issue create --title "$title" --assignee "$ASSIGNEE" --body-file "$RUNNER_TEMP/bump-issue.md"
           fi
-      - name: Scrub credentials
-        if: always()
-        run: rm -f "$clasp_config_auth"
