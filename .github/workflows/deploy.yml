@@ -11,7 +11,11 @@
 # produced by `clasp login`. It is written to a temp file and handed to clasp
 # via clasp_config_auth (the -A/--auth flag's env form). Apps Script's API
 # does not accept service accounts for script projects, so a user refresh
-# token is the only unattended option; scope the account accordingly.
+# token is the only unattended option; scope the account accordingly. After
+# authenticating, `clasp list-versions` is a read-only preflight for the
+# per-user Apps Script API toggle (script.google.com/home/usersettings): push
+# works without it but version does not, so without the preflight a tag run
+# fails only after its push has landed (#38).
 name: Deploy
 
 on:
@@ -54,6 +58,11 @@ jobs:
           umask 077
           printf '%s' "$CLASPRC_JSON" > "$clasp_config_auth"
           clasp show-authorized-user
+      - name: Preflight the Apps Script API (per-user toggle)
+        # Read-only. Fails with "User has not enabled the Apps Script API" if
+        # the deploying account never flipped script.google.com/home/usersettings
+        # (README > Release pipeline > One-time setup, step 1).
+        run: clasp list-versions
       - name: Push to Apps Script (main)
         if: github.ref_type == 'branch'
         run: clasp push --force
