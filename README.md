@@ -112,9 +112,9 @@ pastes it:
   consent screen ask for: name, descriptions, category, publisher identity
   (`sprue.works`, with `help@sprue.works` as the public support address and a
   separate developer-contact address), URLs, scopes, the distribution flavor,
-  and what the Editor-add-on form pins: the script ID (a reference to
-  `.clasp.json`) plus `publishedVersion`, the script version number
-  currently entered in App Configuration.
+  and the script ID the Editor-add-on form pins (a reference to
+  `.clasp.json`). The version number that form also pins lives only in the
+  console; the repo keeps no copy because it could not verify one.
 - `marketplace/description.md` — the store's detailed description.
 - `marketplace/assets/` — the icon (`icon.svg`, rendered to the required PNG
   sizes plus `docs/icon.png` by `tools/render-icons.sh`) and, once captured, the 1280×800
@@ -152,24 +152,20 @@ Cut a release:
 git tag v1.0.0 && git push origin v1.0.0     # or: gh release create v1.0.0
 ```
 
-The run's summary shows the new version number next to the one currently
-pinned (`marketplace/listing.json` → `extension.publishedVersion`), and the
-workflow opens an issue titled *release vX: bump Slides add-on script version
-to N*, assigned to whoever pushed the tag (so the checklist and a direct link
-to App Configuration land in their email; set the `RELEASE_BUMP_ASSIGNEE`
-Actions variable to route it elsewhere). **After every release**, work that
-issue:
-
-1. Marketplace SDK → App Configuration → *Slides add-on script version*: enter
-   the new number and Save. Installed users stay on the old version until
-   then (Google: "update the version number on the App Configuration page";
-   no Marketplace re-review for that alone).
-2. Set `extension.publishedVersion` in `marketplace/listing.json` to the same
-   number and commit. The repo records what is *live*, so a `publishedVersion`
-   behind the latest release is the visible sign that step 1 is still owed.
+The run's summary shows the new version number, and the workflow opens an
+issue titled *release vX: bump Slides add-on script version to N*, assigned
+to whoever pushed the tag (so the instruction and a direct link to App
+Configuration land in their email; set the `RELEASE_BUMP_ASSIGNEE` Actions
+variable to route it elsewhere). **After every release**, work that issue:
+open Marketplace SDK → App Configuration, enter the new number in *Slides
+add-on script version*, Save, and close the issue. Installed users stay on
+the old version until then (Google: "update the version number on the App
+Configuration page"; no Marketplace re-review for that alone). The repo keeps
+no copy of the pinned number, since it has no way to verify one; the open or
+closed tracking issue is the record of whether the console is current.
 
 `tools/release.sh v1.0.0` does the same thing locally with a `clasp login`
-session (it prints the same instructions but opens no issue).
+session (it prints the same instruction but opens no issue).
 
 ### One-time setup (needs a human — CI cannot create secrets)
 

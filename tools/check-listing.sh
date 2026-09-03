@@ -5,10 +5,10 @@
 #
 #   - marketplace/listing.json and screenshots.json parse
 #   - listing OAuth scopes == src/appsscript.json oauthScopes
-#   - the listing pins what the Editor-add-on App Configuration form takes:
-#     a script reference that resolves to .clasp.json#scriptId, and a
-#     publishedVersion that is a positive integer (the script version number
-#     currently entered in the console -- RUNBOOK section 4)
+#   - the listing's script reference resolves to .clasp.json#scriptId (the
+#     Project Script ID the Editor-add-on App Configuration form takes; the
+#     version number it also takes lives only in the console -- RUNBOOK
+#     section 4 -- so nothing here mirrors it)
 #   - every referenced asset exists, is a PNG, and has the declared size
 #   - the 220x140 card banner exists at exactly that size (#31)
 #   - the Store Listing post-install tip is present and within a sane length
@@ -101,10 +101,9 @@ if (script.source !== '.clasp.json' || script.field !== 'scriptId') {
   fail('.clasp.json has no scriptId; the Marketplace SDK needs the Project Script ID');
 } else ok(`script reference resolves to .clasp.json#scriptId (${clasp.scriptId})`);
 if ('deployment' in ext) fail('listing.extension.deployment is obsolete: the Editor-add-on form pins a script version number, not a deployment ID (RUNBOOK section 4)');
-const pv = ext.publishedVersion;
-if (!Number.isInteger(pv) || pv < 1) {
-  fail(`listing.extension.publishedVersion must be a positive integer, the script version number entered in App Configuration (got ${JSON.stringify(pv)})`);
-} else ok(`publishedVersion ${pv} (the version pinned in App Configuration; bump after each release per RUNBOOK section 4)`);
+// The version number the form also pins lives only in the console; a copy here
+// could not be verified and would drift, so its presence is a mistake.
+if ('publishedVersion' in ext) fail('listing.extension.publishedVersion is not tracked in the repo: the pinned version lives in App Configuration and each release opens a tracking issue for the bump (RUNBOOK section 4)');
 if (listing.extension?.type !== 'editorAddOn' || listing.extension?.application !== 'slides') fail('listing.extension must be an editorAddOn for slides');
 
 // Distribution choice.

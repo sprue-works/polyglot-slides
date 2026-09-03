@@ -17,7 +17,7 @@ Paste sources, so nothing is retyped:
 | OAuth scopes | `listing.json` → `oauth.scopes` (== `src/appsscript.json`) |
 | App icon 128×128 / 32×32, consent-screen logo 120×120 | `marketplace/assets/icon-*.png` |
 | Screenshots 1280×800 | `marketplace/assets/` + `marketplace/screenshots.json` (step 7) |
-| Editor add-on *Project Script ID* + *script version* | `.clasp.json` → `scriptId` (`listing.json` → `extension.script` points there); the version number the latest `tools/release.sh` run printed, recorded after pasting as `listing.json` → `extension.publishedVersion` (step 4). No deployment ID: the Editor-add-on form never asks for one |
+| Editor add-on *Project Script ID* + *script version* | `.clasp.json` → `scriptId` (`listing.json` → `extension.script` points there); the version number the latest `tools/release.sh` run printed (step 4; not recorded in the repo — the release's tracking issue is the record). No deployment ID: the Editor-add-on form never asks for one |
 | GCP project number | `556097262294` (step 2) |
 
 `tools/check-listing.sh` (run by CI) fails if any of those drift from the
@@ -283,7 +283,7 @@ SDK*) and click **Manage**, then the **App Configuration** tab:
 | Installation settings | **Individual + Admin install** (admins can push to a whole domain) |
 | App integration | **Editor add-on** → tick **Slides**. Do **not** tick *Google Workspace add-on* — that is a different architecture (an `addOns` manifest block, card-based UI) and this add-on is a classic Editor add-on (`createAddonMenu` + HtmlService sidebar) |
 | Slides add-on Project Script ID | `.clasp.json` → `scriptId` (`1kDYoA2yi66enrdzqpVhjTaMKJjALmGg2fwCAzGRHmTnIe0QIrb24uxuE`) |
-| Slides add-on script version | the **version number** to serve — the one `tools/release.sh` printed for the latest tag (`clasp versions` lists them all). Entered as `1` on 2026-09-02; `listing.json` → `extension.publishedVersion` records whatever is entered here |
+| Slides add-on script version | the **version number** to serve — the one `tools/release.sh` printed for the latest tag (`clasp versions` lists them all). Entered as `1` on 2026-09-02. Not mirrored in the repo: the release's tracking issue (below) is the record |
 | OAuth scopes | the same two scopes, verbatim |
 | Developer name / website / email | `app.developerName` (`sprue.works`, exactly that casing), `urls.homepage`, `app.supportEmail` (`help@sprue.works`) |
 
@@ -311,14 +311,12 @@ scopes they re-authorize, and the consent screen + this form's scope list
 must be updated first.
 
 The pipeline makes that step hard to forget: each tag's `deploy.yml` run
-opens an issue titled *release vX: bump Slides add-on script version to N*
-and prints the same checklist in its step summary. Work it in this order:
-
-1. Enter `N` in this form's *Slides add-on script version* and Save.
-2. Set `extension.publishedVersion` to `N` in `marketplace/listing.json` and
-   commit (closing the issue). That field records what is **live** in this
-   form, so it changes only after the paste — a `publishedVersion` behind
-   the latest release is the honest signal that step 1 is still owed.
+opens an issue titled *release vX: bump Slides add-on script version to N*,
+assigned to whoever pushed the tag, and prints the same instruction in its
+step summary. Enter `N` in this form's *Slides add-on script version*, Save,
+and close the issue. The repo keeps no copy of the pinned number (it cannot
+verify one), so an open bump issue is the signal that the console is behind
+the latest release, and a closed one is the record that it caught up.
 
 ## 5. Store listing
 
@@ -387,7 +385,7 @@ without copying anything. Re-run INSTALL.md's functional checklist from there.
 
 | Change | CI does | Human does |
 |---|---|---|
-| Code in `src/` | push on merge; tag → new numbered version + a tracking issue for the bump | **bump *Slides add-on script version* in step 4 to the new number, then commit it as `listing.json` → `extension.publishedVersion`** — until then installed users keep the old version. No re-review for a version bump alone |
+| Code in `src/` | push on merge; tag → new numbered version + a tracking issue for the bump | **bump *Slides add-on script version* in step 4 to the new number and close the tracking issue** — until then installed users keep the old version. No re-review for a version bump alone |
 | `oauthScopes` in `appsscript.json` | CI fails until `listing.json` matches | update consent screen + Marketplace SDK scopes; re-verification |
 | Name, icon, description | `check-listing.sh` validates the files | re-paste (steps 3–5); name/logo changes re-trigger brand verification |
 | `developerName`, `supportEmail`, `contactEmail` | `check-listing.sh` enforces `sprue.works` / an `@sprue.works` support address | re-paste (steps 3–5); a publisher-name or support-email change re-triggers brand verification |

@@ -34,7 +34,6 @@ jobs:
     environment: apps-script
     outputs:
       version: ${{ steps.release.outputs.version }}
-      published_version: ${{ steps.release.outputs.published_version }}
     steps:
       - name: Configure clasp auth path
         run: echo "clasp_config_auth=$RUNNER_TEMP/clasprc.json" >> "$GITHUB_ENV"
@@ -68,13 +67,15 @@ jobs:
 
   # The Editor-add-on listing pins a version number, so the release is not
   # live until someone bumps it in App Configuration. Make that step a
-  # visible, assignable issue instead of a line in the run summary. Its own
-  # job so `issues: write` never reaches the credential-holding deploy job or
-  # the push-to-main path. A re-run of the same tag cuts yet another version,
-  # so if that tag's issue is still open, rewrite it rather than duplicating.
+  # visible, assignable issue instead of a line in the run summary; closing it
+  # is the record that the pin was done (the repo keeps no copy of the pinned
+  # number, since it cannot verify one). Its own job so `issues: write` never
+  # reaches the credential-holding deploy job or the push-to-main path. A
+  # re-run of the same tag cuts yet another version, so if that tag's issue is
+  # still open, rewrite it rather than duplicating.
   track-version-bump:
     needs: deploy
-    if: github.ref_type == 'tag' && needs.deploy.outputs.version != needs.deploy.outputs.published_version
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -85,7 +86,6 @@ jobs:
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
           VERSION: ${{ needs.deploy.outputs.version }}
-          PUBLISHED: ${{ needs.deploy.outputs.published_version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           # Who gets the paste in their inbox: whoever pushed the tag, since
           # GitHub's assignment email carries the full body. The Actions variable
@@ -99,12 +99,11 @@ jobs:
           existing="$(gh issue list --state open --search "\"$title_prefix\" in:title" --json number,title \
             | jq -r --arg p "$title_prefix" '[.[] | select(.title | startswith($p))] | .[0].number // empty')"
           cat >"$RUNNER_TEMP/bump-issue.md" <<EOF
-          Release \`$TAG\` created Apps Script version \`$VERSION\` ([run]($RUN_URL)). The Marketplace SDK still pins version \`$PUBLISHED\` (\`marketplace/listing.json\` → \`extension.publishedVersion\`), so installed users do not have this release yet.
+          Release \`$TAG\` created Apps Script version \`$VERSION\` ([run]($RUN_URL)). Installed users stay on whatever version the Marketplace SDK currently pins until someone updates it.
 
           - [ ] Open [Marketplace SDK → Manage → App Configuration]($CONSOLE_URL) and set **Slides add-on script version** to \`$VERSION\`, then Save (\`marketplace/RUNBOOK.md\` §4; a version bump alone triggers no re-review)
-          - [ ] Set \`extension.publishedVersion\` to \`$VERSION\` in \`marketplace/listing.json\` and commit, closing this issue
 
-          Opened automatically by \`.github/workflows/deploy.yml\`.
+          Then close this issue; that is the record that version \`$VERSION\` is live. Opened automatically by \`.github/workflows/deploy.yml\`.
           EOF
           title="$title_prefix $VERSION"
           if [ -n "$existing" ]; then
