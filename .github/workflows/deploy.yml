@@ -74,6 +74,13 @@ jobs:
           VERSION: ${{ steps.release.outputs.version }}
           PUBLISHED: ${{ steps.release.outputs.published_version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # Who gets the paste in their inbox: whoever pushed the tag, since
+          # GitHub's assignment email carries the full body. The Actions variable
+          # overrides that for the day a bot pushes tags.
+          ASSIGNEE: ${{ vars.RELEASE_BUMP_ASSIGNEE || github.actor }}
+          # Marketplace SDK -> App Configuration for GCP project 556097262294
+          # (the SDK has no left-nav entry; this is its API Library page, RUNBOOK section 4).
+          CONSOLE_URL: https://console.cloud.google.com/apis/api/appsmarket-component.googleapis.com/googleapps_sdk?project=556097262294
         run: |
           title_prefix="release $TAG: bump Slides add-on script version to"
           existing="$(gh issue list --state open --search "\"$title_prefix\" in:title" --json number,title \
@@ -86,13 +93,14 @@ jobs:
           cat >"$RUNNER_TEMP/bump-issue.md" <<EOF
           Release \`$TAG\` created Apps Script version \`$VERSION\` ([run]($RUN_URL)). The Marketplace SDK still pins version \`$PUBLISHED\` (\`marketplace/listing.json\` → \`extension.publishedVersion\`), so installed users do not have this release yet.
 
-          - [ ] Marketplace SDK → App Configuration → **Slides add-on script version**: enter \`$VERSION\`, Save (\`marketplace/RUNBOOK.md\` §4; a version bump alone triggers no re-review)
+          - [ ] Open [Marketplace SDK → Manage → App Configuration]($CONSOLE_URL) and set **Slides add-on script version** to \`$VERSION\`, then Save (\`marketplace/RUNBOOK.md\` §4; a version bump alone triggers no re-review)
           - [ ] Set \`extension.publishedVersion\` to \`$VERSION\` in \`marketplace/listing.json\` and commit, closing this issue
 
           Opened automatically by \`.github/workflows/deploy.yml\`.
           EOF
           gh issue create \
             --title "release $TAG: bump Slides add-on script version to $VERSION" \
+            --assignee "$ASSIGNEE" \
             --body-file "$RUNNER_TEMP/bump-issue.md"
       - name: Scrub credentials
         if: always()
