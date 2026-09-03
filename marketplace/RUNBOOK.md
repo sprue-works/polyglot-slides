@@ -143,6 +143,12 @@ homepage is the mismatch that costs a full review round trip.
 
 The publishing account must:
 
+0. **Own the Apps Script project in `.clasp.json`** (ideally via a
+   sprue.works Shared Drive, so the org rather than one user owns it). It
+   cannot be moved there later from a personal account: Google does not
+   transfer Drive ownership across the consumer/Workspace boundary (see
+   `CLAUDE.md`, #36). Create it signed in as the publishing account.
+
 1. **Own the GCP project** from step 2 (create it while signed in as that
    account, or be granted *Owner*), and hold the *Marketplace publisher*
    ability that comes with owning the project's Marketplace SDK.
@@ -268,7 +274,9 @@ Apps Script editor for the script in `.clasp.json` (`clasp open-script`) →
 project** → paste the project number (`556097262294`). If this is refused,
 the consent screen in step 3 is not saved yet.
 
-Done 2026-09-02 for the script in `.clasp.json`.
+Done 2026-09-02 for the *old*, personally owned script; **redo it for the
+org-owned project** that #36 puts in `.clasp.json` — the attachment belongs
+to the script project, so a new project starts unattached.
 
 ## 4. Marketplace SDK configuration
 
@@ -282,12 +290,14 @@ SDK*) and click **Manage**, then the **App Configuration** tab:
 | App visibility | `distribution.visibility`: **Private** (own domain) or **Public** with *Unlisted* checked. **Private vs Public is irreversible once saved** — the SDK will not let you switch later; only the *Unlisted* checkbox under Public can be changed afterwards. Get `listing.json` → `distribution.visibility` right before clicking Save |
 | Installation settings | **Individual + Admin install** (admins can push to a whole domain) |
 | App integration | **Editor add-on** → tick **Slides**. Do **not** tick *Google Workspace add-on* — that is a different architecture (an `addOns` manifest block, card-based UI) and this add-on is a classic Editor add-on (`createAddonMenu` + HtmlService sidebar) |
-| Slides add-on Project Script ID | `.clasp.json` → `scriptId` (`1kDYoA2yi66enrdzqpVhjTaMKJjALmGg2fwCAzGRHmTnIe0QIrb24uxuE`) |
-| Slides add-on script version | the **version number** to serve — the one `tools/release.sh` printed for the latest tag (`clasp versions` lists them all). Entered as `1` on 2026-09-02. Not mirrored in the repo: the release's tracking issue (below) is the record |
+| Slides add-on Project Script ID | `.clasp.json` → `scriptId` — the org-owned project (#36); copy it from the file, never from memory |
+| Slides add-on script version | the **version number** to serve — the one `tools/release.sh` printed for the latest tag (`clasp versions` lists them all). Entered as `1` on 2026-09-02 for the old project; the org-owned project's numbering restarts at `1`. Not mirrored in the repo: the release's tracking issue (below) is the record |
 | OAuth scopes | the same two scopes, verbatim |
 | Developer name / website / email | `app.developerName` (`sprue.works`, exactly that casing), `urls.homepage`, `app.supportEmail` (`help@sprue.works`) |
 
-Save. Configuration saved as a draft 2026-09-02 with script ID + version 1.
+Save. Configuration was saved as a draft 2026-09-02 with the *old* script
+ID and version 1; after #36 merges, **repaste the new Project Script ID and
+the new project's version 1** (versions restart at 1 on the new project).
 
 **There is no deployment ID field on this path.** Google's docs are explicit:
 "to publish an Editor add-on, you must provide the project script ID and
