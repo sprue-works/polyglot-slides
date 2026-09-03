@@ -191,7 +191,8 @@ around" — that needs a real Marketplace/domain install (issue #4).
 
 ## Owner setup
 
-Staged artifacts (owned by `mari@guerrieri.codes`):
+Staged artifacts (the template deck and its bound script are owned by
+`mari@guerrieri.codes`; the dev script project is not):
 
 | Thing | ID / link |
 |---|---|

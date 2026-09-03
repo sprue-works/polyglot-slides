@@ -171,8 +171,9 @@ session (it prints the same instruction but opens no issue).
 
 The workflow authenticates as a real Google account: Apps Script's API does
 not accept service accounts for script projects, so a user OAuth refresh
-token is the only unattended option. That token grants **full Apps Script
-access to the account that minted it**. Mint it as the `@sprue.works`
+token is the only unattended option. That token acts **as the account that
+minted it**, with full Apps Script access to every script project that
+account can reach. Mint it as the `@sprue.works`
 publishing account, which owns the script project in `.clasp.json` (#36);
 a personal account's token would only work while that account is shared in
 as editor, and ownership cannot be transferred to it later (see `CLAUDE.md`).
