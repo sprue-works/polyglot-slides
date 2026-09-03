@@ -155,7 +155,10 @@ git tag v1.0.0 && git push origin v1.0.0     # or: gh release create v1.0.0
 The run's summary shows the new version number next to the one currently
 pinned (`marketplace/listing.json` → `extension.publishedVersion`), and the
 workflow opens an issue titled *release vX: bump Slides add-on script version
-to N*. **After every release**, work that issue:
+to N*, assigned to whoever pushed the tag (so the checklist and a direct link
+to App Configuration land in their email; set the `RELEASE_BUMP_ASSIGNEE`
+Actions variable to route it elsewhere). **After every release**, work that
+issue:
 
 1. Marketplace SDK → App Configuration → *Slides add-on script version*: enter
    the new number and Save. Installed users stay on the old version until
