@@ -19,7 +19,9 @@
     "homepage": "https://polyglot.sprue.works/",
     "privacyPolicy": "https://polyglot.sprue.works/privacy.html",
     "termsOfService": "https://polyglot.sprue.works/terms.html",
-    "support": "https://github.com/sprue-works/polyglot-slides/issues"
+    "support": "https://github.com/sprue-works/polyglot-slides/issues",
+    "_draftTesterOptOutComment": "Store Listing 'Draft Tester Opt-Out URL' (required; the Draft Tester section gates who can SEE the draft listing, distinct from the consent screen's Test users who can AUTHORIZE while in Testing -- RUNBOOK section 5). Google asks only for 'a mechanism, such as a web form, that lets testers indicate that they don't want to be draft testers', so the issue tracker doubles as that mechanism; check-listing.sh requires a well-formed https URL.",
+    "draftTesterOptOut": "https://github.com/sprue-works/polyglot-slides/issues"
   },
 
   "extension": {
