@@ -25,10 +25,12 @@ fi
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-if ! command -v clasp >/dev/null 2>&1; then
-  echo "error: clasp not found on PATH" >&2
-  exit 1
-fi
+for tool in clasp node; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "error: $tool not found on PATH" >&2
+    exit 1
+  fi
+done
 
 json_field() { # json_field <key> <json>
   node -e 'const v = JSON.parse(process.argv[2])[process.argv[1]]; if (v === undefined || v === null) process.exit(1); process.stdout.write(String(v))' "$1" "$2"
