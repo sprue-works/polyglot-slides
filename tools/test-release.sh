@@ -47,7 +47,7 @@ grep -q '^version=7$' "$GITHUB_OUTPUT" || fail "case 1: version output missing"
 [ "$(wc -l <"$GITHUB_OUTPUT")" -eq 1 ] || fail "case 1: version should be the only output"
 grep -q 'Slides add-on script version' "$GITHUB_STEP_SUMMARY" || fail "case 1: summary must name the console field to bump"
 grep -q 'enter `7`' "$GITHUB_STEP_SUMMARY" || fail "case 1: summary must say which number to paste"
-grep -qi 'publishedVersion\|listing.json' "$GITHUB_STEP_SUMMARY" && fail "case 1: summary must not ask for a repo-side version bump"
+grep -Eqi 'publishedVersion|listing\.json' "$GITHUB_STEP_SUMMARY" && fail "case 1: summary must not ask for a repo-side version bump"
 grep -q 'Slides add-on script version' "$work/stdout1" || fail "case 1: terminal output must carry the same instruction"
 echo "ok   release pushes, versions, and surfaces the manual bump"
 
