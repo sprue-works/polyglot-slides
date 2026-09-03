@@ -45,7 +45,7 @@ expect_fail "clasp project without a scriptId" ".clasp.json has no scriptId"
 fresh
 rm "$work/repo/.clasp.json"
 expect_fail "clasp project file missing reports cleanly" ".clasp.json is missing or not valid JSON"
-grep -q "at Object\|at Module\|node:internal" "$work/out" && fail "missing .clasp.json must not produce a stack trace"
+grep -Eq "at Object|at Module|node:internal" "$work/out" && fail "missing .clasp.json must not produce a stack trace"
 
 fresh
 # A pinned-version copy in the repo cannot be verified against the console and only drifts.
