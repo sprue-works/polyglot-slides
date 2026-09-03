@@ -85,11 +85,6 @@ jobs:
           title_prefix="release $TAG: bump Slides add-on script version to"
           existing="$(gh issue list --state open --search "\"$title_prefix\" in:title" --json number,title \
             | jq -r --arg p "$title_prefix" '[.[] | select(.title | startswith($p))] | .[0].number // empty')"
-          if [ -n "$existing" ]; then
-            echo "Tracking issue #$existing is still open for $TAG; noting the new version there."
-            gh issue comment "$existing" --body "Re-run of \`$TAG\` ([run]($RUN_URL)) created Apps Script version \`$VERSION\`; pin that number instead of the one above."
-            exit 0
-          fi
           cat >"$RUNNER_TEMP/bump-issue.md" <<EOF
           Release \`$TAG\` created Apps Script version \`$VERSION\` ([run]($RUN_URL)). The Marketplace SDK still pins version \`$PUBLISHED\` (\`marketplace/listing.json\` → \`extension.publishedVersion\`), so installed users do not have this release yet.
 
@@ -98,10 +93,16 @@ jobs:
 
           Opened automatically by \`.github/workflows/deploy.yml\`.
           EOF
-          gh issue create \
-            --title "release $TAG: bump Slides add-on script version to $VERSION" \
-            --assignee "$ASSIGNEE" \
-            --body-file "$RUNNER_TEMP/bump-issue.md"
+          title="$title_prefix $VERSION"
+          if [ -n "$existing" ]; then
+            # Same tag re-run: rewrite the open issue so its title and checklist
+            # name the latest version, and leave a comment as the audit trail.
+            echo "Tracking issue #$existing is still open for $TAG; updating it to version $VERSION."
+            gh issue edit "$existing" --title "$title" --body-file "$RUNNER_TEMP/bump-issue.md"
+            gh issue comment "$existing" --body "Re-run of \`$TAG\` ([run]($RUN_URL)) created Apps Script version \`$VERSION\`; the checklist above now points at that number."
+          else
+            gh issue create --title "$title" --assignee "$ASSIGNEE" --body-file "$RUNNER_TEMP/bump-issue.md"
+          fi
       - name: Scrub credentials
         if: always()
         run: rm -f "$clasp_config_auth"
