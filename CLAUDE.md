@@ -20,9 +20,10 @@
   and screenshots, and `RUNBOOK.md` (the click-through). `docs/` is the
   GitHub Pages site (homepage + privacy + terms) brand verification needs.
   `tools/check-listing.sh` is the contract: listing scopes == manifest scopes,
-  script reference resolves to `.clasp.json#scriptId` and `publishedVersion`
-  is a positive integer (the two fields the Editor-add-on console form
-  consumes), assets exist at the right sizes,
+  script reference resolves to `.clasp.json#scriptId` (the one field the
+  Editor-add-on console form consumes that the repo can verify; the version
+  number it also pins is deliberately not mirrored), assets exist at the
+  right sizes,
   publisher is `sprue.works` with an `@sprue.works` support address (brand
   verification checks name, support email, and homepage domain agree).
 - This file — gotchas that aren't visible from the code.
@@ -99,16 +100,15 @@ second-account checklist.
 - **Since #29** the pipeline matches that: `tools/release.sh` is `clasp push`
   + `clasp version` and nothing else — no deployment, no `deployment.json`
   (the old deployment still exists in Apps Script, orphaned and harmless).
-  `marketplace/listing.json` → `extension.publishedVersion` records the
-  version **currently pinned in the console** — what *is* live, not what
-  should be. Deliberately so: the repo can't write the console, so a
-  release-side bump would assert something untrue exactly in the window that
-  matters, and this way "publishedVersion < latest release" is a true,
-  checkable statement that the manual step is owed. After pasting the new
-  number into App Configuration, commit the same number to
-  `publishedVersion`. The tag workflow opens a tracking issue with that
-  two-step checklist whenever the new version differs from the pinned one;
-  the step summary carries the same text.
+  The **pinned version number is not mirrored in the repo** — `check-listing.sh`
+  fails if a `publishedVersion` key appears. #29 first added one (recording
+  "what is live", bumped by hand after the paste) and then removed it: the
+  repo can neither read nor write the console, so the copy was pure
+  bookkeeping that could only drift, and it cost a second manual step per
+  release. The record is the tag workflow's tracking issue (*release vX: bump
+  Slides add-on script version to N*, assigned to whoever pushed the tag):
+  open means the bump is owed, closed means it was done. The step summary
+  carries the same instruction.
 - `tools/test-release.sh` pins the exact clasp call sequence with a stub. Change
   the sequence deliberately and update the expectations together.
 
@@ -126,9 +126,10 @@ consequences:
 - The Editor-add-on listing is pinned to the **script ID plus a version
   number** (RUNBOOK §4), not to a deployment and not to HEAD. A tagged
   release does nothing for installed users until that version field is
-  bumped by hand; `listing.json`'s `extension.script` + `publishedVersion`
-  mirror the two console fields, and `check-listing.sh` rejects the old
-  `extension.deployment` pointer if it ever comes back.
+  bumped by hand; `listing.json`'s `extension.script` mirrors the script-ID
+  field, the version number stays console-only (see above), and
+  `check-listing.sh` rejects both the old `extension.deployment` pointer and
+  a `publishedVersion` key if either comes back.
 - Console facts the runbook now carries because they aren't in Google's docs:
   Apps Script refuses *Change GCP project* until the target project has a
   saved OAuth consent screen (so consent screen before attach);

@@ -26,12 +26,10 @@
     "type": "editorAddOn",
     "application": "slides",
     "script": {
-      "_comment": "What the Marketplace SDK App Configuration form for an Editor add-on actually pins: the Project Script ID (this reference resolves to .clasp.json#scriptId) plus a script VERSION NUMBER (publishedVersion below). There is no deployment-ID field on that path -- that belongs to the Google Workspace add-on integration type, which this add-on is not.",
+      "_comment": "What the Marketplace SDK App Configuration form for an Editor add-on actually pins: the Project Script ID (this reference resolves to .clasp.json#scriptId) plus a script VERSION NUMBER. There is no deployment-ID field on that path -- that belongs to the Google Workspace add-on integration type, which this add-on is not. The version number is deliberately NOT recorded here: the repo cannot read or write the console, so a copy would only drift. Each tagged release opens a tracking issue for the bump (RUNBOOK section 4); that issue's open/closed state is the record of whether the console pin is current.",
       "source": ".clasp.json",
       "field": "scriptId"
-    },
-    "_publishedVersionComment": "The script version number currently entered as 'Slides add-on script version' in App Configuration -- what IS live, not what should be. A tagged release (tools/release.sh) creates the next version and opens a tracking issue; the human who bumps the console field then sets this to the same number and commits, so the repo records the pin and the gap between the latest release and this value is the outstanding manual step (RUNBOOK section 4).",
-    "publishedVersion": 1
+    }
   },
 
   "oauth": {

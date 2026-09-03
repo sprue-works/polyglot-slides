@@ -48,16 +48,9 @@ expect_fail "clasp project file missing reports cleanly" ".clasp.json is missing
 grep -q "at Object\|at Module\|node:internal" "$work/out" && fail "missing .clasp.json must not produce a stack trace"
 
 fresh
-(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.extension.publishedVersion="1";fs.writeFileSync(f,JSON.stringify(j))')
-expect_fail "publishedVersion as a string" "publishedVersion must be a positive integer"
-
-fresh
-(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.extension.publishedVersion=0;fs.writeFileSync(f,JSON.stringify(j))')
-expect_fail "publishedVersion zero" "publishedVersion must be a positive integer"
-
-fresh
-(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));delete j.extension.publishedVersion;fs.writeFileSync(f,JSON.stringify(j))')
-expect_fail "publishedVersion missing" "publishedVersion must be a positive integer"
+# A pinned-version copy in the repo cannot be verified against the console and only drifts.
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.extension.publishedVersion=1;fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "publishedVersion copy in the repo" "publishedVersion is not tracked in the repo"
 
 fresh
 # The pre-#29 shape: a pointer at a deployment ID the Editor-add-on form never reads.
