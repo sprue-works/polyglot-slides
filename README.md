@@ -178,25 +178,36 @@ publishing account, which owns the script project in `.clasp.json` (#36);
 a personal account's token would only work while that account is shared in
 as editor, and ownership cannot be transferred to it later (see `CLAUDE.md`).
 
-1. On a machine with clasp 3 installed, log in as the deploying account:
+1. Signed in as the deploying account, turn on the **Apps Script API** at
+   <https://script.google.com/home/usersettings>. This is a per-user toggle,
+   separate from enabling the API on the GCP project (RUNBOOK §2), and only
+   the deploying account itself can flip it. `clasp push` works without it;
+   `clasp version` does not — the first tag after #36 failed there with
+   `User has not enabled the Apps Script API` after a successful push. The
+   workflow runs `clasp list-versions` right after authenticating so a
+   missing toggle fails every deploy at auth setup, not the tag job after
+   its push.
+2. On a machine with clasp 3 installed, log in as the deploying account:
    `clasp login` (add `--no-localhost` on a headless box). Check with
    `clasp show-authorized-user`.
-2. Copy the resulting `~/.clasprc.json` **verbatim** — the whole file,
+3. Copy the resulting `~/.clasprc.json` **verbatim** — the whole file,
    including `{"tokens":{"default":{...}}}` — into a repo secret named
    **`CLASPRC_JSON`**: *Settings → Secrets and variables → Actions → New
    repository secret*, or
    `gh secret set CLASPRC_JSON < ~/.clasprc.json`.
    The workflow writes the secret to a temp file and passes it to clasp via
    `clasp_config_auth`.
-3. (Optional) The job runs in the `apps-script` environment. GitHub creates it
+4. (Optional) The job runs in the `apps-script` environment. GitHub creates it
    on the first run; add required reviewers or a `main`/tag deployment-branch
    rule there if you want an approval gate on deploys.
-4. Push to `main` (or re-run the *Deploy* workflow from the Actions tab via
+5. Push to `main` (or re-run the *Deploy* workflow from the Actions tab via
    *Run workflow*) and confirm `clasp show-authorized-user` in the log shows
-   the expected account.
+   the expected account and the `clasp list-versions` preflight passes.
 
 The refresh token stays valid until revoked or the account's password / 2SV
-setup changes; if a deploy fails on auth, redo steps 1–2. If the project's
+setup changes; if a deploy fails on auth, redo steps 2–3. If it fails at
+`clasp list-versions` with `User has not enabled the Apps Script API`, the
+deploying account skipped step 1. If the project's
 OAuth consent screen (runbook step 3) is in *Testing*, Google expires
 refresh tokens after 7 days — the deploying account's login uses clasp's own
 client, not the project's, so that limit does not apply here.

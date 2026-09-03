@@ -112,6 +112,15 @@ Consequences, so nobody "fixes" this back:
   (`{"tokens":{"default":{...}}}`), not a token; clasp 3 also reads the legacy
   `{token, oauth2ClientSettings}` shape, so a clasp 2 file works too. Don't
   read the local `~/.clasprc.json` — it's a credential file.
+- The Apps Script API has **two** switches: the GCP project's API
+  enablement (RUNBOOK §2) and a **per-user** toggle at
+  `script.google.com/home/usersettings` that only the deploying account can
+  flip. `clasp push` works with the per-user toggle off; `clasp version`
+  fails (`User has not enabled the Apps Script API`) — so a green
+  push-to-main deploy is not proof the account can cut versions. The
+  `v1.0.1` tag run after #36 failed exactly that way. `deploy.yml` runs
+  `clasp list-versions` right after auth as a preflight (#38); if that step
+  fails, the fix is the toggle, not the token.
 - GitHub Actions expression contexts are placement-sensitive: `runner.*` is
   unavailable in job-level `env`, even though the file is valid YAML. Run
   `tools/lint-workflows.sh` after workflow edits; it uses actionlint to catch
