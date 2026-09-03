@@ -197,7 +197,7 @@ Staged artifacts (owned by `mari@guerrieri.codes`):
 |---|---|
 | Template deck | [`1GYqlX8OhHm4WPz8QoJcFvugjMNvztCKgxeHJOMtxeYE`](https://docs.google.com/presentation/d/1GYqlX8OhHm4WPz8QoJcFvugjMNvztCKgxeHJOMtxeYE/edit) |
 | Template's bound script | [`1hQJ6n7ButKEZbpFdLbyM0TGj555-5q-Q2diiEWSac5bGWZwo8ocBw_YP`](https://script.google.com/d/1hQJ6n7ButKEZbpFdLbyM0TGj555-5q-Q2diiEWSac5bGWZwo8ocBw_YP/edit) |
-| Dev script project (Path B source) | `1kDYoA2yi66enrdzqpVhjTaMKJjALmGg2fwCAzGRHmTnIe0QIrb24uxuE` (see `.clasp.json`) |
+| Dev script project (Path B source) | the `scriptId` in `.clasp.json` — owned by the `@sprue.works` publishing account, not by the account above (#36) |
 
 The bound script project is deliberately named **Polyglot Slides**: for a bound
 script the Extensions submenu takes the *script project's* name, so renaming

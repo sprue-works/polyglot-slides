@@ -72,6 +72,38 @@ a view-only deck and hitting the unverified-app consent screen). Don't claim the
 install path is verified off owner-side testing; INSTALL.md carries the
 second-account checklist.
 
+## The Apps Script project is org-owned, and that cannot be undone or redone later
+
+The script project in `.clasp.json` is owned by the `@sprue.works` publishing
+account (ideally inside a sprue.works Shared Drive), **not** by a personal
+Google account — the same side of the fence as GCP project `556097262294`,
+the OAuth consent screen, the Search Console property, and the `help@` /
+`contact@` groups. #36 recreated it there before #20 submitted the listing.
+
+Why recreate rather than transfer: **Google does not transfer Drive ownership
+across the consumer/Workspace boundary** — an Apps Script project is a Drive
+file, and the restriction is a deliberate data-protection rule, not a setting
+(<https://support.google.com/a/answer/1247799>). The only alternatives were a
+Shared Drive move with several admin-side moving parts, or a new project. A
+new project was cheap only while nothing was published and no one had
+installed the add-on; after launch the same change is a migration that strands
+every existing install, because the Marketplace listing pins the script ID.
+
+Consequences, so nobody "fixes" this back:
+
+- Never point `.clasp.json` at a personally owned project again, even for
+  convenience — the personal account can be *shared in* as an editor, but the
+  listing must keep pinning the org-owned ID.
+- `CLASPRC_JSON` must be minted **by the publishing account** (README
+  "One-time setup"); a personal account's token only works while that account
+  is shared in, and re-minting is the fix, not re-pointing the script.
+- Attaching the script to the GCP project (RUNBOOK §3b) and the Marketplace
+  SDK's *Project Script ID* + *version* (§4) are per-project facts that had to be
+  redone for the new project; a new project's versions start at `1`.
+- The old personal project still exists, orphaned. Leave it; don't delete it.
+- `tools/sync-template.sh` is unaffected — it targets the template deck's
+  **bound** script, a different project that stays with the deck's owner.
+
 ## CI deploys authenticate as a user, and the deployment ID is *not* what the Marketplace pins
 
 - Apps Script's API rejects service accounts for script projects, so

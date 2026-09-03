@@ -172,9 +172,10 @@ session (it prints the same instruction but opens no issue).
 The workflow authenticates as a real Google account: Apps Script's API does
 not accept service accounts for script projects, so a user OAuth refresh
 token is the only unattended option. That token grants **full Apps Script
-access to the owning account** — prefer a dedicated account that owns only
-this script project (the dev project must be shared with it as editor, or
-transferred).
+access to the account that minted it**. Mint it as the `@sprue.works`
+publishing account, which owns the script project in `.clasp.json` (#36);
+a personal account's token would only work while that account is shared in
+as editor, and ownership cannot be transferred to it later (see `CLAUDE.md`).
 
 1. On a machine with clasp 3 installed, log in as the deploying account:
    `clasp login` (add `--no-localhost` on a headless box). Check with
