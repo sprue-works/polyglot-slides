@@ -43,6 +43,11 @@ fresh
 expect_fail "clasp project without a scriptId" ".clasp.json has no scriptId"
 
 fresh
+rm "$work/repo/.clasp.json"
+expect_fail "clasp project file missing reports cleanly" ".clasp.json is missing or not valid JSON"
+grep -q "at Object\|at Module\|node:internal" "$work/out" && fail "missing .clasp.json must not produce a stack trace"
+
+fresh
 (cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.extension.publishedVersion="1";fs.writeFileSync(f,JSON.stringify(j))')
 expect_fail "publishedVersion as a string" "publishedVersion must be a positive integer"
 

@@ -38,7 +38,8 @@ const { checkCoverage } = require(path.resolve('tools/png-check.js'));
 
 const listing = readJson('marketplace/listing.json');
 const manifest = readJson('src/appsscript.json');
-const clasp = readJson('.clasp.json');
+let clasp = {};
+try { clasp = readJson('.clasp.json'); } catch (e) { fail(`.clasp.json is missing or not valid JSON (${e.message}); it holds the Project Script ID the Marketplace SDK pins`); }
 const shots = readJson('marketplace/screenshots.json');
 ok('marketplace/listing.json, screenshots.json parse');
 
