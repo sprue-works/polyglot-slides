@@ -208,7 +208,14 @@ failed exactly there.)
      is also the only way *into* the SDK later: there is no left-nav entry;
      click **Manage** on that page to reach *App Configuration* / *Store
      Listing* (steps 4–5).
-   - **Apps Script API** (already on if CI deploys work)
+   - **Apps Script API**. This project-level enablement is *not* the
+     per-user toggle at <https://script.google.com/home/usersettings>, which
+     the deploying account must flip itself (README "One-time setup" step 1).
+     A green push-to-main deploy proves neither: `clasp push` succeeds without
+     the per-user toggle and only `clasp version` fails (the `v1.0.1` tag run
+     did exactly that, after #36 moved the project to the publishing
+     account). `deploy.yml` now runs `clasp list-versions` at auth setup so
+     the gap surfaces on the next deploy rather than on the next tag.
 
 ## 3. OAuth consent screen
 
@@ -338,7 +345,7 @@ the latest release, and a closed one is the record that it caught up.
 | Language | `app.language` |
 | Application name | `app.name` |
 | Short description | `app.shortDescription` |
-| Detailed description | `marketplace/description.md` (Markdown is not rendered; paste as plain text, keep the blank lines) |
+| Detailed description | `marketplace/description.md` is the paste source and must match the console **verbatim** — `check-listing.sh` cannot read the console, so the repo file is the only record of what is live (trimmed at submission to the three mode bullets). Markdown is not rendered; paste as plain text, keep the blank lines |
 | Application icons | `icon-128.png`, `icon-32.png` |
 | Application card banner | `assets.cardBanner220` → `marketplace/assets/banner-220x140.png` (required, exactly 220×140; rendered from `banner.svg` by `tools/render-icons.sh`) |
 | Post-install tip | `app.postInstallTip` (required; names the Extensions menu path, so re-check it if the menu labels in `src/Code.js` change) |
@@ -346,7 +353,16 @@ the latest release, and a closed one is the record that it caught up.
 | Support links | Terms `urls.termsOfService`, Privacy `urls.privacyPolicy`, Support `urls.support` (the issue tracker URL, not an email) |
 | Developer name / email | `app.developerName` / `app.supportEmail` (prefilled from step 4 in most consoles; confirm they still read `sprue.works` / `help@sprue.works`) |
 | Regions | all |
+| Draft Tester Email Addresses | the Google accounts that should see the **draft** listing before it is published (up to 100; for a public listing they must be Gmail accounts). Testers are not notified when added |
+| Draft Tester Opt-Out URL | `urls.draftTesterOptOut` (required; Google: "a mechanism, such as a web form, that lets testers indicate that they don't want to be draft testers" — ours is the issue tracker, so a tester opts out by filing an issue, and the list above must be pruned by hand) |
 | Developer legal name / physical address | required by the Marketplace program policies for every listing (see step 3). Use the `sprue.works` details settled there |
+
+**Two tester lists, two gates** (hit live during the first submission): the
+Store Listing's *draft testers* control who can **see** the draft listing on
+the Marketplace; the OAuth consent screen's *Test users* (step 3) control who
+can **authorize** the add-on while the consent screen is in *Testing*. A
+tester who is on only one list either finds no listing or finds it and is
+refused at the consent prompt, so add them to both.
 
 ## 6. Publish
 
