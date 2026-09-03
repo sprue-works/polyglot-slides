@@ -16,7 +16,8 @@
 #     docs/icon.png is the same pixels as icon-128.png -- a renderer that
 #     thumbnails the SVG at its intrinsic size passes the size check with the
 #     mark in one corner (#27)
-#   - the listing URLs point at pages that exist under docs/
+#   - the listing URLs point at pages that exist under docs/, and the Store
+#     Listing's required Draft Tester Opt-Out URL is a well-formed https URL
 #   - the publisher identity is sprue.works: developerName and the public
 #     supportEmail's domain (brand verification checks these against the
 #     verified homepage domain); contactEmail is on the domain too so no
@@ -46,7 +47,7 @@ ok('marketplace/listing.json, screenshots.json parse');
 // Required text fields.
 for (const [obj, keys, label] of [
   [listing.app, ['name', 'shortDescription', 'detailedDescriptionFile', 'category', 'developerName', 'supportEmail', 'contactEmail'], 'app'],
-  [listing.urls, ['homepage', 'privacyPolicy', 'termsOfService', 'support'], 'urls'],
+  [listing.urls, ['homepage', 'privacyPolicy', 'termsOfService', 'support', 'draftTesterOptOut'], 'urls'],
 ]) {
   for (const k of keys) if (!obj || typeof obj[k] !== 'string' || !obj[k].trim()) fail(`listing.${label}.${k} is missing or empty`);
 }
@@ -158,7 +159,15 @@ const base = typeof urls.homepage === 'string' ? urls.homepage.replace(/\/$/, ''
 const publicBase = 'https://polyglot.sprue.works';
 if (urls.homepage !== `${publicBase}/`) fail(`urls.homepage must be exactly ${publicBase}/ (got ${urls.homepage})`);
 if (urls.support !== 'https://github.com/sprue-works/polyglot-slides/issues') {
-  fail(`urls.support must use the Sprue Works issue tracker (got ${urls.support})`);
+  fail(`urls.support must use the sprue.works issue tracker (got ${urls.support})`);
+}
+// Store Listing "Draft Tester Opt-Out URL" (required). Google only asks for a
+// mechanism testers can use to opt out, so the shape is all that can be checked.
+if (typeof urls.draftTesterOptOut === 'string') {
+  let parsed = null;
+  try { parsed = new URL(urls.draftTesterOptOut); } catch (e) { /* reported below */ }
+  if (!parsed || parsed.protocol !== 'https:' || !parsed.hostname) fail(`urls.draftTesterOptOut must be a well-formed https URL (got ${urls.draftTesterOptOut})`);
+  else ok(`urls.draftTesterOptOut ${urls.draftTesterOptOut}`);
 }
 for (const [k, expectFile] of [['homepage', 'index.html'], ['privacyPolicy', 'privacy.html'], ['termsOfService', 'terms.html']]) {
   const url = urls[k];

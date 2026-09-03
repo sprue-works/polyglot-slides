@@ -161,4 +161,16 @@ fresh
 (cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.app.postInstallTip="x".repeat(201);fs.writeFileSync(f,JSON.stringify(j))')
 expect_fail "over-long post-install tip" "postInstallTip is 201 chars"
 
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));delete j.urls.draftTesterOptOut;fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "missing draft tester opt-out URL" "listing.urls.draftTesterOptOut is missing"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.urls.draftTesterOptOut="http://github.com/sprue-works/polyglot-slides/issues";fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "plain-http draft tester opt-out URL" "draftTesterOptOut must be a well-formed https URL"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.urls.draftTesterOptOut="file an issue";fs.writeFileSync(f,JSON.stringify(j))')
+expect_fail "non-URL draft tester opt-out" "draftTesterOptOut must be a well-formed https URL"
+
 echo "all check-listing.sh tests passed"
