@@ -15,3 +15,12 @@ unavailable, start the rebase with
 `git -c commit.gpgsign=false rebase <upstream>`. Do not switch signing modes or
 manually commit halfway through a stalled rebase; doing so can duplicate its
 todo entries. Abort back to the untouched branch and restart cleanly instead.
+
+## `gh` resolves the repo from the current directory
+
+`gh pr edit 37 …` run from a scratch directory that happens to be inside some
+other checkout (a job tmp dir under `~/.claude-team`, for example) silently
+targets *that* repo's PR 37. During #36 this overwrote the description of an
+unrelated, already-merged PR in another repo, which then had to be restored
+from its edit history. Pass `-R sprue-works/polyglot-slides` on every `gh`
+call that names a PR or issue number, or run it from this checkout.
