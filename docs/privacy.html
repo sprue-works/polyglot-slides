@@ -39,14 +39,14 @@
   <h2 id="sharing">With whom the add-on shares, transfers, or discloses Google user data</h2>
   <ul>
     <li><strong>Google Translate.</strong> The text you choose to translate is transferred to Google Translate through Apps Script's built-in <code>LanguageApp</code> service, which is subject to <a href="https://policies.google.com/privacy">Google's privacy policy</a>. This is the only transfer the add-on makes. Only the text in the selection or slides you chose is sent, and only when you run an action.</li>
-    <li><strong>No one else.</strong> The add-on does not share, transfer, or disclose Google user data to the developer or to any third party. It has no analytics, no trackers, no advertising, and no external servers. Apart from the Google Translate transfer above, the add-on's only communication is between its own sidebar and its own Apps Script code inside Google's platform, which is how it reads and edits your presentation; that traffic leaves neither Google nor your account.</li>
+    <li><strong>No one else.</strong> The add-on does not share, transfer, or disclose Google user data to the developer or to any third party. It has no analytics, no trackers, no advertising, and no external servers. Apart from the Google Translate transfer above, the add-on's only communication is between its own sidebar and its own Apps Script code inside Google's platform, which is how it reads and edits your presentation; that traffic stays within Google's platform and runs under your own Google account.</li>
   </ul>
 
   <h2 id="protection">How the add-on protects Google user data</h2>
   <ul>
     <li>The add-on runs entirely inside Google's Apps Script sandbox, on Google's infrastructure, under the permissions you granted. The developer operates no server, database, or storage of any kind, and has no access to any user's presentation content or translations.</li>
     <li>Your presentation text is handled in memory for the duration of a single run and is transmitted only between Google services (Apps Script and Google Translate), inside Google's infrastructure, which <a href="https://cloud.google.com/docs/security/encryption-in-transit">encrypts data in transit</a>.</li>
-    <li>The only value the add-on stores is your language selection, kept in your own Google account's Apps Script user properties. Google scopes that store to your account and to this add-on, so it is readable only when you run the add-on; the developer cannot read it.</li>
+    <li>The only value the add-on stores is your language selection, kept in your own Google account's Apps Script user properties. Google scopes that store to your account and to this add-on; the add-on reads it only when you run it, and the value is never transmitted to the developer or to any third party.</li>
     <li>The add-on's source code is public at <a href="https://github.com/sprue-works/polyglot-slides">github.com/sprue-works/polyglot-slides</a>, so the behavior described here can be verified.</li>
   </ul>
   <p id="ai-ml"><strong>AI/ML model training.</strong> The add-on does not use Google user data to develop, improve, or train generalized artificial intelligence or machine learning models. It does not retain the data needed to do so.</p>
