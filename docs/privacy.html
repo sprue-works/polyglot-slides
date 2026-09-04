@@ -22,7 +22,7 @@
   <p class="muted">Effective 2026-09-04. Applies to the Polyglot Slides add-on for Google Slides ("the add-on"), published by sprue.works ("the developer").</p>
 
   <h2>Summary</h2>
-  <p>The add-on runs entirely inside Google's Apps Script platform. It has no server of its own, collects no personal data, and sends nothing anywhere except to Google Translate, and only the text you ask it to translate. The sections below state, in Google's terms, what Google user data the add-on accesses, how it uses that data, with whom it shares it, how it protects it, and how long it keeps it.</p>
+  <p>The add-on runs entirely inside Google's Apps Script platform. It has no server of its own and collects no personal data. The only recipient of your presentation text outside the Slides editor is Google Translate, and it receives only the text you ask it to translate. The sections below state, in Google's terms, what Google user data the add-on accesses, how it uses that data, with whom it shares it, how it protects it, and how long it keeps it.</p>
 
   <h2 id="access">What Google user data the add-on accesses</h2>
   <p>The add-on requests two Google permissions (OAuth scopes):</p>
@@ -39,7 +39,7 @@
   <h2 id="sharing">With whom the add-on shares, transfers, or discloses Google user data</h2>
   <ul>
     <li><strong>Google Translate.</strong> The text you choose to translate is transferred to Google Translate through Apps Script's built-in <code>LanguageApp</code> service, which is subject to <a href="https://policies.google.com/privacy">Google's privacy policy</a>. This is the only transfer the add-on makes. Only the text in the selection or slides you chose is sent, and only when you run an action.</li>
-    <li><strong>No one else.</strong> The add-on does not share, transfer, or disclose Google user data to the developer or to any third party. It has no analytics, no trackers, no advertising, and no external servers, and it makes no network requests other than the Google Translate call above.</li>
+    <li><strong>No one else.</strong> The add-on does not share, transfer, or disclose Google user data to the developer or to any third party. It has no analytics, no trackers, no advertising, and no external servers. Apart from the Google Translate transfer above, the add-on's only communication is between its own sidebar and its own Apps Script code inside Google's platform, which is how it reads and edits your presentation; that traffic leaves neither Google nor your account.</li>
   </ul>
 
   <h2 id="protection">How the add-on protects Google user data</h2>
