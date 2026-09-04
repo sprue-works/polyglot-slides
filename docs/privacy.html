@@ -19,34 +19,45 @@
 <main>
   <p><a href="./">← Polyglot Slides</a></p>
   <h1>Privacy policy</h1>
-  <p class="muted">Effective 2026-08-25. Applies to the Polyglot Slides add-on for Google Slides ("the add-on").</p>
+  <p class="muted">Effective 2026-09-04. Applies to the Polyglot Slides add-on for Google Slides ("the add-on"), published by sprue.works ("the developer").</p>
 
   <h2>Summary</h2>
-  <p>The add-on runs entirely inside Google's Apps Script platform. It has no server of its own, collects no personal data, and sends nothing anywhere except to Google Translate, and only the text you ask it to translate.</p>
+  <p>The add-on runs entirely inside Google's Apps Script platform. It has no server of its own, collects no personal data, and sends nothing anywhere except to Google Translate, and only the text you ask it to translate. The sections below state, in Google's terms, what Google user data the add-on accesses, how it uses that data, with whom it shares it, how it protects it, and how long it keeps it.</p>
 
-  <h2>What the add-on can access</h2>
+  <h2 id="access">What Google user data the add-on accesses</h2>
   <p>The add-on requests two Google permissions (OAuth scopes):</p>
   <ul>
-    <li><code>presentations.currentonly</code> — <strong>view and manage the presentation the add-on is open in.</strong> It cannot see any other file in your Drive. It reads text and layout from the elements you select (or the slides you choose) and inserts translated copies into the same presentation.</li>
-    <li><code>script.container.ui</code> — show its menu and sidebar inside Google Slides.</li>
+    <li><code>presentations.currentonly</code> — <strong>view and manage the presentation the add-on is open in.</strong> Under this scope the add-on accesses the text and layout (position and size) of the slide elements you select, or of the slide or slides you choose to duplicate, in that one presentation. It cannot see any other file in your Drive.</li>
+    <li><code>script.container.ui</code> — show its menu and sidebar inside Google Slides. This scope grants no access to user data; it only lets the add-on draw its interface.</li>
   </ul>
-  <p>It does not request access to your Drive, Gmail, Calendar, contacts, or account profile.</p>
+  <p>The add-on does not access your Drive file list, Gmail, Calendar, contacts, or Google account profile, and it does not request any scope that would allow it to. It does not access your email address or name.</p>
 
-  <h2>What is sent where</h2>
-  <ul>
-    <li><strong>Text you choose to translate</strong> is sent to Google Translate through Apps Script's built-in <code>LanguageApp</code> service, subject to <a href="https://policies.google.com/privacy">Google's privacy policy</a>. Nothing is sent until you click a translate action, and only the text in the selection or slides you chose.</li>
-    <li>Nothing is sent to the developer or to any third party. There are no analytics, trackers, or external servers.</li>
-  </ul>
-
-  <h2>What is stored</h2>
-  <ul>
-    <li><strong>Your language selection</strong>, stored in your own Google account's Apps Script user properties so the sidebar remembers it. It is visible only to you and is removed when you uninstall the add-on.</li>
-    <li>Nothing else. The add-on keeps no copy of your presentations or translations.</li>
-  </ul>
-  <p>Google may keep standard Apps Script execution logs (timestamps, error messages) on the project, as it does for any add-on; these do not include your slide content.</p>
-
-  <h2>Google API Services User Data Policy</h2>
+  <h2 id="use">How the add-on uses Google user data</h2>
+  <p>The add-on uses the text it reads for one purpose only: to produce translated copies of the selected elements or slides and insert them into the same presentation, when you explicitly run one of its actions from the sidebar or the Extensions menu. It reads layout only to place the copies next to the originals. Nothing is read until you start an action, and no data is used for any other purpose.</p>
   <p>Polyglot Slides' use of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements. Data obtained through Google APIs is used only to provide the add-on's translation features to you, is never sold, and is never used for advertising.</p>
+
+  <h2 id="sharing">With whom the add-on shares, transfers, or discloses Google user data</h2>
+  <ul>
+    <li><strong>Google Translate.</strong> The text you choose to translate is transferred to Google Translate through Apps Script's built-in <code>LanguageApp</code> service, which is subject to <a href="https://policies.google.com/privacy">Google's privacy policy</a>. This is the only transfer the add-on makes. Only the text in the selection or slides you chose is sent, and only when you run an action.</li>
+    <li><strong>No one else.</strong> The add-on does not share, transfer, or disclose Google user data to the developer or to any third party. It has no analytics, no trackers, no advertising, and no external servers, and it makes no network requests other than the Google Translate call above.</li>
+  </ul>
+
+  <h2 id="protection">How the add-on protects Google user data</h2>
+  <ul>
+    <li>The add-on runs entirely inside Google's Apps Script sandbox, on Google's infrastructure, under the permissions you granted. The developer operates no server, database, or storage of any kind, and has no access to any user's presentation content or translations.</li>
+    <li>Your presentation text is handled in memory for the duration of a single run and is transmitted only between Google services (Apps Script and Google Translate), inside Google's infrastructure, which <a href="https://cloud.google.com/docs/security/encryption-in-transit">encrypts data in transit</a>.</li>
+    <li>The only value the add-on stores is your language selection, kept in your own Google account's Apps Script user properties. Google scopes that store to your account and to this add-on, so it is readable only when you run the add-on; the developer cannot read it.</li>
+    <li>The add-on's source code is public at <a href="https://github.com/sprue-works/polyglot-slides">github.com/sprue-works/polyglot-slides</a>, so the behavior described here can be verified.</li>
+  </ul>
+  <p id="ai-ml"><strong>AI/ML model training.</strong> The add-on does not use Google user data to develop, improve, or train generalized artificial intelligence or machine learning models. It does not retain the data needed to do so.</p>
+
+  <h2 id="retention">Retention and deletion of Google user data</h2>
+  <ul>
+    <li><strong>Presentation content and translations</strong> are not retained after a run completes. The add-on keeps no copy of your presentations, your selected text, or the translations it produced; the translated copies exist only inside your presentation, where you control them.</li>
+    <li><strong>Your language selection</strong> (a list of language codes, no personal data) is retained in your account's Apps Script user properties so the sidebar remembers it. It is overwritten each time you run an action and is retained until you uninstall the add-on or revoke its access at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>, after which the add-on can no longer read it.</li>
+    <li><strong>Execution logs.</strong> Google may keep standard Apps Script execution logs (timestamps, error messages) for the add-on's script project, as it does for any add-on, and retains them under Google's own policy. These do not include your slide content or translations.</li>
+  </ul>
+  <p>To ask a question or make a request about your data, contact <a href="mailto:help@sprue.works">help@sprue.works</a>.</p>
 
   <h2>Children</h2>
   <p>The add-on is intended for teachers and other adults. It does not knowingly collect any information from anyone, including children.</p>
