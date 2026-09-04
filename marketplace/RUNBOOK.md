@@ -252,6 +252,38 @@ What it is **not** is a CASA security assessment; that is required only for
 justification before submitting (step 6) so the reviewer's first email does
 not cost a round trip.
 
+**The privacy policy is reviewed against a checklist — match its words.**
+Verification round 1 (2026-09-04, #41) rejected `docs/privacy.html` on five
+findings even though the page already described the add-on's behavior: the
+reviewer pattern-matches for explicit disclosures under headings that use
+Google's own vocabulary, literally "Google user data", and a section that
+merely implies one of them counts as missing. Before every submission or
+resubmission, confirm the page at `urls.privacyPolicy` has a clearly headed
+section for **each** of these, in these words:
+
+- [ ] what **Google user data** the app **accesses** (each scope, in plain
+      words, plus what it does *not* access);
+- [ ] how the app **uses** Google user data (the one purpose; Limited Use
+      statement);
+- [ ] with whom the app **shares, transfers, or discloses** Google user data
+      (every transfer named — for us, the text sent to Google Translate via
+      `LanguageApp` — and an explicit "no one else");
+- [ ] how the app **protects** Google user data (where it runs, what the
+      developer can and cannot access, what is stored where);
+- [ ] **retention and deletion** of Google user data (what is kept, for how
+      long, how the user gets rid of it);
+- [ ] the **AI/ML model-training disclosure** the sensitive-scope email lists
+      as a requirement: the app does not use Google user data to develop,
+      improve, or train generalized AI/ML models.
+
+Every claim on the page must be true to `src/Code.js` and `src/Sidebar.html`
+(no server, one user property, `LanguageApp` only, the open presentation
+only); do not pad it with retention periods or certifications that don't
+exist. Bump the effective date when the page changes. If a round rejects the
+policy, fix the page, confirm the Pages rebuild published it, resubmit in the
+Verification Center, **and reply to Google's email** — verification does not
+continue without the reply.
+
 Leave the app in **Testing** until the listing is ready, then **Publish app**
 and **Prepare for verification** → submit. Google emails questions to the
 developer contact; proof of domain ownership (step 1) is the other usual ask.
@@ -377,8 +409,11 @@ refused at the consent prompt, so add them to both.
   end to end rather than 3–5 days. The submission may also present the EU
   DSA trader-status question (step 3: non-trader). Common Marketplace
   rejections: screenshots that don't show the add-on in Slides, a consent
-  screen still in Testing, homepage missing the privacy link (ours has it).
-  Fix and resubmit; the review thread is in the Marketplace SDK page.
+  screen still in Testing, homepage missing the privacy link (ours has it),
+  and a privacy policy that fails the five-disclosure checklist in step 3
+  (round 1 did — walk the checklist before resubmitting). Fix and resubmit;
+  the Marketplace review thread is in the Marketplace SDK page, the OAuth
+  one in the Verification Center plus the email, which needs a reply.
 
 Once live, the listing URL is
 `https://workspace.google.com/marketplace/app/polyglot_slides/<app-id>`.
@@ -414,4 +449,5 @@ without copying anything. Re-run INSTALL.md's functional checklist from there.
 | Code in `src/` | push on merge; tag → new numbered version + a tracking issue for the bump | **bump *Slides add-on script version* in step 4 to the new number and close the tracking issue** — until then installed users keep the old version. No re-review for a version bump alone |
 | `oauthScopes` in `appsscript.json` | CI fails until `listing.json` matches | update consent screen + Marketplace SDK scopes; re-verification |
 | Name, icon, description | `check-listing.sh` validates the files | re-paste (steps 3–5); name/logo changes re-trigger brand verification |
+| `docs/privacy.html` | Pages redeploys on merge; `check-listing.sh` checks the URL resolves to the file | walk the five-disclosure checklist (step 3); the URL is unchanged so nothing to re-paste, but a pending verification round needs a resubmit + email reply |
 | `developerName`, `supportEmail`, `contactEmail` | `check-listing.sh` enforces `sprue.works` / an `@sprue.works` support address | re-paste (steps 3–5); a publisher-name or support-email change re-triggers brand verification |
