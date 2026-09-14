@@ -1,15 +1,14 @@
 # Cloudflare configuration for polyglot.sprue.works: the hostname's DNS record
-# and, once cut over, the Workers route that sends it to the docs-site Worker.
+# and the Workers route that sends it to the docs-site Worker.
 #
 # Why Terraform owns the hostname rather than a `custom_domain` route in
 # wrangler.jsonc: a non-interactive `wrangler deploy` (what Workers Builds
 # runs) attaches a Custom Domain by replacing whatever DNS record exists on
-# the hostname without asking, and the Terraform provider cannot express that
-# replacement atomically either. A Workers *route* over a proxied DNS record
-# can be reached with two in-place changes and no gap, so that is the shape
-# here, and wrangler.jsonc declares no route at all (tools/check-listing.sh
-# enforces that). See marketplace/RUNBOOK.md §1c and CLAUDE.md "The docs site
-# is a Worker".
+# the hostname without asking, which would take DNS-as-code out of this
+# repo's hands. A Workers *route* over a proxied DNS record keeps the record
+# here (the intent of #23), and wrangler.jsonc declares no route at all
+# (tools/check-listing.sh enforces that). See marketplace/RUNBOOK.md §1 and
+# CLAUDE.md "The docs site is a Worker".
 #
 # State lives in the GCS bucket that sprue-works/infrastructure provisions for
 # this repository (backend.tf). Pushes to main that touch terraform/ (or the
@@ -49,22 +48,11 @@ variable "worker_name" {
   default     = "polyglot-slides"
 }
 
-# The cutover switch. false: the record is the DNS-only CNAME to GitHub Pages
-# exactly as it exists today, and there is no route. true: the record becomes
-# proxied (an in-place update; GitHub Pages keeps serving through Cloudflare,
-# whose SSL mode for the zone is Full) and the route below sends the hostname
-# to the Worker instead. Flip it in its own PR (RUNBOOK §1c); flipping it back
-# is the rollback.
-variable "cutover" {
-  description = "Serve polyglot.sprue.works from the Worker (true) or leave it on GitHub Pages (false)"
-  type        = bool
-  default     = false
-}
-
 # The record was created through the Cloudflare API by the retired
-# tools/reconcile-pages-dns.sh. This import block adopts it into state on the
-# first apply from main; the plan for that apply must read
-# "1 to import, 0 to add, 0 to change, 0 to destroy". Once it is in state the
+# tools/reconcile-pages-dns.sh as a DNS-only CNAME to GitHub Pages. This
+# import block adopts it into state on the first apply from main, which also
+# flips it to proxied and adds the route below: the expected first plan is
+# "1 to import, 1 to add, 1 to change, 0 to destroy". Once it is in state the
 # block is a no-op and stays as a record of where the resource came from.
 import {
   to = cloudflare_dns_record.docs_site
@@ -82,19 +70,19 @@ data "cloudflare_dns_records" "docs_site" {
   }
 }
 
+# Proxied so the route below receives the traffic. The CNAME target is the
+# old GitHub Pages origin and is never reached once the route is in front;
+# it stays because changing the record type would be a replacement, which
+# prevent_destroy refuses -- the hostname must never be unresolvable.
 resource "cloudflare_dns_record" "docs_site" {
   zone_id = var.zone_id
   name    = var.hostname
   type    = "CNAME"
   content = "sprue-works.github.io"
   ttl     = 1
-  proxied = var.cutover
-  # No `comment`: the live record has none, and the first plan must be a
-  # pure import ("0 to change"). Add one in a later PR if wanted.
+  proxied = true
 
   lifecycle {
-    # The hostname is what Google holds; a replacement would leave it
-    # unresolvable for the gap. Every change here must be in place.
     prevent_destroy = true
 
     precondition {
@@ -107,11 +95,10 @@ resource "cloudflare_dns_record" "docs_site" {
   }
 }
 
-# Present only after the cutover. A Workers route needs a proxied record on
-# the hostname to receive traffic, hence the dependency on the record update.
+# The route takes precedence over the record's origin, so from the first
+# apply the Worker serves the hostname. A route needs a proxied record on the
+# hostname to receive traffic, hence the dependency.
 resource "cloudflare_workers_route" "docs_site" {
-  count = var.cutover ? 1 : 0
-
   zone_id = var.zone_id
   pattern = "${var.hostname}/*"
   script  = var.worker_name

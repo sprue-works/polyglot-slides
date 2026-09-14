@@ -50,30 +50,22 @@ same arrangement as sprue-works/website. Production is `main`; every other
 branch gets a preview URL (README "Docs site"). The hostname
 `polyglot.sprue.works` is **not** declared in `wrangler.jsonc`: its DNS record
 and the Workers route that sends it to the Worker are owned by `terraform/`
-(README "Terraform"), and one variable there, `cutover`, is the switch
-between GitHub Pages and the Worker.
+(README "Terraform"), applied from `main`.
 
 CI pins what Google depends on: `tools/test-docs-worker.sh` serves `docs/`
 with `wrangler dev` and checks that `/`, `/privacy.html`, and `/terms.html`
 answer 200 with no redirect and byte-identical bodies; `tools/check-listing.sh`
 keeps `html_handling` at `none`, refuses any route in `wrangler.jsonc`, and
-keeps the GitHub Pages control files in place until `cutover` is `true`.
+checks that `terraform/main.tf` still routes this hostname to this Worker.
 
 Why the hostname is Terraform's and not wrangler's: a non-interactive
 `wrangler deploy` (what Workers Builds runs on every push to `main`) attaches
 a `custom_domain` by sending `override_existing_dns_record: true`, replacing
-whatever record sits on the hostname **without asking** (wrangler 4.131.1,
-`publishCustomDomains`). With such a route in the config, merging any PR would
-be the cutover. The Terraform provider cannot express that replacement
-atomically either. A Workers *route* over a *proxied* record can be reached
-with two in-place changes and no gap, so that is the shape, and the switch is
-a reviewed plan rather than a deploy side effect.
+whatever record sits on the hostname without asking — DNS-as-code would then
+live nowhere. A Workers *route* over a *proxied* record keeps the record in
+this repo (#23's intent) and is what the stack declares.
 
-Until 1c has run with `cutover = true`, the *live* site is still the legacy
-GitHub Pages build of `main:/docs` behind the DNS-only CNAME to
-`sprue-works.github.io` — the very record `terraform/main.tf` imports.
-
-### 1a. Connect the repo to Workers Builds (one-time)
+### 1a. Connect the repo to Workers Builds (one-time, before merging #48)
 
 From an account with access to the Igneus Cloudflare account (the one that
 owns the `sprue.works` zone and the `website` Worker):
@@ -81,32 +73,42 @@ owns the `sprue.works` zone and the `website` Worker):
 1. Cloudflare dashboard → Workers & Pages → Create → **Continue with GitHub**
    → the Cloudflare GitHub App is already authorised for the `sprue-works`
    org from the website; select `sprue-works/polyglot-slides`. (A repository
-   connection for this repo may already exist from #47's exploration; the
-   dashboard reuses it.)
+   connection for this repo already exists from #47; the dashboard reuses it.)
 2. Worker name **`polyglot-slides`** (must match `name` in `wrangler.jsonc`),
    production branch `main`, no build command, deploy command left at the
    default. Create and deploy. With no route declared this publishes only
-   `https://polyglot-slides.igneus-fdc.workers.dev`.
+   `https://polyglot-slides.igneus-fdc.workers.dev`; while `main` has no
+   `wrangler.jsonc` yet the first build fails harmlessly.
 3. In the Worker: Settings → Build → enable **non-production branch builds**
    and **pull request comments**. Settings → Domains & Routes should show the
-   `workers.dev` route and preview URLs enabled, from `wrangler.jsonc`, and no
-   custom domain.
+   `workers.dev` route and preview URLs enabled, and no custom domain.
 
 Branch builds run `wrangler versions upload`, which never touches routes or
-domains, so previews are safe at every stage.
+domains. Open the PR's preview URL (the Workers Builds comment, or
+`https://<branch-alias>-polyglot-slides.igneus-fdc.workers.dev/`) and compare
+the URLs Google holds against the files, from the PR's checkout:
 
-### 1b. Wire and verify Terraform, then verify the Worker
+```bash
+host=<branch-alias>-polyglot-slides.igneus-fdc.workers.dev
+for p in / /privacy.html /terms.html; do
+  curl -s -o /dev/null -w "$p %{http_code} %{redirect_url}\n" "https://$host$p"
+done
+curl -s "https://$host/" | cmp - docs/index.html
+curl -s "https://$host/privacy.html" | cmp - docs/privacy.html
+curl -s "https://$host/terms.html" | cmp - docs/terms.html
+```
 
-Terraform prerequisites (one-time, repo settings):
+Every line must be `200` with an empty redirect URL and every `cmp` silent.
+A `307` means `html_handling` drifted from `none`.
 
-1. Actions **variables** (non-secret; the same shape as sprue-works/website):
-   `TF_STATE_BUCKET` = `sprue-works-polyglot-slides-tfstate`,
-   `TF_STATE_PREFIX` = `terraform/polyglot-slides/dns`,
-   `GCP_WORKLOAD_IDENTITY_PROVIDER` = the provider name from
-   sprue-works/infrastructure's `workload_identity_provider_name` output
-   (`projects/1081723767108/locations/global/workloadIdentityPools/github-actions/providers/github-oidc`
-   at the time of writing). The bucket and trust are the `polyglot-slides`
-   entry of that repo's `consumers` map (infrastructure#1).
+### 1b. Terraform prerequisites (one-time, repo settings)
+
+1. Actions **variables** (non-secret; set in #47): `TF_STATE_BUCKET` =
+   `sprue-works-polyglot-slides-tfstate`, `TF_STATE_PREFIX` =
+   `terraform/polyglot-slides/dns`, `GCP_WORKLOAD_IDENTITY_PROVIDER` = the
+   provider name from sprue-works/infrastructure's
+   `workload_identity_provider_name` output. The bucket and trust are the
+   `polyglot-slides` entry of that repo's `consumers` map (infrastructure#1).
 2. The `CLOUDFLARE_API_TOKEN` secret must carry, on the `sprue.works` zone,
    **Zone:Read**, **DNS:Edit**, and **Workers Routes:Edit**. The token minted
    for the retired reconciler had only the first two; edit it in Cloudflare
@@ -115,102 +117,43 @@ Terraform prerequisites (one-time, repo settings):
 3. Optionally dispatch *Actions → OIDC isolation check* from a branch other
    than `main`; it passes only when Google rejects that branch's token.
 
-Then the first apply, which must be a pure import:
+### 1c. Merge = cutover (production-affecting)
 
-4. Merging the PR that adds `terraform/` runs *Terraform → Plan and apply* on
-   `main`. Its plan must read **`1 to import, 0 to add, 0 to change, 0 to
-   destroy`**: the existing CNAME is adopted, nothing else. An in-place change
-   there means the live record and the HCL have drifted; the workflow's
-   guard step fails the run before applying in that case, so reconcile
-   (fix the HCL to match, or fix the record by hand and note why) and re-run
-   with `gh run rerun <run-id>`. The same re-run is how to retry once the
-   variables in step 1 exist; the apply path is push-to-`main` only, with no
+Merging the PR that adds `terraform/` is the switch from GitHub Pages to the
+Worker, and it is not zero-downtime: the same merge removes `docs/CNAME`
+from the published branch, so GitHub Pages drops the custom domain on its
+next build, and the hostname serves nothing useful until the Terraform
+apply has run. Traffic was effectively zero when this was decided (#47);
+if a Google verification round is in flight, time the merge accordingly and
+verify promptly.
+
+1. Merge. *Terraform → Plan and apply* runs on `main`. The expected first
+   plan is **`1 to import, 1 to add, 1 to change, 0 to destroy`**: the CNAME
+   is adopted and flipped to proxied, and the route is added. The workflow
+   refuses any plan that deletes or replaces a resource. If the apply fails
+   at Google auth or Cloudflare, fix the prerequisite in 1b and re-run with
+   `gh run rerun <run-id>`; the apply path is push-to-`main` only, with no
    manual dispatch, because the protected branch is its only authorization
-   boundary. From here the record is Terraform's; do not edit it in the
-   dashboard.
-
-Then the Worker, before touching the hostname:
-
-5. Open a PR's preview URL (the Workers Builds comment, or
-   `https://<branch-alias>-polyglot-slides.igneus-fdc.workers.dev/`) and the
-   production copy at `https://polyglot-slides.igneus-fdc.workers.dev/`.
-6. From a checkout of `main`, compare bytes and status codes for the URLs
-   Google holds:
-
-   ```bash
-   host=polyglot-slides.igneus-fdc.workers.dev
-   for p in / /privacy.html /terms.html; do
-     curl -s -o /dev/null -w "$p %{http_code} %{redirect_url}\n" "https://$host$p"
-   done
-   curl -s "https://$host/" | cmp - docs/index.html
-   curl -s "https://$host/privacy.html" | cmp - docs/privacy.html
-   curl -s "https://$host/terms.html" | cmp - docs/terms.html
-   ```
-
-   Every line must be `200` with an empty redirect URL and every `cmp`
-   silent. A `307` here means `html_handling` drifted from `none`.
-
-### 1c. Cut over from GitHub Pages (production-affecting; a reviewed PR does this)
-
-Google's reviewers fetch `https://polyglot.sprue.works/privacy.html` and
-`/terms.html` by exactly those URLs while verification is in progress, so
-the switch has to leave the hostname resolving at every moment. The cutover
-is two in-place changes Terraform makes in order, both reversible:
-
-- the CNAME becomes **proxied** (Cloudflare fronts GitHub Pages; the zone's
-  SSL mode is *Full*, and Pages already holds a certificate for the
-  hostname, so nothing downgrades);
-- a **Workers route** `polyglot.sprue.works/*` → `polyglot-slides` is added,
-  which takes precedence over the origin. From that apply on, the Worker
-  serves the hostname.
-
-1. Open the cutover PR: in `terraform/main.tf`, change the default of
-   `variable "cutover"` from `false` to `true`, and nothing else. CI validates
-   the HCL; `check-listing.sh` reads the same default and from now on allows
-   the Pages control files to go (step 4).
-2. Review the merge's *Plan and apply* run before it applies? It cannot be
-   paused — the apply job runs the plan it just made — so review the **PR**
-   with the expected plan in mind: `0 to add` on the record (one in-place
-   update, `proxied: false → true`), `1 to add` for the route, nothing
-   destroyed. `prevent_destroy` on the record makes a replacement fail the
-   plan rather than run.
-3. Verify the live hostname the same way as 1b step 6, with
+   boundary.
+2. Verify the live hostname with the loop from 1a, using
    `host=polyglot.sprue.works`, plus one request through a resolver that has
    not cached the old answer (`curl --resolve` against a Cloudflare edge IP,
-   or a phone off wifi). The record's TTL is automatic, so the switch is
-   visible within seconds. **Rollback** is a PR setting `cutover` back to
-   `false`: the route is removed and the record returns to DNS-only, and
-   GitHub Pages — still enabled and still holding the domain at this point —
-   resumes serving.
-4. Switch GitHub Pages off so it cannot be re-pointed at the hostname:
+   or a phone off wifi). The zone's SSL mode is *Full*.
+3. Switch GitHub Pages off so it cannot be re-pointed at the hostname:
 
    ```bash
    gh api -X DELETE repos/sprue-works/polyglot-slides/pages
    ```
 
-   Organization Settings → Pages → Verified domains may keep `sprue.works`;
-   it is harmless and blocks another repo from claiming the hostname on
-   GitHub's side. After this step the rollback above no longer has a
-   Pages site to fall back to; re-enabling Pages (1a of the old runbook, in
-   git history) would be needed first.
-5. Open the cleanup PR — a separate PR, after step 3's verification, never
-   the cutover PR itself: add **`terraform/CUTOVER.md`** recording the
-   *Terraform → Plan and apply* run URL that added the route
-   (`https://github.com/sprue-works/polyglot-slides/actions/runs/<id>`), the
-   date, and the verification output from step 3; then delete `docs/CNAME`,
-   `docs/.nojekyll` and `docs/.assetsignore`. `check-listing.sh` refuses to
-   let the control files go unless `cutover` is `true` **and** that file
-   names an apply run, so the switch and the deletion cannot land in one
-   commit. Also delete the **`pages-dns`** and **`github-pages`**
-   environments in repo settings, and drop the "Until 1c has run" paragraph
-   above and this step.
-   Nothing in that PR touches a served byte, so the URLs stay as they are.
-   The CNAME's `content` (`sprue-works.github.io`) becomes meaningless once
-   the route is in front of it; leave it. Swapping the record for an
-   originless placeholder (`AAAA 100::`) would be a type change, i.e. a
-   replacement, which the record's `prevent_destroy` refuses by design — the
-   hostname must never be unresolvable — so that tidy-up is not worth its
-   own lifecycle exception.
+   Then delete the **`pages-dns`** and **`github-pages`** environments in
+   repo settings. Organization Settings → Pages → Verified domains may keep
+   `sprue.works`; it is harmless and blocks another repo from claiming the
+   hostname on GitHub's side.
+
+From here the record is Terraform's; do not edit it in the dashboard. Its
+CNAME `content` (`sprue-works.github.io`) is never reached once the route is
+in front and stays because a type change would be a replacement, which
+`prevent_destroy` refuses.
 
 **Brand verification needs proof you own the homepage's domain.** Add
 `sprue.works` to Search Console and complete its DNS verification before the

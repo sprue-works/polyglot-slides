@@ -4,7 +4,8 @@
   "compatibility_date": "2026-09-12",
 
   // Assets-only Worker: no script, everything under docs/ is served as-is
-  // (minus docs/.assetsignore). Mirrors sprue-works/website's wrangler.jsonc.
+  // (Cloudflare never serves _redirects itself). Mirrors sprue-works/website's
+  // wrangler.jsonc.
   //
   // html_handling is "none", not the "auto-trailing-slash" default the main
   // site uses: the default answers /privacy.html with a 307 to /privacy, and

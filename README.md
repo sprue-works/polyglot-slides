@@ -151,10 +151,8 @@ same setup as sprue-works/website. There is no build step; the committed
 files are what is served.
 
 - **Production:** every push to `main` runs `npx wrangler deploy`, which
-  publishes `https://polyglot-slides.igneus-fdc.workers.dev`. That is also
-  what https://polyglot.sprue.works serves **once the Terraform cutover has
-  run** (`marketplace/RUNBOOK.md` §1c); before it, the hostname still points
-  at GitHub Pages.
+  publishes `https://polyglot-slides.igneus-fdc.workers.dev`; the Workers
+  route in `terraform/` serves the same Worker at https://polyglot.sprue.works.
 - **Previews:** every other branch runs `npx wrangler versions upload`, which
   publishes a preview aliased by branch name at
   `https://<alias>-polyglot-slides.igneus-fdc.workers.dev`, where `<alias>` is
@@ -169,12 +167,9 @@ files are what is served.
   from the file; `tools/test-docs-theme.sh` pins the legal pages' wording.
 - **Hostname and DNS:** `polyglot.sprue.works` is *not* in `wrangler.jsonc`
   (`tools/check-listing.sh` rejects any route there). Its DNS record and the
-  Workers route that sends it to this Worker live in [`terraform/`](#terraform),
-  where one variable, `cutover`, switches the hostname between GitHub Pages
-  and the Worker in a reviewed plan. Declaring it as a `custom_domain` would
-  let a production deploy replace the DNS record without asking. The
-  one-time cutover is `marketplace/RUNBOOK.md` §1c; until it runs, the live
-  hostname still points at GitHub Pages.
+  Workers route that sends it to this Worker live in [`terraform/`](#terraform).
+  Declaring it as a `custom_domain` would let a production deploy replace
+  the DNS record without asking, taking DNS-as-code out of the repo.
 
 Run it locally the way production does with `npx wrangler dev`.
 
@@ -182,8 +177,8 @@ Run it locally the way production does with `npx wrangler dev`.
 
 `terraform/` holds the Cloudflare configuration for `polyglot.sprue.works`
 that must not live in `wrangler.jsonc`: the hostname's DNS record (imported
-from the retired shell reconciler) and, once `variable "cutover"` is `true`,
-the Workers route to the docs Worker. Nothing in it is applied by hand. It
+from the retired shell reconciler, kept proxied) and the Workers route that
+sends the hostname to the docs Worker. Nothing in it is applied by hand. It
 mirrors sprue-works/website's `terraform/`:
 
 - **State** lives in the GCS bucket `sprue-works-polyglot-slides-tfstate`
@@ -213,15 +208,14 @@ mirrors sprue-works/website's `terraform/`:
   `Workers Routes:Edit` on the `sprue.works` zone.
 - **Import.** The CNAME was created through the Cloudflare API before this
   Terraform existed. An `import` block adopts it on the first apply from
-  `main`; that plan must read `1 to import, 0 to add, 0 to change, 0 to
-  destroy`. An in-place change there means live and HCL have drifted: stop
-  and reconcile. The record carries `prevent_destroy`.
-- **Cutover.** `variable "cutover"` defaults to `false` (DNS-only CNAME to
-  GitHub Pages, no route). A PR flipping it to `true` makes the record
-  proxied and adds the route: two in-place changes, no gap, and flipping it
-  back is the rollback. `tools/check-listing.sh` reads the same default and
-  keeps the Pages control files in `docs/` while it is `false`. The
-  procedure is `marketplace/RUNBOOK.md` §1c.
+  `main`, which also flips it to proxied and adds the route, so that plan
+  reads `1 to import, 1 to add, 1 to change, 0 to destroy`. The record
+  carries `prevent_destroy` and a precondition that it is the hostname's
+  only record, and the workflow refuses any plan that deletes or replaces a
+  resource. That first apply was the cutover from GitHub Pages
+  (`marketplace/RUNBOOK.md` §1c). `tools/check-listing.sh` reads
+  `terraform/main.tf` and fails if the route or record stop matching the
+  listing hostname, the Worker name, or the zone.
 - **Local loop.** `terraform -chdir=terraform fmt -recursive`, then
   `terraform -chdir=terraform init -backend=false && terraform -chdir=terraform
   validate`. Plans need the bucket, so they only run from `main` via the

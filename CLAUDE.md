@@ -268,29 +268,24 @@ about it are not the obvious configuration:
 - **`polyglot.sprue.works` is Terraform's** (`terraform/`, state in the
   foundation bucket sprue-works/infrastructure provisions as the
   `polyglot-slides` consumer, applied only from `main` by
-  `.github/workflows/terraform.yml`). The stack imports the existing CNAME
-  and holds one switch, `variable "cutover"`: `false` keeps the DNS-only
-  CNAME to GitHub Pages; `true` makes the record proxied and adds a
-  `cloudflare_workers_route` to the Worker — two in-place changes, no gap,
-  rollback by flipping it back. A Custom Domain was rejected for the reason
-  above and because the provider can't replace a record with a domain
-  atomically. `check-listing.sh` reads that default too: while it is `false`
-  the Pages control files must stay in `docs/`. The record carries
-  `prevent_destroy`; a plan that wants to replace it is wrong, not
-  something to `-target` around.
+  `.github/workflows/terraform.yml`). The stack imports the CNAME the retired
+  reconciler created, keeps it proxied, and declares a
+  `cloudflare_workers_route` to the Worker — a route over a proxied record
+  rather than a Custom Domain, for the reason above and because the
+  provider can't replace a record with a domain atomically. The record
+  carries `prevent_destroy` and a precondition that it is the hostname's
+  sole record; the workflow refuses any plan that deletes or replaces
+  anything. `check-listing.sh` reads `terraform/main.tf` and fails if the
+  route or record stop matching the listing hostname, the Worker name, or
+  the zone. Don't edit the record in the dashboard.
 
-Until the cutover, `docs/CNAME` and `docs/.nojekyll` stay in the repo:
-GitHub Pages still serves the live hostname from `main:/docs`, and removing
-`CNAME` from the published branch drops its custom domain immediately.
-`docs/.assetsignore` keeps them out of the Worker. Removing all three is the
-last step of RUNBOOK §1c, and `check-listing.sh` allows it only when
-`cutover` is `true` *and* `terraform/CUTOVER.md` names the apply run that
-added the route — an explicit attestation, so the switch and the deletion
-cannot ride one commit (the apply and the Pages build are separate
-operations, and the route must be verified live in between). The old Pages DNS tooling
+#47 first built a two-phase cutover (a `cutover` variable, transitional
+checks keeping `docs/CNAME` until an attestation file appeared). It was
+dropped once the site was confirmed to have effectively zero traffic: the
+merge of #48 was the cutover, with a brief gap while GitHub Pages lost the
+domain and Terraform applied. The old Pages DNS tooling
 (`tools/reconcile-pages-dns.sh`, `pages-dns.yml`, the DNS-only CNAME rule)
-was retired in #47 — Terraform owns the record now, so don't recreate it and
-don't edit the record in the dashboard.
+went in the same PR — Terraform owns the record now, so don't recreate it.
 
 The Workers Builds connection itself (repo ↔ Worker, triggers, build token)
 has no Terraform resource in the Cloudflare provider (checked at v5.25.0)

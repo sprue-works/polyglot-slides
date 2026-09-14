@@ -8,7 +8,7 @@
 #   - each body is byte-identical to the file under docs/;
 #   - the extensionless paths GitHub Pages served (/privacy, /terms) still
 #     resolve, and an unknown path is a 404;
-#   - Pages control files and _redirects itself are not served.
+#   - _redirects itself is not served.
 #
 # Needs node + network on first run (npx fetches wrangler). Used by
 # .github/workflows/ci.yml; run locally before changing wrangler.jsonc or
@@ -86,10 +86,8 @@ s="$(status "/index.html")"
 [[ "$s" == "200 " ]] || fail "/index.html returned '$s'; html_handling must not redirect .html paths"
 
 [[ "$(status /nope)" == 404* ]] || fail "/nope should be a 404"
-for hidden in /_redirects /.assetsignore /CNAME /.nojekyll; do
-  [[ "$(status "$hidden")" == 404* ]] || fail "$hidden must not be served"
-done
-ok "unknown paths and control files are 404"
+[[ "$(status /_redirects)" == 404* ]] || fail "/_redirects must not be served"
+ok "unknown paths and _redirects are 404"
 
 if (( failures )); then echo "$failures docs-worker check(s) failed" >&2; exit 1; fi
 echo "docs worker checks passed"
