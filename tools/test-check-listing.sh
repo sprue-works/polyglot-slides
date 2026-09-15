@@ -249,7 +249,25 @@ fresh
 expect_fail "zone_id default drifted" 'variable "zone_id" must default to the sprue.works zone'
 
 fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="terraform/main.tf";fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/prevent_destroy\s*=\s*true/,"prevent_destroy = false"))')
+expect_fail "prevent_destroy switched off" "must keep prevent_destroy = true"
+
+fresh
+# The route block commented out line by line still contains every keyword;
+# the check must not be fooled by it.
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="terraform/main.tf";let s=fs.readFileSync(f,"utf8");s=s.replace(/resource\s+"cloudflare_workers_route"[\s\S]*?\n\}\n/,(m)=>m.split("\n").map((l)=>l?"# "+l:l).join("\n"));fs.writeFileSync(f,s)')
+expect_fail "route resource commented out" "must declare a cloudflare_workers_route"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="terraform/main.tf";let s=fs.readFileSync(f,"utf8");s=s.replace(/resource\s+"cloudflare_dns_record"[\s\S]*?\n\}\n/,(m)=>"/*\n"+m+"*/\n");fs.writeFileSync(f,s)')
+expect_fail "DNS record resource commented out" "must declare the cloudflare_dns_record"
+
+fresh
 printf 'polyglot.sprue.works\n' >"$work/repo/docs/CNAME"
 expect_fail "GitHub Pages control file resurrected" "docs/CNAME is a GitHub Pages control file"
+
+fresh
+: >"$work/repo/docs/.nojekyll"
+expect_fail "GitHub Pages .nojekyll resurrected" "docs/.nojekyll is a GitHub Pages control file"
 
 echo "all check-listing.sh tests passed"

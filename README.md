@@ -202,8 +202,9 @@ mirrors sprue-works/website's `terraform/`:
   `terraform/`. Pull requests get `fmt -check`, `init -backend=false`, and
   `validate` only; a push to `main` that touches those paths additionally
   plans and applies. Between plan and apply, a guard step fails the run if
-  the plan would delete or replace any resource; in-place updates (such as
-  the first apply's `proxied` flip) go through unattended. The apply job is the only place
+  the plan would delete or replace any resource, or if a resource being
+  imported differs from the HCL in anything but `proxied` (the first apply's
+  expected flip); other in-place updates go through unattended. The apply job is the only place
   the Cloudflare token appears; it needs `Zone:Read`, `DNS:Edit`, and
   `Workers Routes:Edit` on the `sprue.works` zone.
 - **Import.** The CNAME was created through the Cloudflare API before this

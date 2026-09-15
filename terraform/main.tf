@@ -100,8 +100,10 @@ resource "cloudflare_dns_record" "docs_site" {
 # hostname to receive traffic, hence the dependency. It also needs the Worker
 # to exist: Workers Builds creates and deploys it from the same push to main
 # that triggers this apply, independently, so the first apply can lose that
-# race and fail on this resource. That is a re-run after the deploy is green
-# (RUNBOOK §1c), not a config problem; the record is untouched by the failure.
+# race and fail on this resource. Terraform does not roll back: the record
+# will already be imported and proxied, and the hostname serves GitHub's 404
+# through Cloudflare until the re-run after the deploy is green (RUNBOOK
+# §1c). That is the accepted gap, not a config problem.
 resource "cloudflare_workers_route" "docs_site" {
   zone_id = var.zone_id
   pattern = "${var.hostname}/*"

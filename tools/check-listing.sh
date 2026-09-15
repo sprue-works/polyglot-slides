@@ -212,7 +212,10 @@ if (wrangler) {
   // route the listing hostname to this Worker in the sprue.works zone, with
   // the hostname's CNAME proxied under it. A drift here would leave the
   // hostname serving nothing, and nothing else in CI would notice.
-  const tfMain = fs.existsSync('terraform/main.tf') ? fs.readFileSync('terraform/main.tf', 'utf8') : '';
+  // Comments are stripped first so a commented-out resource cannot satisfy
+  // the checks below (HCL: `#` and `//` line comments, `/* */` blocks).
+  const stripHcl = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').filter((l) => !/^\s*(#|\/\/)/.test(l)).join('\n');
+  const tfMain = fs.existsSync('terraform/main.tf') ? stripHcl(fs.readFileSync('terraform/main.tf', 'utf8')) : '';
   if (!tfMain) fail('terraform/main.tf is missing; it owns the polyglot.sprue.works record and route (RUNBOOK 1)');
   else {
     const tfDefault = (name) => (tfMain.match(new RegExp(`variable\\s+"${name}"[\\s\\S]*?default\\s*=\\s*"([^"]*)"`)) || [])[1];

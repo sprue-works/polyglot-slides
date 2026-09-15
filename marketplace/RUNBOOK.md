@@ -137,11 +137,13 @@ verify promptly.
    boundary. **Ordering race:** the same push also starts the Workers Builds
    production deploy, and the route can only be created once the
    `polyglot-slides` Worker exists. If Terraform runs first and fails on the
-   route with a missing-script error, wait for the Workers Builds deploy to
-   go green (Cloudflare dashboard → the Worker → Deployments), then re-run
-   the Terraform workflow. Doing 1a before merging makes this unlikely: the
-   Worker is created by the dashboard connection, not by the first green
-   build.
+   route with a missing-script error, the record is already imported and
+   proxied (Terraform does not roll back) and the hostname serves GitHub's
+   404 through Cloudflare; wait for the Workers Builds deploy to go green
+   (Cloudflare dashboard → the Worker → Deployments), then re-run the
+   Terraform workflow, whose plan will then be just `1 to add`. Doing 1a
+   before merging makes this unlikely: the Worker is created by the
+   dashboard connection, not by the first green build.
 2. Verify the live hostname with the loop from 1a, using
    `host=polyglot.sprue.works`, plus one request through a resolver that has
    not cached the old answer (`curl --resolve` against a Cloudflare edge IP,

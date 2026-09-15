@@ -107,19 +107,39 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: terraform -chdir=terraform plan -input=false -no-color -out=apply.tfplan
 
-      # Never let a plan replace or destroy anything unattended: the record
-      # carries prevent_destroy, but this covers every resource and fails the
-      # run with the address named rather than after the fact.
-      - name: Refuse to apply a plan that destroys or replaces a resource
+      # Two refusals before anything is applied, each naming the address:
+      #  - nothing may be destroyed or replaced (the record carries
+      #    prevent_destroy; this covers every resource);
+      #  - a resource being imported may change only in `proxied`, the flip
+      #    the cutover expects. Any other difference between the live record
+      #    and the HCL (target, TTL, type) is drift that must be reconciled by
+      #    hand, not rewritten unattended (marketplace/RUNBOOK.md 1b).
+      # The plan JSON goes to the runner's temp dir, never the checkout.
+      - name: Refuse destructive plans and unexpected drift on imported resources
         run: |
           set -eu
-          terraform -chdir=terraform show -json apply.tfplan > plan.json
-          destructive="$(jq -r '[.resource_changes[]? | select(.change.actions | index("delete")) | .address] | .[]' plan.json)"
+          plan_json="$RUNNER_TEMP/plan.json"
+          terraform -chdir=terraform show -json apply.tfplan > "$plan_json"
+          destructive="$(jq -r '[.resource_changes[]? | select(.change.actions | index("delete")) | .address] | .[]' "$plan_json")"
           if [ -n "$destructive" ]; then
             echo "::error::Plan would delete or replace: $destructive. Nothing in terraform/ may be destroyed unattended; reconcile by hand (marketplace/RUNBOOK.md 1b)."
             exit 1
           fi
-          echo "Plan destroys nothing."
+          drifted="$(jq -r '
+            [ .resource_changes[]?
+              | select(.change.importing != null)
+              | select((.change.actions | index("update")) != null)
+              | . as $rc
+              | [ ($rc.change.before // {}) | keys[] ] + [ ($rc.change.after // {}) | keys[] ] | unique
+              | map(select(. != "proxied" and ($rc.change.before[.] != $rc.change.after[.]) and ($rc.change.after[.] != null)))
+              | select(length > 0)
+              | "\($rc.address): \(join(", "))"
+            ] | .[]' "$plan_json")"
+          if [ -n "$drifted" ]; then
+            echo "::error::Imported resource differs from terraform/main.tf beyond the expected proxied flip -- $drifted. Reconcile by hand before applying (marketplace/RUNBOOK.md 1b)."
+            exit 1
+          fi
+          echo "Plan destroys nothing and imports carry no unexpected drift."
 
       - name: Apply exact plan
         env:
