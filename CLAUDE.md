@@ -81,8 +81,10 @@ screen, and now equally a non-owner installing the listing and seeing the real
 consent screen. Don't claim either is verified off owner-side testing.
 INSTALL.md carries the second-account checklist; its functional sweep applies
 to both, while its steps 1–2 and the unverified-app parts of step 4 are the
-template-deck path's only. The 2026-09-15 listing acceptance ran the sweep from
-the listing (see "The listing is live" below).
+template-deck path's only. **That sweep has never been run end to end.** The
+2026-09-15 listing run was an install smoke test — consent screen, menu
+present, one translation — and the 2026-08-25 template run stopped at
+authorization. Don't read either as the regression checklist passing.
 
 ## The Apps Script project is org-owned, and that cannot be undone or redone later
 
@@ -312,10 +314,11 @@ Both Google reviews are approved and the add-on is published:
 
 - **OAuth verification approved 2026-09-13** — brand verification plus the
   sensitive scope `script.container.ui`.
-- **Marketplace listing review approved 2026-09-15**; the teacher acceptance
-  test ran from a second account the same day and passed (clean consent
+- **Marketplace listing review approved 2026-09-15**; a second account
+  install-tested the live listing the same day and it passed — clean consent
   screen, no unverified-app interstitial, `Extensions → Polyglot Slides` in a
-  fresh deck, translation ran).
+  fresh deck, translation ran. That is an install smoke test, not INSTALL.md's
+  full functional sweep, which is still owed on every entry point.
 - Live listing (`unlisted`, link-only, not searchable):
   <https://workspace.google.com/marketplace/app/polyglot_slides/556097262294>
   — committed in `docs/index.html` (`#install`) and README "Install".

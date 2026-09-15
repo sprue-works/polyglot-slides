@@ -491,9 +491,12 @@ Save as `marketplace/assets/screenshot-<n>.png`, list them in
 
 ## 8. Verify as a teacher (acceptance)
 
-**Done — passed on 2026-09-15** against the live listing (see step 6,
-Post-live). Keep the procedure: it is the acceptance test for any future
-change that reaches installed users.
+**Install smoke test passed 2026-09-15** against the live listing (see step 6,
+Post-live): the consent screen, the absence of an unverified-app interstitial,
+the menu in a fresh deck, and one translation run. **INSTALL.md's functional
+sweep was not re-run**, so the acceptance below is only partly discharged.
+Keep the procedure either way: it is the acceptance test for any future change
+that reaches installed users.
 
 Use a **second Google account** — the owner's account cannot see the real
 consent flow. From the listing link (or, for `private`, the domain
@@ -501,7 +504,8 @@ Marketplace): **Install** → the consent screen names *Polyglot Slides*, shows
 the icon, lists only "see and edit the presentation this add-on is open in"
 and "display content in the Slides UI", and shows **no** "unverified app"
 interstitial. Then open any deck → **Extensions → Polyglot Slides** is present
-without copying anything. Re-run INSTALL.md's functional checklist from there.
+without copying anything. Re-run INSTALL.md's functional checklist from there
+— that last part is the half still outstanding.
 
 ## Ongoing: what changes need what
 
