@@ -101,7 +101,8 @@ Editor add-on test deployments can only be created in the Apps Script UI
 (one-time setup per deck; [INSTALL.md](INSTALL.md) has the long form, the
 permissions gotcha, and the second-account verification checklist):
 
-1. `clasp open-script`
+1. `clasp push` (so *Latest Code* is your tree, not the last upload), then
+   `clasp open-script`
 2. **Deploy → Test deployments**
 3. Under *Application(s): Slides*, click **Add test**, pick a presentation, save.
 4. Select the test and click **Execute** — the deck opens with the add-on
