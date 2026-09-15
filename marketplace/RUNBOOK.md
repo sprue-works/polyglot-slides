@@ -451,8 +451,17 @@ Live listing:
 (step 8's teacher acceptance ran against it on 2026-09-15 and passed: clean
 consent screen, no unverified-app interstitial, **Extensions → Polyglot
 Slides** present in a fresh deck, translation ran). The URL is committed in
-`docs/index.html` (`#install`) and README "Install"; `INSTALL.md`'s
-template-deck flow is now the development/testing path.
+`docs/index.html` (`#install`) and README "Install"; `INSTALL.md` is now a
+developer-only doc (test deployments + the second-account checklist).
+
+**Retired: the template deck.** Before the listing, the zero-install route was
+copying a view-only Drive deck
+(`1GYqlX8OhHm4WPz8QoJcFvugjMNvztCKgxeHJOMtxeYE`, bound script
+`1hQJ6n7ButKEZbpFdLbyM0TGj555-5q-Q2diiEWSac5bGWZwo8ocBw_YP`, owned by
+`mari@guerrieri.codes`) that carried its own copy of `src/` (#2). Retired in
+#55: the deck and its script still exist but are unmaintained and frozen at
+old code; recreating one is an optional fallback if the listing is ever
+pulled, not a procedure this runbook keeps.
 
 **Treat the OAuth consent screen as frozen.** Google's approval email states
 the binding rule plainly: **any change to the consent screen configuration, and
