@@ -47,9 +47,10 @@ exist (IDs in INSTALL.md's retired note and `marketplace/RUNBOOK.md`'s
 "Retired" note); copies made from it are frozen at the code they were copied
 with, which is inherent to bound scripts. Don't resurrect a sync script or a
 recipient-facing doc for it — if a template is ever needed again (listing
-pulled), recreate one via `clasp create --type slides` and remember that a
-**container-bound** script's Extensions submenu takes the *script project's*
-name, so the bound script must be titled exactly `Polyglot Slides`.
+pulled), recreate one via `clasp create --type slides --title "Polyglot
+Slides"` and rename the *deck* afterwards in Drive: a **container-bound**
+script's Extensions submenu takes the *script project's* name, so the bound
+script must be titled exactly `Polyglot Slides`.
 
 ## Verifying the listing needs a second Google account
 

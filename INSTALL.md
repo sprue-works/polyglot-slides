@@ -99,6 +99,8 @@ The tester should, signed in as a non-owner account:
 
 Wording that didn't match is a fix to this document; a scope that reads wider
 than intended is a fix to `src/appsscript.json`; a mode misbehaving (steps 3–6)
-is a code defect — file it against `src/`. A step 1 or 2 failure on the
-listing is a release problem — check the pinned script version in
-`marketplace/RUNBOOK.md` §4 first.
+is a code defect — file it against `src/`. On the listing, a consent screen
+with the wrong name, icon, or scopes (or an unverified-app interstitial) is a
+Marketplace/OAuth configuration problem (`marketplace/RUNBOOK.md` §3–6); a
+missing menu or an install that lands old code is a release problem — check
+the pinned script version (§4) first.
