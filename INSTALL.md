@@ -47,9 +47,10 @@ After that, iterate with `clasp push` and reload the deck.
 > **If you get "You do not have permission to perform this action"** when
 > opening **Deploy → Test deployments**, your account has only *view* access
 > to the project. Viewer access lets you read the code but not create a
-> deployment: ask the publishing account to share the project with you as
-> **Editor**, or make your own copy (Apps Script editor → **Overview** → the
-> copy icon) and deploy from that. Confirmed against a real second account.
+> deployment (nor `clasp push`): ask the publishing account to share the
+> project with you as **Editor**. Don't work around it by copying the project
+> — `clasp push` targets the ID in `.clasp.json`, so a copy would never see
+> your changes. Confirmed against a real second account.
 >
 > If an editor account still cannot deploy, check whether it is a **Workspace /
 > school account**: some domains block Apps Script deployments or
@@ -96,7 +97,8 @@ The tester should, signed in as a non-owner account:
 7. Report back: any step whose wording did not match what they saw, and any
    step where they had to guess.
 
-Anything that comes back wrong is a fix to this document (or to
-`src/appsscript.json` if a scope reads wider than intended). A step 1 or 2
-failure on the listing is a release problem, not a documentation one — check
-the pinned script version in `marketplace/RUNBOOK.md` §4 first.
+Wording that didn't match is a fix to this document; a scope that reads wider
+than intended is a fix to `src/appsscript.json`; a mode misbehaving (steps 3–6)
+is a code defect — file it against `src/`. A step 1 or 2 failure on the
+listing is a release problem — check the pinned script version in
+`marketplace/RUNBOOK.md` §4 first.
