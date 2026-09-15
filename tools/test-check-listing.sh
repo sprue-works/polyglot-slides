@@ -11,11 +11,17 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 # Fresh copy of just what the check reads.
 fresh() {
   rm -rf "$work/repo"
-  mkdir -p "$work/repo/tools" "$work/repo/src"
+  mkdir -p "$work/repo/tools" "$work/repo/src" "$work/repo/terraform"
   cp -R "$repo_root/marketplace" "$repo_root/docs" "$work/repo/"
   cp "$repo_root/tools/check-listing.sh" "$repo_root/tools/png-check.js" "$work/repo/tools/"
   cp "$repo_root/src/appsscript.json" "$work/repo/src/"
-  cp "$repo_root/.clasp.json" "$work/repo/"
+  cp "$repo_root/.clasp.json" "$repo_root/wrangler.jsonc" "$work/repo/"
+  cp "$repo_root/terraform/main.tf" "$work/repo/terraform/"
+}
+# Edit wrangler.jsonc in the fresh copy with a JS expression over the parsed
+# config; the check reads JSONC, so plain JSON output is fine.
+edit_wrangler() { # edit_wrangler <js mutating `j`>
+  (cd "$work/repo" && node -e 'const fs=require("fs"),f="wrangler.jsonc";const s=fs.readFileSync(f,"utf8").replace(/\/\*[\s\S]*?\*\//g,"").replace(/^\s*\/\/.*$/gm,"").replace(/,(\s*[}\]])/g,"$1");const j=JSON.parse(s);'"$1"';fs.writeFileSync(f,JSON.stringify(j))')
 }
 
 expect_pass() { # expect_pass <label>
@@ -172,5 +178,96 @@ expect_fail "plain-http draft tester opt-out URL" "draftTesterOptOut must be a w
 fresh
 (cd "$work/repo" && node -e 'const fs=require("fs"),f="marketplace/listing.json",j=JSON.parse(fs.readFileSync(f));j.urls.draftTesterOptOut="file an issue";fs.writeFileSync(f,JSON.stringify(j))')
 expect_fail "non-URL draft tester opt-out" "draftTesterOptOut must be a well-formed https URL"
+
+# Hosting invariants (#47): docs/ is served by a Cloudflare Worker and
+# terraform/ routes the hostname to it.
+fresh
+rm "$work/repo/wrangler.jsonc"
+expect_fail "wrangler config missing reports cleanly" "wrangler.jsonc is missing or not valid JSONC"
+
+fresh
+edit_wrangler 'j.assets.html_handling="auto-trailing-slash"'
+expect_fail "html_handling that redirects .html URLs" 'html_handling must be "none"'
+
+fresh
+# A custom_domain here would have Workers Builds replace the live DNS record.
+edit_wrangler 'j.routes=[{pattern:"polyglot.sprue.works",custom_domain:true}]'
+expect_fail "custom domain declared in wrangler.jsonc" "must not declare routes"
+
+fresh
+edit_wrangler 'j.routes=[]'
+expect_fail "even an empty routes key" "must not declare routes"
+
+fresh
+# wrangler's singular form is the same bypass.
+edit_wrangler 'j.route={pattern:"polyglot.sprue.works",custom_domain:true}'
+expect_fail "singular route key" "must not declare route;"
+
+fresh
+edit_wrangler 'j.preview_urls=false'
+expect_fail "branch previews switched off" "preview_urls"
+
+fresh
+rm "$work/repo/docs/_redirects"
+expect_fail "root rewrite missing" "docs/_redirects must rewrite"
+
+fresh
+rm "$work/repo/terraform/main.tf"
+expect_fail "Terraform stack missing" "terraform/main.tf is missing"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="terraform/main.tf";fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/resource\s+"cloudflare_workers_route"[\s\S]*?\n\}\n/,""))')
+expect_fail "Workers route resource removed" "must declare a cloudflare_workers_route"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="terraform/main.tf";fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/script\s*=\s*var\.worker_name/,"script  = \"some-other-worker\""))')
+expect_fail "route pointed at a different Worker" "script must be var.worker_name"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="terraform/main.tf";fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/default\s*=\s*"polyglot-slides"/,"default     = \"website\""))')
+expect_fail "worker_name default drifted from wrangler.jsonc" 'variable "worker_name" must default to'
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="terraform/main.tf";fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/name\s*=\s*var\.hostname/,"name    = \"other.sprue.works\""))')
+expect_fail "DNS record renamed away from the hostname" "record name must be var.hostname"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="terraform/main.tf";fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/content\s*=\s*"sprue-works\.github\.io"/,"content = \"example.com\""))')
+expect_fail "DNS record retargeted" "must keep pointing at sprue-works.github.io"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="terraform/main.tf";fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/proxied\s*=\s*true/,"proxied = false"))')
+expect_fail "DNS record not proxied" "must be proxied = true"
+
+fresh
+# Route moved to another zone (the last zone_id in the file is the route's).
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="terraform/main.tf";let s=fs.readFileSync(f,"utf8");const i=s.lastIndexOf("zone_id = var.zone_id");s=s.slice(0,i)+"zone_id = \"deadbeef\""+s.slice(i+"zone_id = var.zone_id".length);fs.writeFileSync(f,s)')
+expect_fail "route in another zone" "route zone_id must be var.zone_id"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="terraform/main.tf";fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/default\s*=\s*"0a2832ed293070b06bd75cb7fc8db4d7"/,"default     = \"00000000000000000000000000000000\""))')
+expect_fail "zone_id default drifted" 'variable "zone_id" must default to the sprue.works zone'
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="terraform/main.tf";fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/prevent_destroy\s*=\s*true/,"prevent_destroy = false"))')
+expect_fail "prevent_destroy switched off" "must keep prevent_destroy = true"
+
+fresh
+# The route block commented out line by line still contains every keyword;
+# the check must not be fooled by it.
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="terraform/main.tf";let s=fs.readFileSync(f,"utf8");s=s.replace(/resource\s+"cloudflare_workers_route"[\s\S]*?\n\}\n/,(m)=>m.split("\n").map((l)=>l?"# "+l:l).join("\n"));fs.writeFileSync(f,s)')
+expect_fail "route resource commented out" "must declare a cloudflare_workers_route"
+
+fresh
+(cd "$work/repo" && node -e 'const fs=require("fs"),f="terraform/main.tf";let s=fs.readFileSync(f,"utf8");s=s.replace(/resource\s+"cloudflare_dns_record"[\s\S]*?\n\}\n/,(m)=>"/*\n"+m+"*/\n");fs.writeFileSync(f,s)')
+expect_fail "DNS record resource commented out" "must declare the cloudflare_dns_record"
+
+fresh
+printf 'polyglot.sprue.works\n' >"$work/repo/docs/CNAME"
+expect_fail "GitHub Pages control file resurrected" "docs/CNAME is a GitHub Pages control file"
+
+fresh
+: >"$work/repo/docs/.nojekyll"
+expect_fail "GitHub Pages .nojekyll resurrected" "docs/.nojekyll is a GitHub Pages control file"
 
 echo "all check-listing.sh tests passed"

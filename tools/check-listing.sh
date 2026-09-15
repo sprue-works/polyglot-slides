@@ -18,6 +18,12 @@
 #     mark in one corner (#27)
 #   - the listing URLs point at pages that exist under docs/, and the Store
 #     Listing's required Draft Tester Opt-Out URL is a well-formed https URL
+#   - wrangler.jsonc hosts docs/ with html_handling "none" (anything else
+#     redirects the .html URLs Google holds) and declares no routes; the
+#     hostname is routed by terraform/, whose record and route must still
+#     name the listing hostname, the Worker, and the sprue.works zone;
+#     docs/_redirects restores / -> index.html; the retired GitHub Pages
+#     control files must not reappear under docs/
 #   - the publisher identity is sprue.works: developerName and the public
 #     supportEmail's domain (brand verification checks these against the
 #     verified homepage domain); contactEmail is on the domain too so no
@@ -179,9 +185,74 @@ for (const [k, expectFile] of [['homepage', 'index.html'], ['privacyPolicy', 'pr
   else if (rel !== expectFile) fail(`urls.${k} should point at ${expectFile}, points at ${rel}`);
   else ok(`urls.${k} -> ${file}`);
 }
-if (!fs.existsSync('docs/.nojekyll')) fail('docs/.nojekyll missing (GitHub Pages would run Jekyll over the site)');
-if (!fs.existsSync('docs/CNAME')) fail('docs/CNAME missing (Pages would lose the custom domain)');
-else if (fs.readFileSync('docs/CNAME', 'utf8').trim() !== 'polyglot.sprue.works') fail('docs/CNAME must contain polyglot.sprue.works');
+// Hosting: docs/ is served by a Cloudflare Worker (wrangler.jsonc). The
+// listing URLs above only hold if the Worker routes the hostname and serves
+// the .html paths without redirecting them (see the comments in wrangler.jsonc
+// and docs/_redirects; tools/test-docs-worker.sh checks the served responses).
+const publicHost = new URL(publicBase).hostname;
+const stripJsonc = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/,(\s*[}\]])/g, '$1');
+let wrangler = null;
+try { wrangler = JSON.parse(stripJsonc(fs.readFileSync('wrangler.jsonc', 'utf8'))); }
+catch (e) { fail(`wrangler.jsonc is missing or not valid JSONC (${e.message}); it is how docs/ is hosted`); }
+if (wrangler) {
+  const assets = wrangler.assets || {};
+  if (assets.directory !== './docs') fail(`wrangler.jsonc assets.directory must be ./docs (got ${assets.directory})`);
+  if (assets.html_handling !== 'none') fail(`wrangler.jsonc assets.html_handling must be "none" (got ${assets.html_handling}); any other mode redirects /privacy.html, a URL Google holds`);
+  // Routes: none, ever. The hostname reaches the Worker through the Workers
+  // route terraform/ owns over the DNS record. A route here -- above all a
+  // custom_domain -- would have Workers Builds' non-interactive deploy
+  // replace that DNS record without asking (wrangler passes
+  // override_existing_dns_record=true when stdout is not a TTY).
+  // wrangler accepts both the plural `routes` and the singular `route`.
+  for (const key of ['routes', 'route']) {
+    if (wrangler[key] !== undefined && wrangler[key] !== null) fail(`wrangler.jsonc must not declare ${key}; ${publicHost} is routed by terraform/ (got ${JSON.stringify(wrangler[key])})`);
+  }
+  if (wrangler.workers_dev !== true || wrangler.preview_urls !== true) fail('wrangler.jsonc must keep workers_dev and preview_urls on (branch previews)');
+  // The hostname reaches the Worker through terraform/: the stack must still
+  // route the listing hostname to this Worker in the sprue.works zone, with
+  // the hostname's CNAME proxied under it. A drift here would leave the
+  // hostname serving nothing, and nothing else in CI would notice.
+  // Comments are stripped first so a commented-out resource cannot satisfy
+  // the checks below (HCL: `#` and `//` line comments, `/* */` blocks).
+  const stripHcl = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').filter((l) => !/^\s*(#|\/\/)/.test(l)).join('\n');
+  const tfMain = fs.existsSync('terraform/main.tf') ? stripHcl(fs.readFileSync('terraform/main.tf', 'utf8')) : '';
+  if (!tfMain) fail('terraform/main.tf is missing; it owns the polyglot.sprue.works record and route (RUNBOOK 1)');
+  else {
+    const tfDefault = (name) => (tfMain.match(new RegExp(`variable\\s+"${name}"[\\s\\S]*?default\\s*=\\s*"([^"]*)"`)) || [])[1];
+    if (tfDefault('hostname') !== publicHost) fail(`terraform/main.tf variable "hostname" must default to ${publicHost} (got ${tfDefault('hostname')})`);
+    if (tfDefault('worker_name') !== wrangler.name) fail(`terraform/main.tf variable "worker_name" must default to wrangler.jsonc's name ${wrangler.name} (got ${tfDefault('worker_name')})`);
+    // The sprue.works zone (the same value the retired reconciler used via
+    // the CLOUDFLARE_ZONE_ID variable). Both resources must live in it.
+    const ZONE_ID = '0a2832ed293070b06bd75cb7fc8db4d7';
+    if (tfDefault('zone_id') !== ZONE_ID) fail(`terraform/main.tf variable "zone_id" must default to the sprue.works zone ${ZONE_ID} (got ${tfDefault('zone_id')})`);
+    const route = tfMain.match(/resource\s+"cloudflare_workers_route"\s+"[^"]+"\s*\{([\s\S]*?)\n\}/);
+    if (!route) fail('terraform/main.tf must declare a cloudflare_workers_route for the hostname');
+    else {
+      const body = route[1];
+      if (!/\bzone_id\s*=\s*var\.zone_id\b/.test(body)) fail('the cloudflare_workers_route zone_id must be var.zone_id');
+      if (!/pattern\s*=\s*"\$\{var\.hostname\}\/\*"/.test(body)) fail('the cloudflare_workers_route pattern must be "${var.hostname}/*"');
+      if (!/script\s*=\s*var\.worker_name\b/.test(body)) fail('the cloudflare_workers_route script must be var.worker_name');
+    }
+    const record = tfMain.match(/resource\s+"cloudflare_dns_record"\s+"[^"]+"\s*\{([\s\S]*?)\n\}/);
+    if (!record) fail('terraform/main.tf must declare the cloudflare_dns_record for the hostname');
+    else {
+      const body = record[1];
+      if (!/\bzone_id\s*=\s*var\.zone_id\b/.test(body)) fail('the cloudflare_dns_record zone_id must be var.zone_id');
+      if (!/\bname\s*=\s*var\.hostname\b/.test(body)) fail('the cloudflare_dns_record name must be var.hostname');
+      if (!/\btype\s*=\s*"CNAME"/.test(body)) fail('the cloudflare_dns_record must stay a CNAME (a type change is a replacement the hostname cannot afford)');
+      if (!/\bcontent\s*=\s*"sprue-works\.github\.io"/.test(body)) fail('the cloudflare_dns_record must keep pointing at sprue-works.github.io (never reached behind the route; a change would be a replacement)');
+      if (!/\bproxied\s*=\s*true\b/.test(body)) fail('the cloudflare_dns_record must be proxied = true (a route only receives traffic over a proxied record)');
+      if (!/prevent_destroy\s*=\s*true/.test(body)) fail('the cloudflare_dns_record must keep prevent_destroy = true');
+    }
+  }
+  // GitHub Pages is retired; its control files must not come back, or a
+  // stray Pages build could claim the hostname again.
+  for (const f of ['CNAME', '.nojekyll']) if (fs.existsSync(path.join('docs', f))) fail(`docs/${f} is a GitHub Pages control file; Pages is retired (RUNBOOK 1c) and the Worker serves docs/`);
+  if (!failures) ok(`wrangler.jsonc serves docs/ with html_handling none; terraform/ routes ${publicHost} to it`);
+}
+if (!fs.existsSync('docs/_redirects') || !/^\/ \/index\.html 200$/m.test(fs.readFileSync('docs/_redirects', 'utf8'))) {
+  fail('docs/_redirects must rewrite "/ /index.html 200" (html_handling none does not serve index.html at /)');
+}
 
 if (failures) { console.error(`${failures} listing check(s) failed`); process.exit(1); }
 console.log('listing checks passed');

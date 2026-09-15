@@ -1,0 +1,147 @@
+name: Terraform
+
+# Zone-level Cloudflare configuration for polyglot.sprue.works (terraform/).
+# Pull requests format and validate without a backend; a push to main that
+# touches terraform/ or this file plans and applies against the state bucket
+# sprue-works/infrastructure provisions for this repository. Modelled on
+# sprue-works/website's workflow of the same name, minus workflow_dispatch:
+# the only authorization boundary available here is the protected main
+# branch (an approval environment would change the OIDC subject the
+# foundation trusts), so the apply path is push-to-main only. To re-run an
+# apply -- e.g. after setting the repository variables -- re-run the failed
+# push workflow (`gh run rerun <id>`), which keeps the same event and ref.
+
+"on":
+  pull_request:
+    paths:
+      - ".github/workflows/terraform.yml"
+      - "terraform/**"
+  push:
+    branches:
+      - "main"
+    paths:
+      - ".github/workflows/terraform.yml"
+      - "terraform/**"
+
+permissions:
+  contents: read
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+
+jobs:
+  validate:
+    name: Format and validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Read pinned Terraform version
+        id: terraform_version
+        run: printf 'version=%s\n' "$(tr -d '[:space:]' < terraform/.terraform-version)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ steps.terraform_version.outputs.version }}
+
+      - name: Check formatting
+        run: terraform -chdir=terraform fmt -check -diff -recursive
+
+      # -backend=false: pull-request tokens carry a subject the foundation's
+      # workload identity provider rejects, so this job never touches the
+      # state bucket. Validation only needs the providers.
+      - name: Initialize without a backend
+        run: terraform -chdir=terraform init -input=false -backend=false
+
+      - name: Validate
+        run: terraform -chdir=terraform validate -no-color
+
+  apply:
+    name: Plan and apply
+    # Only ever runs on a push to refs/heads/main: the foundation's workload
+    # identity provider trusts exactly that subject for this repository, and
+    # this is the one job whose Terraform steps receive CLOUDFLARE_API_TOKEN.
+    # Do NOT add `environment:` to this job: it would change the OIDC subject
+    # to ...:environment:<name>, which the provider rejects.
+    if: "github.event_name == 'push' && github.ref == 'refs/heads/main'"
+    needs: validate
+    runs-on: ubuntu-latest
+    concurrency:
+      group: terraform-cloudflare-apply
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          create_credentials_file: true
+
+      - name: Read pinned Terraform version
+        id: terraform_version
+        run: printf 'version=%s\n' "$(tr -d '[:space:]' < terraform/.terraform-version)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ steps.terraform_version.outputs.version }}
+
+      - name: Initialize remote state
+        run: >-
+          terraform -chdir=terraform init -input=false -reconfigure
+          -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+          -backend-config="prefix=${{ vars.TF_STATE_PREFIX }}"
+
+      # The Cloudflare token is bound only to the two steps that run Terraform,
+      # not to the job, so checkout, Google auth, and setup-terraform never see it.
+      - name: Create reviewed apply plan
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: terraform -chdir=terraform plan -input=false -no-color -out=apply.tfplan
+
+      # Two refusals before anything is applied, each naming the address:
+      #  - nothing may be destroyed or replaced (the record carries
+      #    prevent_destroy; this covers every resource);
+      #  - a resource being imported may change only in `proxied`, the flip
+      #    the cutover expects. Any other difference between the live record
+      #    and the HCL (target, TTL, type) is drift that must be reconciled by
+      #    hand, not rewritten unattended (marketplace/RUNBOOK.md 1b).
+      # The plan JSON goes to the runner's temp dir, never the checkout.
+      - name: Refuse destructive plans and unexpected drift on imported resources
+        run: |
+          set -eu
+          plan_json="$RUNNER_TEMP/plan.json"
+          terraform -chdir=terraform show -json apply.tfplan > "$plan_json"
+          destructive="$(jq -r '[.resource_changes[]? | select(.change.actions | index("delete")) | .address] | .[]' "$plan_json")"
+          if [ -n "$destructive" ]; then
+            echo "::error::Plan would delete or replace: $destructive. Nothing in terraform/ may be destroyed unattended; reconcile by hand (marketplace/RUNBOOK.md 1b)."
+            exit 1
+          fi
+          drifted="$(jq -r '
+            [ .resource_changes[]?
+              | select(.change.importing != null)
+              | select((.change.actions | index("update")) != null)
+              | . as $rc
+              | [ ($rc.change.before // {}) | keys[] ] + [ ($rc.change.after // {}) | keys[] ] | unique
+              | map(select(. != "proxied" and ($rc.change.before[.] != $rc.change.after[.]) and ($rc.change.after[.] != null)))
+              | select(length > 0)
+              | "\($rc.address): \(join(", "))"
+            ] | .[]' "$plan_json")"
+          if [ -n "$drifted" ]; then
+            echo "::error::Imported resource differs from terraform/main.tf beyond the expected proxied flip -- $drifted. Reconcile by hand before applying (marketplace/RUNBOOK.md 1b)."
+            exit 1
+          fi
+          echo "Plan destroys nothing and imports carry no unexpected drift."
+
+      - name: Apply exact plan
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: terraform -chdir=terraform apply -input=false -auto-approve apply.tfplan
