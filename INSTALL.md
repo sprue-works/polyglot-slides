@@ -279,19 +279,22 @@ Give a tester **only the entry point under test** — the template link plus a
 pointer to [Path A](#path-a--copy-the-template-deck-simpler), or the listing
 link on its own. Do not coach them; the point is to test the writing as much
 as the mechanics. Steps 1–2 and the unverified-app parts of step 4 are
-Path A's; from the listing, a tester installs and starts at step 3.
+Path A's: from the listing, a tester installs, confirms the consent screen
+named the add-on and showed no unverified-app interstitial, and picks the
+sweep up at step 3.
 
 The tester should, signed in as a non-owner account:
 
 1. Open the template link — confirm it opens **read-only**.
 2. **File → Make a copy → Entire presentation** — confirm the copy lands in
    *their* Drive and they are the owner.
-3. In the copy, confirm **Extensions → Polyglot Slides** appears, with all four
-   items. Note whether a tab reload was needed.
+3. Confirm **Extensions → Polyglot Slides** appears, with all four items — in
+   the copy on Path A, in any deck they open after installing from the
+   listing. Note whether a tab reload was needed.
 4. Click **Open sidebar** and complete authorization. Record:
    - **whether authorization is allowed at all** — a Workspace/school account
-        may block unverified apps by domain policy, which affects these
-     development paths only — the published listing is verified, so it is not
+     may block unverified apps by domain policy, which affects these
+     development paths only; the published listing is verified, so it is not
      subject to the unverified-app block;
    - whether the **"Google hasn't verified this app"** screen appeared, and
      whether **Advanced → Go to Polyglot Slides (unsafe)** matched the wording

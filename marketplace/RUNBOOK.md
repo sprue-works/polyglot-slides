@@ -432,9 +432,10 @@ refused at the consent prompt, so add them to both.
   the Marketplace review thread is in the Marketplace SDK page, the OAuth
   one in the Verification Center plus the email, which needs a reply.
 
-Once live, the listing URL is
-`https://workspace.google.com/marketplace/app/polyglot_slides/<app-id>`.
-Put it in `docs/index.html` (`#install`) and README "Install" and commit.
+Once live, the listing URL takes the form
+`https://workspace.google.com/marketplace/app/polyglot_slides/<app-id>`, and it
+belongs in `docs/index.html` (`#install`) and README "Install". That was done
+for this listing — see below.
 
 ### Post-live — done, and what it froze
 
