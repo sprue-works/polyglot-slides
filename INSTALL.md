@@ -1,31 +1,44 @@
-# Installing Polyglot Slides
+# Running Polyglot Slides without installing it
 
-This is the install path for someone who is **not** a developer — no `clasp`, no
-command line, no Apps Script knowledge required. It works today, before any
-Marketplace listing exists.
+> **This is no longer the install path.** The add-on is published:
+> **[install it from the Google Workspace
+> Marketplace](https://workspace.google.com/marketplace/app/polyglot_slides/556097262294)**
+> — one click, one authorization screen, and it is present in every deck you
+> open. Anyone wanting to *use* Polyglot Slides should stop here and use that
+> link.
 
-> **Shelf life.** Everything in this document is an interim measure. Once the
-> add-on is published to a Workspace domain or the Marketplace (the in-repo
-> pieces are in `marketplace/`; the human steps are
-> [marketplace/RUNBOOK.md](marketplace/RUNBOOK.md)), install becomes "an admin
-> turns it on" or "click Install", and both paths below stop being relevant —
-> along with the template deck and `tools/sync-template.sh`.
-> What survives that transition is the
-> [verification checklist](#verification-checklist-second-google-account): the
-> functional sweep in it is about the add-on working for a **non-owner user**,
-> which is worth re-running against any new distribution mechanism. Delete the
-> rest when the listing goes live rather than letting it rot.
+What is left below are the two pre-Marketplace paths, kept for
+**development and testing**: they put a specific build of `src/` in front of a
+specific deck without touching the published listing or its script version.
+Reach for them when you are
 
-There are two possible paths. **Path A (copy the template deck) is the
-recommended one**; Path B is kept as a documented alternative for the cases
-where A doesn't fit. The reasoning behind the choice is in
+- exercising an unreleased change on a real deck before it is tagged and the
+  console version pin is bumped (`marketplace/RUNBOOK.md` §4);
+- re-running the non-owner functional sweep in the
+  [verification checklist](#verification-checklist-second-google-account)
+  against a build, rather than against the live listing;
+- working with an account or domain where the listing itself cannot be
+  installed, and you need to reproduce the add-on's behavior anyway.
+
+> **Shelf life.** The paths below describe a *bound-script* copy of the source,
+> which is a second copy that drifts from `src/` unless
+> `tools/sync-template.sh` is run — see the repo's `CLAUDE.md`. They are
+> maintained only as long as that dev loop is useful. The part with a longer
+> life is the
+> [verification checklist](#verification-checklist-second-google-account): its
+> functional sweep is about the add-on working for a **non-owner user**, which
+> is worth re-running against any distribution mechanism, the live listing
+> included.
+
+There are two paths. **Path A (copy the template deck) is the simpler one**;
+Path B attaches to a deck that already exists. The trade-off is in
 [Why Path A](#why-path-a-and-when-to-use-path-b).
 
 ---
 
-## Path A — Copy the template deck (recommended)
+## Path A — Copy the template deck (simpler)
 
-The add-on ships as a script *bound to* a template presentation. Copying the
+The template carries the add-on as a script *bound to* a presentation. Copying the
 presentation copies the script with it, and you become the owner of your copy.
 That means: no deployments, no Apps Script editor, no access to anyone else's
 project.
@@ -34,7 +47,8 @@ project.
 
 - A Google account.
 - The link to the template deck (the owner sends it — see
-  [Owner setup](#owner-setup) for what gets shared).
+  [Owner setup](#owner-setup) for what gets shared). The template is a
+  development artifact, not something end users are pointed at any more.
 
 ### Steps
 
@@ -62,8 +76,11 @@ first load can miss it.
 
 ### First-run authorization
 
-The add-on is not published or Google-verified, so the first authorization shows
-a warning screen. This is expected for a personal script, and the walkthrough is:
+A copy of the bound script is *your own* unverified script, not the published
+add-on — Google's verification covers the listing's script project, not copies
+of it — so the first authorization shows a warning screen. Installing from the
+[Marketplace listing](https://workspace.google.com/marketplace/app/polyglot_slides/556097262294)
+shows no such screen. On this path the walkthrough is:
 
 1. A window opens: **Choose an account** → pick your account.
 2. **"Google hasn't verified this app"** → click **Advanced** (bottom left),
@@ -97,16 +114,18 @@ the deck that has the add-on. To use it on existing material:
   the slides you want. They come in with their formatting, and the add-on is
   right there.
 
-If you need the add-on on a deck you can't rebuild from the template — say it
+If you need the build on a deck you can't rebuild from the template — say it
 has comments, revision history, or collaborators you'd lose — that is what
 [Path B](#path-b--shared-script-project--test-deployment) is for.
 
 ### Getting a newer version
 
-Copies do not auto-update: your copy has the code as of the day you copied it.
-When a new version ships, make a fresh copy of the template and **File → Import
-slides** your work into it. (Automatic updates for everyone are what the
-Marketplace listing in issue #4 is for.)
+Copies do not auto-update: your copy has the code as of the day you copied it,
+and the template itself only moves when someone runs `tools/sync-template.sh`.
+To test a newer build, make a fresh copy of the template and **File → Import
+slides** your work into it. Users of the published listing get updates without
+any of this — a human bumps the pinned script version after a release
+(`marketplace/RUNBOOK.md` §4).
 
 ### Uninstalling
 
@@ -149,12 +168,15 @@ you approve once, and further decks only need a test entry added.
 > confirmed against a real second account.
 >
 > If the copy also refuses, check whether your account is a **Workspace /
-> school account**: some domains block Apps Script deployments or
-> unverified-app authorization outright, in which case no path here works and
-> the add-on has to be published to that domain (issue #4). Try
-> [Path A](#path-a--copy-the-template-deck-recommended) with the same account
-> to tell the two apart — if Path A's authorization screen also fails, it is a
-> domain policy, not a permissions mistake.
+> school account**: two different domain policies can bite here. One blocks
+> Apps Script **deployments**, which rules out Path B but leaves Path A
+> working (a copied bound script needs no deployment). The other blocks
+> **unverified-app authorization** outright, which rules out both development
+> paths — the published listing is verified and unaffected, so use it, or have
+> an admin install it domain-wide. Try
+> [Path A](#path-a--copy-the-template-deck-simpler) with the same account to
+> tell them apart: if Path A's authorization screen also fails, it is the
+> second policy, not a permissions mistake.
 
 **A test deployment targets one specific presentation.** For a second deck,
 repeat steps 4–6 with that deck selected. The authorization carries over; only
@@ -181,11 +203,14 @@ on — a bound script is copied along with its container, and a user with only
 ([Container-bound scripts](https://developers.google.com/apps-script/guides/bound)).
 Path B's extra cost is real and permanent: test deployments are created per
 document ([Testing editor add-ons](https://developers.google.com/apps-script/add-ons/how-tos/testing-editor-addons)),
-so "install once, use everywhere" is not something it offers either.
+so "set up once, use everywhere" is not something it offers either.
 
 The trade Path A makes is that the add-on rides along with a specific deck
 rather than following the user around. Neither path gives "follows the user
-around" — that needs a real Marketplace/domain install (issue #4).
+around" — that is exactly what the
+[Marketplace install](https://workspace.google.com/marketplace/app/polyglot_slides/556097262294)
+now provides, and why these two are development paths rather than install
+paths.
 
 ---
 
@@ -237,32 +262,56 @@ by design.
 
 ## Verification checklist (second Google account)
 
-**Status: install verified.** On 2026-08-25 a second Google account — not the
-owner's, on a school Workspace domain — copied the template and installed the
-add-on successfully, which is what closed issue #2. That also settles the open
-question about domain policy: this domain does **not** block authorizing an
-unverified app, so Path A is viable there.
+**Status: entry points smoke-tested; the full sweep below has never been run
+end to end by a second account.** Two runs, both partial:
 
-The functional sweep below was not all re-run by that account. Keep it as the
-**regression checklist for a non-owner user** — it is the part of this document
-worth carrying forward when packaging (#4) replaces the install steps above,
-since it tests the add-on's behavior for someone who is not the script's author.
+- **2026-08-25, Path A** (issue #2): a second Google account — not the owner's,
+  on a school Workspace domain — copied the template and authorized the bound
+  script. That settles one open question: the domain does **not** block
+  authorizing an unverified app, so Path A is viable there. Steps 5–9 were not
+  re-run by that account.
+- **2026-09-15, the published listing** (issue #21): a second account installed
+  from the listing and saw a clean consent screen with no unverified-app
+  interstitial, **Extensions → Polyglot Slides** present in a fresh deck
+  without copying anything, and a translation run. That is install plus one
+  mode — not steps 5–9, and not the mode matrix in step 6.
 
-Give a tester **only the template link** and a pointer to
-[Path A](#path-a--copy-the-template-deck-recommended). Do not coach them; the
-point is to test the writing as much as the mechanics.
+**Path B has not been exercised by a second account at all**, beyond the
+permissions gotcha recorded in its own section.
+
+So the functional sweep below is still owed on every path. It is the
+**regression checklist for a non-owner user** — the part of this document that
+outlived the install steps it used to accompany, since it tests the add-on's
+behavior for someone who is not the script's author. Run it against whichever
+entry point you are exercising: a build via Path A or B, or the live listing.
+
+Give a tester **only the entry point under test** — the template link plus a
+pointer to [Path A](#path-a--copy-the-template-deck-simpler), or the listing
+link on its own. Do not coach them; the point is to test the writing as much
+as the mechanics.
+
+Steps 1–2 below belong to **Path A only**. The unverified-app parts of step 4
+belong to **both development paths** — Path B runs a copied, unverified
+script too, and its first-run authorization shows the same screens — and do
+**not** apply to the listing. A tester on the **listing** installs from it,
+records whether the consent screen named the add-on and whether any
+unverified-app screen appeared (it should not), and joins at step 3. A tester
+on **Path B** sets up the test deployment per that section and joins at
+step 3, keeping all of step 4. Steps 3 and 5–9 are common to all three.
 
 The tester should, signed in as a non-owner account:
 
-1. Open the template link — confirm it opens **read-only**.
-2. **File → Make a copy → Entire presentation** — confirm the copy lands in
-   *their* Drive and they are the owner.
-3. In the copy, confirm **Extensions → Polyglot Slides** appears, with all four
-   items. Note whether a tab reload was needed.
+1. *(Path A only.)* Open the template link — confirm it opens **read-only**.
+2. *(Path A only.)* **File → Make a copy → Entire presentation** — confirm the
+   copy lands in *their* Drive and they are the owner.
+3. Confirm **Extensions → Polyglot Slides** appears, with all four items — in
+   the copy on Path A, in the targeted deck on Path B, in any deck they open
+   after installing from the listing. Note whether a tab reload was needed.
 4. Click **Open sidebar** and complete authorization. Record:
    - **whether authorization is allowed at all** — a Workspace/school account
-     may block unverified apps by domain policy, which would rule out every
-     path short of a domain-wide publish (issue #4);
+     may block unverified apps by domain policy, which affects these
+     development paths only; the published listing is verified, so it is not
+     subject to the unverified-app block;
    - whether the **"Google hasn't verified this app"** screen appeared, and
      whether **Advanced → Go to Polyglot Slides (unsafe)** matched the wording
      here;

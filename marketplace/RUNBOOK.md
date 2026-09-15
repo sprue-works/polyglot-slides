@@ -432,9 +432,49 @@ refused at the consent prompt, so add them to both.
   the Marketplace review thread is in the Marketplace SDK page, the OAuth
   one in the Verification Center plus the email, which needs a reply.
 
-Once live, the listing URL is
-`https://workspace.google.com/marketplace/app/polyglot_slides/<app-id>`.
-Put it in `docs/index.html` (`#install`) and README "Install" and commit.
+Once live, the listing URL takes the form
+`https://workspace.google.com/marketplace/app/polyglot_slides/<app-id>`, and it
+belongs in `docs/index.html` (`#install`) and README "Install". That was done
+for this listing — see below.
+
+### Post-live — done, and what it froze
+
+Both reviews came back approved and the listing is live:
+
+| | Approved | Covers |
+|---|---|---|
+| OAuth verification | 2026-09-13 | brand verification plus the sensitive scope `script.container.ui` |
+| Marketplace listing review | 2026-09-15 | the store listing itself; `unlisted`, so link-only, not searchable |
+
+Live listing:
+<https://workspace.google.com/marketplace/app/polyglot_slides/556097262294>
+(step 8's teacher acceptance ran against it on 2026-09-15 and passed: clean
+consent screen, no unverified-app interstitial, **Extensions → Polyglot
+Slides** present in a fresh deck, translation ran). The URL is committed in
+`docs/index.html` (`#install`) and README "Install"; `INSTALL.md`'s
+template-deck flow is now the development/testing path.
+
+**Treat the OAuth consent screen as frozen.** Google's approval email states
+the binding rule plainly: **any change to the consent screen configuration, and
+any new scope, requires a new verification request — verification is not
+inherited.** So an edit to the app name, logo, support email, homepage,
+privacy-policy or terms URL, or the scope list does not ride on this approval;
+it re-opens a review round, and for a sensitive scope that is weeks, not days.
+Nothing is blocked — it is a cost to plan for, not a prohibition. The "Ongoing"
+table below says which changes carry it; `tools/check-listing.sh` fails the
+build when `listing.json` and `src/appsscript.json` disagree, which is the
+reminder that a scope change is one of them.
+
+Code releases are exempt: bumping the pinned *Slides add-on script version*
+(step 4) is not a consent-screen change and triggers no re-review.
+
+**Domain-wide admin install.** The Marketplace SDK is configured for
+*Individual + Admin install* (step 4), so a Workspace admin can install the
+add-on for a whole domain from **Admin console → Apps → Google Workspace
+Marketplace apps**, finding this listing by its URL rather than by search
+(`unlisted` is not searchable). That path is **optional for `unlisted`** —
+individual install is the normal route, and admin install is not part of this
+add-on's acceptance. It has not been exercised; nothing here claims it was.
 
 ## 7. Screenshots (needed before step 5)
 
@@ -451,15 +491,27 @@ Save as `marketplace/assets/screenshot-<n>.png`, list them in
 
 ## 8. Verify as a teacher (acceptance)
 
+**Install smoke test passed 2026-09-15** against the live listing (see step 6,
+Post-live): the consent screen, the absence of an unverified-app interstitial,
+the menu in a fresh deck, and one translation run. **INSTALL.md's functional
+sweep was not re-run**, so the acceptance below is only partly discharged.
+Keep the procedure either way: it is the acceptance test for any future change
+that reaches installed users.
+
 Use a **second Google account** — the owner's account cannot see the real
 consent flow. From the listing link (or, for `private`, the domain
 Marketplace): **Install** → the consent screen names *Polyglot Slides*, shows
 the icon, lists only "see and edit the presentation this add-on is open in"
 and "display content in the Slides UI", and shows **no** "unverified app"
 interstitial. Then open any deck → **Extensions → Polyglot Slides** is present
-without copying anything. Re-run INSTALL.md's functional checklist from there.
+without copying anything. Re-run INSTALL.md's functional checklist from there
+— that last part is the half still outstanding.
 
 ## Ongoing: what changes need what
+
+The consent screen is **frozen** post-approval (step 6, Post-live): every row
+below that touches it re-opens verification, because verification is not
+inherited.
 
 | Change | CI does | Human does |
 |---|---|---|

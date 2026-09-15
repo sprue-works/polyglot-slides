@@ -7,10 +7,20 @@ so it scales to many users without a shared limit.
 
 ## Install
 
-Marketplace listing: not live yet — see [Distribution](#distribution) for the
-status. Until then, **[INSTALL.md](INSTALL.md)** — copy one template deck,
-click through one authorization screen, done. No command line, no Apps Script
-editor.
+**[Install from the Google Workspace
+Marketplace](https://workspace.google.com/marketplace/app/polyglot_slides/556097262294)**
+— one click, one authorization screen, done. The add-on then appears under
+**Extensions → Polyglot Slides** in every deck you open, and updates reach you
+without reinstalling. No command line, no Apps Script editor.
+
+The listing is *unlisted*: it is not searchable in the Marketplace, but anyone
+with the link above can install it. Domain-wide admin install is configured
+too, so a Workspace admin *can* push it to everyone from the same listing —
+optional and unexercised, so treat it as available rather than proven
+(`marketplace/RUNBOOK.md` §6).
+
+[INSTALL.md](INSTALL.md) keeps the older template-deck flow, now scoped to
+development and testing rather than to installing the add-on.
 
 ## Modes
 
@@ -66,7 +76,9 @@ the sidebar, persisted via `UserProperties`; the offered list is
   `main`; on `v*` tags cut a version and open the "bump script version"
   tracking issue), and `pages-dns.yml` (manual
   Cloudflare CNAME check/apply)
-- `INSTALL.md` — end-user install runbook (and the owner-side sharing setup)
+- `INSTALL.md` — the development/testing paths for putting a build of `src/`
+  in front of a deck, plus the owner-side sharing setup (not the install path;
+  the Marketplace listing is)
 
 ## Develop
 
@@ -134,9 +146,11 @@ publish, and verify from a second account. The listing pins a **script
 version number**; after each release someone bumps that field (no re-review
 for a version bump alone) before installed users see the new code.
 
-**Until the listing is live**, the template-deck flow in
-[INSTALL.md](INSTALL.md) remains the install path (and the dev/testing path
-afterwards); push `src/` changes into it with `tools/sync-template.sh`.
+**The listing is live** (`unlisted`, approved 2026-09-15:
+<https://workspace.google.com/marketplace/app/polyglot_slides/556097262294>),
+so the template-deck flow in [INSTALL.md](INSTALL.md) is now the
+development/testing path rather than the install path; push `src/` changes
+into it with `tools/sync-template.sh`.
 
 ## Release pipeline
 
@@ -254,4 +268,6 @@ has no API that a CI job could drive:
   (new scopes, name/branding changes). Bumping the pinned script version
   number does not need re-review, but it is still a console edit per release.
 - The **template deck** (`tools/sync-template.sh`) — its bound script is a
-  separate project with no CI hook, and it goes away once the listing is live.
+  separate project with no CI hook. It outlived the listing going live: it is
+  now the development/testing path in [INSTALL.md](INSTALL.md), not an install
+  route, so it stays until that loop stops being useful.
