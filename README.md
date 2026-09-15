@@ -14,8 +14,10 @@ Marketplace](https://workspace.google.com/marketplace/app/polyglot_slides/556097
 without reinstalling. No command line, no Apps Script editor.
 
 The listing is *unlisted*: it is not searchable in the Marketplace, but anyone
-with the link above can install it. A Workspace admin can install it for a
-whole domain from the same listing.
+with the link above can install it. Domain-wide admin install is configured
+too, so a Workspace admin *can* push it to everyone from the same listing —
+optional and unexercised, so treat it as available rather than proven
+(`marketplace/RUNBOOK.md` §6).
 
 [INSTALL.md](INSTALL.md) keeps the older template-deck flow, now scoped to
 development and testing rather than to installing the add-on.
@@ -74,7 +76,9 @@ the sidebar, persisted via `UserProperties`; the offered list is
   `main`; on `v*` tags cut a version and open the "bump script version"
   tracking issue), and `pages-dns.yml` (manual
   Cloudflare CNAME check/apply)
-- `INSTALL.md` — end-user install runbook (and the owner-side sharing setup)
+- `INSTALL.md` — the development/testing paths for putting a build of `src/`
+  in front of a deck, plus the owner-side sharing setup (not the install path;
+  the Marketplace listing is)
 
 ## Develop
 

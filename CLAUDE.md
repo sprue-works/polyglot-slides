@@ -69,15 +69,20 @@ They drift silently — nothing fails, new recipients just get old code. Run
 shadow or rewrite the repo's own `.clasp.json`.
 
 Copies already made never update. That is inherent to bound scripts, not a bug
-to fix — automatic updates need the Marketplace path (#4).
+to fix — updates that reach users need the Marketplace path, which now exists:
+a release cuts a new script version and a human bumps the pin the listing
+carries (see "The listing is live" at the bottom of this file).
 
-## Testing the install path needs a second Google account
+## Verifying either entry point needs a second Google account
 
-The owner's account cannot exercise the flow that matters (a non-owner copying
-a view-only deck and hitting the unverified-app consent screen). Don't claim the
-install path is verified off owner-side testing; INSTALL.md carries the
-second-account checklist, which the 2026-09-15 listing acceptance ran against
-(see "The listing is live" below).
+The owner's account cannot exercise the flow that matters — originally a
+non-owner copying a view-only deck and hitting the unverified-app consent
+screen, and now equally a non-owner installing the listing and seeing the real
+consent screen. Don't claim either is verified off owner-side testing.
+INSTALL.md carries the second-account checklist; its functional sweep applies
+to both, while its steps 1–2 and the unverified-app parts of step 4 are the
+template-deck path's only. The 2026-09-15 listing acceptance ran the sweep from
+the listing (see "The listing is live" below).
 
 ## The Apps Script project is org-owned, and that cannot be undone or redone later
 
