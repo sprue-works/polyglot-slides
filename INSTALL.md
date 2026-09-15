@@ -260,37 +260,49 @@ by design.
 
 ## Verification checklist (second Google account)
 
-**Status: verified on both paths.** On 2026-08-25 a second Google account — not
-the owner's, on a school Workspace domain — copied the template and authorized
-the bound script successfully (issue #2); that domain does **not** block
-authorizing an unverified app, so Path A is viable there. On 2026-09-15 a
-second account installed the **published listing** end to end: a clean consent
-screen with no unverified-app interstitial, **Extensions → Polyglot Slides**
-present in a fresh deck without copying anything, and a translation run
-(issue #21).
+**Status: entry points smoke-tested; the full sweep below has never been run
+end to end by a second account.** Two runs, both partial:
 
-The functional sweep below is the **regression checklist for a non-owner
-user** — the part of this document that outlived the install steps it used to
-accompany, since it tests the add-on's behavior for someone who is not the
-script's author. Run it against whichever path you are exercising: a build via
-Path A or B, or the live listing.
+- **2026-08-25, Path A** (issue #2): a second Google account — not the owner's,
+  on a school Workspace domain — copied the template and authorized the bound
+  script. That settles one open question: the domain does **not** block
+  authorizing an unverified app, so Path A is viable there. Steps 5–9 were not
+  re-run by that account.
+- **2026-09-15, the published listing** (issue #21): a second account installed
+  from the listing and saw a clean consent screen with no unverified-app
+  interstitial, **Extensions → Polyglot Slides** present in a fresh deck
+  without copying anything, and a translation run. That is install plus one
+  mode — not steps 5–9, and not the mode matrix in step 6.
+
+**Path B has not been exercised by a second account at all**, beyond the
+permissions gotcha recorded in its own section.
+
+So the functional sweep below is still owed on every path. It is the
+**regression checklist for a non-owner user** — the part of this document that
+outlived the install steps it used to accompany, since it tests the add-on's
+behavior for someone who is not the script's author. Run it against whichever
+entry point you are exercising: a build via Path A or B, or the live listing.
 
 Give a tester **only the entry point under test** — the template link plus a
 pointer to [Path A](#path-a--copy-the-template-deck-simpler), or the listing
 link on its own. Do not coach them; the point is to test the writing as much
-as the mechanics. Steps 1–2 and the unverified-app parts of step 4 are
-Path A's: from the listing, a tester installs, confirms the consent screen
-named the add-on and showed no unverified-app interstitial, and picks the
-sweep up at step 3.
+as the mechanics.
+
+Steps 1–2 below, and the unverified-app parts of step 4, belong to **Path A
+only**. A tester on the **listing** instead installs from it, records whether
+the consent screen named the add-on and whether any unverified-app screen
+appeared (it should not), and joins at step 3. A tester on **Path B** sets up
+the test deployment per that section and also joins at step 3. Steps 3 and
+5–9 are common to all three.
 
 The tester should, signed in as a non-owner account:
 
-1. Open the template link — confirm it opens **read-only**.
-2. **File → Make a copy → Entire presentation** — confirm the copy lands in
-   *their* Drive and they are the owner.
+1. *(Path A only.)* Open the template link — confirm it opens **read-only**.
+2. *(Path A only.)* **File → Make a copy → Entire presentation** — confirm the
+   copy lands in *their* Drive and they are the owner.
 3. Confirm **Extensions → Polyglot Slides** appears, with all four items — in
-   the copy on Path A, in any deck they open after installing from the
-   listing. Note whether a tab reload was needed.
+   the copy on Path A, in the targeted deck on Path B, in any deck they open
+   after installing from the listing. Note whether a tab reload was needed.
 4. Click **Open sidebar** and complete authorization. Record:
    - **whether authorization is allowed at all** — a Workspace/school account
      may block unverified apps by domain policy, which affects these
