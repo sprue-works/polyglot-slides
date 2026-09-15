@@ -36,8 +36,9 @@ access, and the project is never re-pointed at a personally owned one (see
    and **Save test**.
 5. Select the test and click **Execute**. The deck opens with the add-on
    loaded under **Extensions → Polyglot Slides**.
-6. First run: approve the OAuth prompt. A test deployment runs as *your*
-   unverified copy of the project, not as the verified listing, so the
+6. First run: approve the OAuth prompt. A test deployment is an unverified
+   deployment of the shared project — Google's verification covers the
+   listing's pinned version, not test deployments — so the
    **"Google hasn't verified this app"** screen is expected — **Advanced → Go
    to Polyglot Slides (unsafe)**. The listing itself shows no such screen.
 
