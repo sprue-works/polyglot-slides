@@ -80,11 +80,13 @@ non-owner copying a view-only deck and hitting the unverified-app consent
 screen, and now equally a non-owner installing the listing and seeing the real
 consent screen. Don't claim either is verified off owner-side testing.
 INSTALL.md carries the second-account checklist; its functional sweep applies
-to both, while its steps 1–2 and the unverified-app parts of step 4 are the
-template-deck path's only. **That sweep has never been run end to end.** The
-2026-09-15 listing run was an install smoke test — consent screen, menu
-present, one translation — and the 2026-08-25 template run stopped at
-authorization. Don't read either as the regression checklist passing.
+to every entry point. Steps 1–2 are the template-deck path's only; the
+unverified-app parts of step 4 apply to both development paths (Path B runs a
+copied, unverified script as well) and not to the listing. **That sweep has
+never been run end to end.** The 2026-09-15 listing run was an install smoke
+test — consent screen, menu present, one translation — and the 2026-08-25
+template run stopped at authorization. Don't read either as the regression
+checklist passing.
 
 ## The Apps Script project is org-owned, and that cannot be undone or redone later
 

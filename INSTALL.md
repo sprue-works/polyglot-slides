@@ -168,13 +168,15 @@ you approve once, and further decks only need a test entry added.
 > confirmed against a real second account.
 >
 > If the copy also refuses, check whether your account is a **Workspace /
-> school account**: some domains block Apps Script deployments or
-> unverified-app authorization outright, in which case neither development
-> path here works on that account — use the published listing, or have an
-> admin install it domain-wide. Try
-> [Path A](#path-a--copy-the-template-deck-simpler) with the same account
-> to tell the two apart — if Path A's authorization screen also fails, it is a
-> domain policy, not a permissions mistake.
+> school account**: two different domain policies can bite here. One blocks
+> Apps Script **deployments**, which rules out Path B but leaves Path A
+> working (a copied bound script needs no deployment). The other blocks
+> **unverified-app authorization** outright, which rules out both development
+> paths — the published listing is verified and unaffected, so use it, or have
+> an admin install it domain-wide. Try
+> [Path A](#path-a--copy-the-template-deck-simpler) with the same account to
+> tell them apart: if Path A's authorization screen also fails, it is the
+> second policy, not a permissions mistake.
 
 **A test deployment targets one specific presentation.** For a second deck,
 repeat steps 4–6 with that deck selected. The authorization carries over; only
@@ -288,12 +290,14 @@ pointer to [Path A](#path-a--copy-the-template-deck-simpler), or the listing
 link on its own. Do not coach them; the point is to test the writing as much
 as the mechanics.
 
-Steps 1–2 below, and the unverified-app parts of step 4, belong to **Path A
-only**. A tester on the **listing** instead installs from it, records whether
-the consent screen named the add-on and whether any unverified-app screen
-appeared (it should not), and joins at step 3. A tester on **Path B** sets up
-the test deployment per that section and also joins at step 3. Steps 3 and
-5–9 are common to all three.
+Steps 1–2 below belong to **Path A only**. The unverified-app parts of step 4
+belong to **both development paths** — Path B runs a copied, unverified
+script too, and its first-run authorization shows the same screens — and do
+**not** apply to the listing. A tester on the **listing** installs from it,
+records whether the consent screen named the add-on and whether any
+unverified-app screen appeared (it should not), and joins at step 3. A tester
+on **Path B** sets up the test deployment per that section and joins at
+step 3, keeping all of step 4. Steps 3 and 5–9 are common to all three.
 
 The tester should, signed in as a non-owner account:
 
