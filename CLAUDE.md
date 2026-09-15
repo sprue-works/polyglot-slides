@@ -6,10 +6,11 @@
   `Sidebar.html` (the sidebar UI), `appsscript.json` (manifest + OAuth scopes).
 - `README.md` — what it does, the modes, known limitations, and the developer
   loop (`clasp push`, test deployments).
-- `INSTALL.md` — how a non-developer installs it today, the owner-side sharing
-  setup, the staged template deck's IDs, and the second-account verification
-  checklist. **Interim by design** — see its shelf-life note; most of it is
-  superseded when #4 lands.
+- `INSTALL.md` — the **development/testing** loop for putting a build of
+  `src/` in front of a real deck, the owner-side sharing setup, the staged
+  template deck's IDs, and the second-account verification checklist. No longer
+  the install path: the Marketplace listing is (see "The listing is live" at
+  the bottom of this file).
 - `tools/sync-template.sh` — pushes `src/` into the template deck's bound script.
 - `tools/release.sh` — tagged-release pipeline (push + numbered version;
   nothing is deployed); `.github/workflows/deploy.yml` runs it and opens the
@@ -75,7 +76,8 @@ to fix — automatic updates need the Marketplace path (#4).
 The owner's account cannot exercise the flow that matters (a non-owner copying
 a view-only deck and hitting the unverified-app consent screen). Don't claim the
 install path is verified off owner-side testing; INSTALL.md carries the
-second-account checklist.
+second-account checklist, which the 2026-09-15 listing acceptance ran against
+(see "The listing is live" below).
 
 ## The Apps Script project is org-owned, and that cannot be undone or redone later
 
@@ -298,3 +300,40 @@ against `PUT /repos/{owner}/{repo}/pages`:
 2. `{"cname": "polyglot.sprue.works"}` — the cert reached `approved` within
    a minute.
 3. `{"https_enforced": true}`
+
+## The listing is live, and the consent screen is frozen
+
+Both Google reviews are approved and the add-on is published:
+
+- **OAuth verification approved 2026-09-13** — brand verification plus the
+  sensitive scope `script.container.ui`.
+- **Marketplace listing review approved 2026-09-15**; the teacher acceptance
+  test ran from a second account the same day and passed (clean consent
+  screen, no unverified-app interstitial, `Extensions → Polyglot Slides` in a
+  fresh deck, translation ran).
+- Live listing (`unlisted`, link-only, not searchable):
+  <https://workspace.google.com/marketplace/app/polyglot_slides/556097262294>
+  — committed in `docs/index.html` (`#install`) and README "Install".
+
+The binding rule from Google's approval email, which is the part that changes
+how this repo is edited: **any change to the OAuth consent screen
+configuration, or any new scope, requires a new verification request —
+verification is not inherited.** So treat the consent screen as frozen. App
+name, logo, support email, homepage, privacy-policy and terms URLs, and the
+scope list are no longer free to edit: each re-opens a review round, weeks
+rather than days for a sensitive scope. That is a cost to plan for, not a
+prohibition — but it is never a drive-by change, and `marketplace/RUNBOOK.md`
+§6 Post-live plus its "Ongoing" table are where the per-change consequences
+live. `tools/check-listing.sh` failing on a `listing.json` /
+`src/appsscript.json` scope mismatch is that reminder firing.
+
+**Code releases are exempt.** Bumping the pinned *Slides add-on script version*
+after a tagged release is not a consent-screen change and triggers no
+re-review — that mechanism is unchanged (see "CI deploys authenticate as a
+user" above).
+
+`INSTALL.md` is no longer an install document. The template-deck and
+test-deployment paths in it are the **development/testing** loop — a specific
+build of `src/` in front of a specific deck — and `tools/sync-template.sh`
+still keeps the template's bound script in step with `src/`. Don't re-promote
+it to "how to install"; the listing is that now.
