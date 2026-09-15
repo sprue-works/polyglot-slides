@@ -264,4 +264,6 @@ has no API that a CI job could drive:
   (new scopes, name/branding changes). Bumping the pinned script version
   number does not need re-review, but it is still a console edit per release.
 - The **template deck** (`tools/sync-template.sh`) — its bound script is a
-  separate project with no CI hook, and it goes away once the listing is live.
+  separate project with no CI hook. It outlived the listing going live: it is
+  now the development/testing path in [INSTALL.md](INSTALL.md), not an install
+  route, so it stays until that loop stops being useful.
