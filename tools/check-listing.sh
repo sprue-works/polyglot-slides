@@ -203,7 +203,10 @@ if (wrangler) {
   // custom_domain -- would have Workers Builds' non-interactive deploy
   // replace that DNS record without asking (wrangler passes
   // override_existing_dns_record=true when stdout is not a TTY).
-  if (wrangler.routes !== undefined && wrangler.routes !== null) fail(`wrangler.jsonc must not declare routes; ${publicHost} is routed by terraform/ (got ${JSON.stringify(wrangler.routes)})`);
+  // wrangler accepts both the plural `routes` and the singular `route`.
+  for (const key of ['routes', 'route']) {
+    if (wrangler[key] !== undefined && wrangler[key] !== null) fail(`wrangler.jsonc must not declare ${key}; ${publicHost} is routed by terraform/ (got ${JSON.stringify(wrangler[key])})`);
+  }
   if (wrangler.workers_dev !== true || wrangler.preview_urls !== true) fail('wrangler.jsonc must keep workers_dev and preview_urls on (branch previews)');
   // The hostname reaches the Worker through terraform/: the stack must still
   // route the listing hostname to this Worker in the sprue.works zone, with

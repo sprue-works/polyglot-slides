@@ -199,6 +199,11 @@ edit_wrangler 'j.routes=[]'
 expect_fail "even an empty routes key" "must not declare routes"
 
 fresh
+# wrangler's singular form is the same bypass.
+edit_wrangler 'j.route={pattern:"polyglot.sprue.works",custom_domain:true}'
+expect_fail "singular route key" "must not declare route;"
+
+fresh
 edit_wrangler 'j.preview_urls=false'
 expect_fail "branch previews switched off" "preview_urls"
 
