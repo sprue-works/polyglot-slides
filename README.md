@@ -7,10 +7,18 @@ so it scales to many users without a shared limit.
 
 ## Install
 
-Marketplace listing: not live yet — see [Distribution](#distribution) for the
-status. Until then, **[INSTALL.md](INSTALL.md)** — copy one template deck,
-click through one authorization screen, done. No command line, no Apps Script
-editor.
+**[Install from the Google Workspace
+Marketplace](https://workspace.google.com/marketplace/app/polyglot_slides/556097262294)**
+— one click, one authorization screen, done. The add-on then appears under
+**Extensions → Polyglot Slides** in every deck you open, and updates reach you
+without reinstalling. No command line, no Apps Script editor.
+
+The listing is *unlisted*: it is not searchable in the Marketplace, but anyone
+with the link above can install it. A Workspace admin can install it for a
+whole domain from the same listing.
+
+[INSTALL.md](INSTALL.md) keeps the older template-deck flow, now scoped to
+development and testing rather than to installing the add-on.
 
 ## Modes
 
@@ -134,9 +142,11 @@ publish, and verify from a second account. The listing pins a **script
 version number**; after each release someone bumps that field (no re-review
 for a version bump alone) before installed users see the new code.
 
-**Until the listing is live**, the template-deck flow in
-[INSTALL.md](INSTALL.md) remains the install path (and the dev/testing path
-afterwards); push `src/` changes into it with `tools/sync-template.sh`.
+**The listing is live** (`unlisted`, approved 2026-09-15:
+<https://workspace.google.com/marketplace/app/polyglot_slides/556097262294>),
+so the template-deck flow in [INSTALL.md](INSTALL.md) is now the
+development/testing path rather than the install path; push `src/` changes
+into it with `tools/sync-template.sh`.
 
 ## Release pipeline
 
