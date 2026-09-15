@@ -97,7 +97,11 @@ resource "cloudflare_dns_record" "docs_site" {
 
 # The route takes precedence over the record's origin, so from the first
 # apply the Worker serves the hostname. A route needs a proxied record on the
-# hostname to receive traffic, hence the dependency.
+# hostname to receive traffic, hence the dependency. It also needs the Worker
+# to exist: Workers Builds creates and deploys it from the same push to main
+# that triggers this apply, independently, so the first apply can lose that
+# race and fail on this resource. That is a re-run after the deploy is green
+# (RUNBOOK §1c), not a config problem; the record is untouched by the failure.
 resource "cloudflare_workers_route" "docs_site" {
   zone_id = var.zone_id
   pattern = "${var.hostname}/*"

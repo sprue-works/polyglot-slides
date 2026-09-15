@@ -134,7 +134,14 @@ verify promptly.
    at Google auth or Cloudflare, fix the prerequisite in 1b and re-run with
    `gh run rerun <run-id>`; the apply path is push-to-`main` only, with no
    manual dispatch, because the protected branch is its only authorization
-   boundary.
+   boundary. **Ordering race:** the same push also starts the Workers Builds
+   production deploy, and the route can only be created once the
+   `polyglot-slides` Worker exists. If Terraform runs first and fails on the
+   route with a missing-script error, wait for the Workers Builds deploy to
+   go green (Cloudflare dashboard → the Worker → Deployments), then re-run
+   the Terraform workflow. Doing 1a before merging makes this unlikely: the
+   Worker is created by the dashboard connection, not by the first green
+   build.
 2. Verify the live hostname with the loop from 1a, using
    `host=polyglot.sprue.works`, plus one request through a resolver that has
    not cached the old answer (`curl --resolve` against a Cloudflare edge IP,
