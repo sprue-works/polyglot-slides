@@ -448,9 +448,10 @@ Both reviews came back approved and the listing is live:
 
 Live listing:
 <https://workspace.google.com/marketplace/app/polyglot_slides/556097262294>
-(step 8's teacher acceptance ran against it on 2026-09-15 and passed: clean
-consent screen, no unverified-app interstitial, **Extensions → Polyglot
-Slides** present in a fresh deck, translation ran). The URL is committed in
+(step 8's **install smoke test** ran against it on 2026-09-15 and passed:
+clean consent screen, no unverified-app interstitial, **Extensions → Polyglot
+Slides** present in a fresh deck, translation ran — the functional sweep half
+of step 8 is still outstanding, see #54). The URL is committed in
 `docs/index.html` (`#install`) and README "Install"; `INSTALL.md`'s
 template-deck flow is now the development/testing path.
 
