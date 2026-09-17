@@ -19,8 +19,8 @@ too, so a Workspace admin *can* push it to everyone from the same listing —
 optional and unexercised, so treat it as available rather than proven
 (`marketplace/RUNBOOK.md` §6).
 
-[INSTALL.md](INSTALL.md) keeps the older template-deck flow, now scoped to
-development and testing rather than to installing the add-on.
+Developers wanting to run an unreleased build in a deck use a test deployment
+instead — see [Test on a real deck](#test-on-a-real-deck).
 
 ## Modes
 
@@ -64,7 +64,6 @@ the sidebar, persisted via `UserProperties`; the offered list is
 - `src/Code.js` — menu, modes, selection handling, translation
 - `src/Sidebar.html` — sidebar UI (language multi-select + mode buttons)
 - `src/appsscript.json` — manifest (scopes: current presentation only + container UI)
-- `tools/sync-template.sh` — push `src/` to the template deck's bound script
 - `tools/release.sh` — cut a numbered script version for a tagged release (CI and local)
 - `tools/check-listing.sh`, `tools/render-icons.sh` — Marketplace listing consistency check and icon rendering; both use `tools/png-check.js` to verify the icon artwork fills its canvas
 - `tools/reconcile-pages-dns.sh` — idempotent Cloudflare check/apply for the DNS-only Pages CNAME
@@ -76,9 +75,9 @@ the sidebar, persisted via `UserProperties`; the offered list is
   `main`; on `v*` tags cut a version and open the "bump script version"
   tracking issue), and `pages-dns.yml` (manual
   Cloudflare CNAME check/apply)
-- `INSTALL.md` — the development/testing paths for putting a build of `src/`
-  in front of a deck, plus the owner-side sharing setup (not the install path;
-  the Marketplace listing is)
+- `INSTALL.md` — developer doc: the test-deployment loop in detail (with its
+  permissions gotcha) and the second-account verification checklist (not the
+  install path; the Marketplace listing is)
 
 ## Develop
 
@@ -94,18 +93,25 @@ Docker image when Docker is available.
 
 Merging to `main` also pushes automatically — see [Release pipeline](#release-pipeline).
 
-## Test on a real deck (one-time setup)
+## Test on a real deck
 
-Editor add-on test deployments can only be created in the Apps Script UI.
-This is the developer-side version of [INSTALL.md](INSTALL.md)'s Path B:
+The listing pins a script *version*, so installed users never see HEAD; a
+**test deployment** is how a developer runs the current `src/` in a deck.
+Editor add-on test deployments can only be created in the Apps Script UI
+(one-time setup per deck; [INSTALL.md](INSTALL.md) has the long form, the
+permissions gotcha, and the second-account verification checklist):
 
-1. `clasp open-script`
+1. `clasp push` (so *Latest Code* is your tree, not the last upload), then
+   `clasp open-script`
 2. **Deploy → Test deployments**
-3. Under *Application(s): Slides*, click **Add test**, pick a presentation, save.
-4. Select the test and click **Execute** — the deck opens with the add-on
-   loaded under **Extensions → Polyglot Slides**.
-5. First run: approve the OAuth prompt (unverified-app warning is expected —
-   Advanced → continue).
+3. *Select type* → **Enable deployment types** → **Editor add-on**; under
+   *Application(s): Slides* click **Add test**, choose **Latest Code**, set the
+   initial authorization state, pick a presentation, save.
+4. Select the test and click **Execute** — that presentation opens with the
+   add-on loaded under **Extensions → Polyglot Slides**.
+5. Approve the OAuth prompt if one appears; with the script attached to the
+   verified GCP project and no new scopes there should be no unverified-app
+   warning (INSTALL.md says what it means if there is).
 
 After that, iterate with `clasp push` and reload the deck.
 
@@ -147,10 +153,9 @@ version number**; after each release someone bumps that field (no re-review
 for a version bump alone) before installed users see the new code.
 
 **The listing is live** (`unlisted`, approved 2026-09-15:
-<https://workspace.google.com/marketplace/app/polyglot_slides/556097262294>),
-so the template-deck flow in [INSTALL.md](INSTALL.md) is now the
-development/testing path rather than the install path; push `src/` changes
-into it with `tools/sync-template.sh`.
+<https://workspace.google.com/marketplace/app/polyglot_slides/556097262294>).
+The pre-Marketplace template-deck path is retired (`marketplace/RUNBOOK.md`
+"Retired"); [INSTALL.md](INSTALL.md) is now developer-only.
 
 ## Release pipeline
 
@@ -267,7 +272,3 @@ has no API that a CI job could drive:
 - **Publishing / re-submitting** the listing after a change that needs review
   (new scopes, name/branding changes). Bumping the pinned script version
   number does not need re-review, but it is still a console edit per release.
-- The **template deck** (`tools/sync-template.sh`) — its bound script is a
-  separate project with no CI hook. It outlived the listing going live: it is
-  now the development/testing path in [INSTALL.md](INSTALL.md), not an install
-  route, so it stays until that loop stops being useful.

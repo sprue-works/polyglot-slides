@@ -6,12 +6,11 @@
   `Sidebar.html` (the sidebar UI), `appsscript.json` (manifest + OAuth scopes).
 - `README.md` — what it does, the modes, known limitations, and the developer
   loop (`clasp push`, test deployments).
-- `INSTALL.md` — the **development/testing** loop for putting a build of
-  `src/` in front of a real deck, the owner-side sharing setup, the staged
-  template deck's IDs, and the second-account verification checklist. No longer
-  the install path: the Marketplace listing is (see "The listing is live" at
-  the bottom of this file).
-- `tools/sync-template.sh` — pushes `src/` into the template deck's bound script.
+- `INSTALL.md` — developer-only: the test-deployment loop for running a build
+  of `src/` in a real deck, its permissions gotcha, the second-account
+  verification checklist, and a one-line note on the retired template deck.
+  Not the install path: the Marketplace listing is (see "The listing is live"
+  at the bottom of this file).
 - `tools/release.sh` — tagged-release pipeline (push + numbered version;
   nothing is deployed); `.github/workflows/deploy.yml` runs it and opens the
   "bump script version" tracking issue. README "Release pipeline" is the
@@ -39,54 +38,31 @@ runs write to `#status` in `Sidebar.html`, menu runs call `SlidesApp.getUi()
 .alert()` in `menuRun_`. That asymmetry is tracked in #6, not a bug to fix
 in passing.
 
-## The script project's *name* is user-visible
+## The template deck is retired, not deleted
 
-`onOpen` uses `Ui.createAddonMenu()`. For a **container-bound** script (which is
-how the template deck in [INSTALL.md](INSTALL.md) ships), the Extensions submenu
-takes **the script project's name**, not the deck's name and not anything in the
-code. Google's reference is explicit: "if the script is bound to the document
-directly, the sub-menu name matches the script's name."
+The pre-Marketplace "copy the template deck" path (#2) is gone from the docs
+since #55: the listing replaced it, and it cost a second copy of `src/` in a
+bound script that drifted silently. The Drive deck and its bound script still
+exist (IDs in INSTALL.md's retired note and `marketplace/RUNBOOK.md`'s
+"Retired" note); copies made from it are frozen at the code they were copied
+with, which is inherent to bound scripts. Don't resurrect a sync script or a
+recipient-facing doc for it — if a template is ever needed again (listing
+pulled), recreate one via `clasp create --type slides --title "Polyglot
+Slides"` and rename the *deck* afterwards in Drive: a **container-bound**
+script's Extensions submenu takes the *script project's* name, so the bound
+script must be titled exactly `Polyglot Slides`.
 
-So `clasp create --type slides --title "X"` names *both* the new deck and its
-bound script `X`, and `X` is then what every recipient is told to click. Create
-the bound script with the title **`Polyglot Slides`** and rename the *deck*
-afterwards (Drive rename; it does not touch the script project). Getting this
-backwards produces an `Extensions → Polyglot Slides — Template` menu that no
-documentation matches.
+## Verifying the listing needs a second Google account
 
-## The template deck holds a second copy of the source
-
-`src/` is pushed to two different script projects:
-
-- the dev project in `.clasp.json` (`clasp push`), used for Path B and for
-  day-to-day iteration;
-- the template deck's **bound** script (`tools/sync-template.sh`), which is what
-  recipients actually copy.
-
-They drift silently — nothing fails, new recipients just get old code. Run
-`tools/sync-template.sh` after any `src/` change that should reach new users.
-`sync-template.sh` pushes from a scratch directory precisely so it can never
-shadow or rewrite the repo's own `.clasp.json`.
-
-Copies already made never update. That is inherent to bound scripts, not a bug
-to fix — updates that reach users need the Marketplace path, which now exists:
-a release cuts a new script version and a human bumps the pin the listing
-carries (see "The listing is live" at the bottom of this file).
-
-## Verifying either entry point needs a second Google account
-
-The owner's account cannot exercise the flow that matters — originally a
-non-owner copying a view-only deck and hitting the unverified-app consent
-screen, and now equally a non-owner installing the listing and seeing the real
-consent screen. Don't claim either is verified off owner-side testing.
-INSTALL.md carries the second-account checklist; its functional sweep applies
-to every entry point. Steps 1–2 are the template-deck path's only; the
-unverified-app parts of step 4 apply to both development paths (Path B runs a
-copied, unverified script as well) and not to the listing. **That sweep has
-never been run end to end.** The 2026-09-15 listing run was an install smoke
-test — consent screen, menu present, one translation — and the 2026-08-25
-template run stopped at authorization. Don't read either as the regression
-checklist passing.
+The owner's account cannot exercise the flow that matters — a non-owner
+installing the listing and seeing the real consent screen. Don't claim it is
+verified off owner-side testing. INSTALL.md carries the second-account
+checklist, scoped to the live listing; **its functional sweep has never been
+run end to end, and is not owed** — #54 was closed not-planned on 2026-09-17,
+keeping the checklist available for a future change rather than as a debt. The
+2026-09-15 listing run was an install smoke test — consent screen, menu
+present, one translation — so don't cite it as the regression checklist
+passing.
 
 ## The Apps Script project is org-owned, and that cannot be undone or redone later
 
@@ -117,8 +93,8 @@ Consequences, so nobody "fixes" this back:
   SDK's *Project Script ID* + *version* (§4) are per-project facts that had to be
   redone for the new project; a new project's versions start at `1`.
 - The old personal project still exists, orphaned. Leave it; don't delete it.
-- `tools/sync-template.sh` is unaffected — it targets the template deck's
-  **bound** script, a different project that stays with the deck's owner.
+- A developer's personal account is *shared in* as an editor on the org-owned
+  project — that is what `clasp push` and INSTALL.md's test deployments run as.
 
 ## CI deploys authenticate as a user, and the deployment ID is *not* what the Marketplace pins
 
@@ -342,8 +318,8 @@ after a tagged release is not a consent-screen change and triggers no
 re-review — that mechanism is unchanged (see "CI deploys authenticate as a
 user" above).
 
-`INSTALL.md` is no longer an install document. The template-deck and
-test-deployment paths in it are the **development/testing** loop — a specific
-build of `src/` in front of a specific deck — and `tools/sync-template.sh`
-still keeps the template's bound script in step with `src/`. Don't re-promote
-it to "how to install"; the listing is that now.
+`INSTALL.md` is no longer an install document. It is the **developer test
+loop** — a test deployment putting a specific build of `src/` in front of a
+specific deck, which is the only way to run HEAD since the listing pins a
+version — plus the second-account checklist. Don't re-promote it to "how to
+install"; the listing is that now.
