@@ -33,10 +33,13 @@ access, and the project is never re-pointed at a personally owned one (see
 2. **Deploy → Test deployments**.
 3. Next to *Select type*, open **Enable deployment types** (the gear) and
    choose **Editor add-on**. Under *Application(s): Slides*, click **Add test**.
-4. Choose **Latest Code**; in *Config*, pick the initial **authorization
-   state** you want to exercise (use the not-yet-installed state to see the
-   first-run consent flow a new user gets); under *Test document* click
-   **Select a document**, pick the presentation, and **Save test**.
+4. Choose **Latest Code**; in *Config*, pick the initial state to exercise —
+   *installed* (the add-on is installed for you, as after a Marketplace
+   install) or *enabled* (someone used it in this file, so collaborators see
+   it). This is the add-on's install/enable lifecycle, **not** your OAuth
+   grant: it does not clear an authorization you already gave. Under *Test
+   document* click **Select a document**, pick the presentation, and
+   **Save test**.
 5. Select the test and click **Execute**. That opens the chosen presentation
    with the add-on loaded under **Extensions → Polyglot Slides**.
 6. Approve the OAuth prompt if one appears. Verification attaches to the
@@ -48,6 +51,12 @@ access, and the project is never re-pointed at a personally owned one (see
    the script is no longer attached to the verified GCP project, or the
    manifest asks for a scope outside the verified set
    (`marketplace/RUNBOOK.md` §3, §3b). Untested against a live second account.
+
+To exercise the **first-run consent flow** itself, the Config state is the
+wrong lever — use an account that has never authorized this project, or clear
+your own grant by running `ScriptApp.invalidateAuth()` once in the editor.
+Note that authorizing during a test also authorizes the script outside
+testing, so the next run won't prompt again.
 
 After that, iterate with `clasp push` and reload the deck.
 
@@ -67,30 +76,29 @@ After that, iterate with `clasp push` and reload the deck.
 
 ## Verification checklist (second Google account)
 
-**Status: install smoke-tested; the functional sweep below has never been run
-end to end by a second account** (tracked in #54). On 2026-09-15 (issue #21) a
-second account installed from the listing and saw a clean consent screen with
-no unverified-app interstitial, **Extensions → Polyglot Slides** in a fresh
-deck, and one translation run — install plus one mode, not steps 3–7.
+**Status: install smoke-tested; the sweep below has never been run end to
+end.** On 2026-09-15 (issue #21) a second account installed from the listing
+and saw a clean consent screen with no unverified-app interstitial,
+**Extensions → Polyglot Slides** in a fresh deck, and one translation run —
+install plus one mode, not steps 3–7. Running the rest was considered and
+deliberately **not** required (#54, closed 2026-09-17): the checklist is kept
+here for whoever wants it against a future change, not owed.
 
-The owner's account cannot see the real consent flow, so this is the
-**regression checklist for a non-owner user**. Give the tester **only the
-entry point under test** — the listing link on its own, or a test deployment
-set up per the section above — and do not coach them; the point is to test the
-writing as much as the mechanics.
+This is the **regression checklist for a non-owner user** against the live
+**Marketplace listing** — the thing real users install, and a flow the owner's
+account cannot see. It is deliberately listing-only; the test-deployment loop
+above is a separate concern. Give the tester **only the listing link** and do
+not coach them; the point is to test the writing as much as the mechanics.
 
 The tester should, signed in as a non-owner account:
 
 1. Install from the listing link. Record whether the consent screen named the
    add-on, showed its icon, listed only "see and edit the presentation this
    add-on is open in" and "display content in the Slides UI", and whether any
-   **"Google hasn't verified this app"** screen appeared (it should not). A
-   tester on a test deployment instead sets it up per the section above and
-   joins at step 2.
-2. Confirm **Extensions → Polyglot Slides** appears, with all four items —
-   on the listing, in any deck they open; on a test deployment, in the
-   presentation that **Execute** opened (a test targets that one document).
-   Note whether a tab reload was needed.
+   **"Google hasn't verified this app"** screen appeared (it should not).
+2. Open any deck and confirm **Extensions → Polyglot Slides** appears, with
+   all four items — a listing install follows the user, so no copying or
+   per-deck setup should be needed. Note whether a tab reload was needed.
 3. Click **Open sidebar**, complete any authorization, confirm the sidebar
    loads its language list, select two languages, and confirm the selection
    survives closing and reopening the sidebar (this exercises
@@ -109,7 +117,7 @@ The tester should, signed in as a non-owner account:
 
 Wording that didn't match is a fix to this document; a scope that reads wider
 than intended is a fix to `src/appsscript.json`; a mode misbehaving (steps 3–6)
-is a code defect — file it against `src/`. On the listing, a consent screen
+is a code defect — file it against `src/`. A consent screen
 with the wrong name, icon, or scopes (or an unverified-app interstitial) is a
 Marketplace/OAuth configuration problem (`marketplace/RUNBOOK.md` §3–6); a
 missing menu or an install that lands old code is a release problem — check

@@ -57,9 +57,12 @@ script must be titled exactly `Polyglot Slides`.
 The owner's account cannot exercise the flow that matters — a non-owner
 installing the listing and seeing the real consent screen. Don't claim it is
 verified off owner-side testing. INSTALL.md carries the second-account
-checklist; **its functional sweep has never been run end to end** (#54 owes
-it). The 2026-09-15 listing run was an install smoke test — consent screen,
-menu present, one translation — not the regression checklist passing.
+checklist, scoped to the live listing; **its functional sweep has never been
+run end to end, and is not owed** — #54 was closed not-planned on 2026-09-17,
+keeping the checklist available for a future change rather than as a debt. The
+2026-09-15 listing run was an install smoke test — consent screen, menu
+present, one translation — so don't cite it as the regression checklist
+passing.
 
 ## The Apps Script project is org-owned, and that cannot be undone or redone later
 
