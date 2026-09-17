@@ -31,16 +31,23 @@ access, and the project is never re-pointed at a personally owned one (see
 
 1. `clasp push` to upload the tree you want to test, then `clasp open-script`.
 2. **Deploy → Test deployments**.
-3. Under *Application(s): Slides*, click **Add test**.
-4. Choose **Latest Code**, click **Select a document**, pick the presentation,
-   and **Save test**.
-5. Select the test and click **Execute**. The deck opens with the add-on
-   loaded under **Extensions → Polyglot Slides**.
-6. First run: approve the OAuth prompt. A test deployment is an unverified
-   deployment of the shared project — Google's verification covers the
-   listing's pinned version, not test deployments — so the
-   **"Google hasn't verified this app"** screen is expected — **Advanced → Go
-   to Polyglot Slides (unsafe)**. The listing itself shows no such screen.
+3. Next to *Select type*, open **Enable deployment types** (the gear) and
+   choose **Editor add-on**. Under *Application(s): Slides*, click **Add test**.
+4. Choose **Latest Code**; in *Config*, pick the initial **authorization
+   state** you want to exercise (use the not-yet-installed state to see the
+   first-run consent flow a new user gets); under *Test document* click
+   **Select a document**, pick the presentation, and **Save test**.
+5. Select the test and click **Execute**. That opens the chosen presentation
+   with the add-on loaded under **Extensions → Polyglot Slides**.
+6. Approve the OAuth prompt if one appears. Verification attaches to the
+   **OAuth client of the associated Cloud project** — which for this script is
+   the verified org-owned project (`CLAUDE.md`) — not to the listing's pinned
+   version, so a test deployment with the manifest's existing scopes should
+   *not* show **"Google hasn't verified this app"**. If that screen does
+   appear, treat it as a signal rather than a step to click through: usually
+   the script is no longer attached to the verified GCP project, or the
+   manifest asks for a scope outside the verified set
+   (`marketplace/RUNBOOK.md` §3, §3b). Untested against a live second account.
 
 After that, iterate with `clasp push` and reload the deck.
 
@@ -53,9 +60,10 @@ After that, iterate with `clasp push` and reload the deck.
 > your changes. Confirmed against a real second account.
 >
 > If an editor account still cannot deploy, check whether it is a **Workspace /
-> school account**: some domains block Apps Script deployments or
-> unverified-app authorization outright, in which case this loop does not work
-> on that account — test from a personal account, or use the published listing.
+> school account**: some domains restrict Apps Script deployments or third-party
+> app authorization by admin policy, in which case this loop does not work on
+> that account — test from an account without that policy, or use the published
+> listing.
 
 ## Verification checklist (second Google account)
 
@@ -79,8 +87,10 @@ The tester should, signed in as a non-owner account:
    **"Google hasn't verified this app"** screen appeared (it should not). A
    tester on a test deployment instead sets it up per the section above and
    joins at step 2.
-2. Open a deck and confirm **Extensions → Polyglot Slides** appears, with all
-   four items. Note whether a tab reload was needed.
+2. Confirm **Extensions → Polyglot Slides** appears, with all four items —
+   on the listing, in any deck they open; on a test deployment, in the
+   presentation that **Execute** opened (a test targets that one document).
+   Note whether a tab reload was needed.
 3. Click **Open sidebar**, complete any authorization, confirm the sidebar
    loads its language list, select two languages, and confirm the selection
    survives closing and reopening the sidebar (this exercises

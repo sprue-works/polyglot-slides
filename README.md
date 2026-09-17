@@ -104,11 +104,14 @@ permissions gotcha, and the second-account verification checklist):
 1. `clasp push` (so *Latest Code* is your tree, not the last upload), then
    `clasp open-script`
 2. **Deploy → Test deployments**
-3. Under *Application(s): Slides*, click **Add test**, pick a presentation, save.
-4. Select the test and click **Execute** — the deck opens with the add-on
-   loaded under **Extensions → Polyglot Slides**.
-5. First run: approve the OAuth prompt (unverified-app warning is expected —
-   Advanced → continue).
+3. *Select type* → **Enable deployment types** → **Editor add-on**; under
+   *Application(s): Slides* click **Add test**, choose **Latest Code**, set the
+   initial authorization state, pick a presentation, save.
+4. Select the test and click **Execute** — that presentation opens with the
+   add-on loaded under **Extensions → Polyglot Slides**.
+5. Approve the OAuth prompt if one appears; with the script attached to the
+   verified GCP project and no new scopes there should be no unverified-app
+   warning (INSTALL.md says what it means if there is).
 
 After that, iterate with `clasp push` and reload the deck.
 
