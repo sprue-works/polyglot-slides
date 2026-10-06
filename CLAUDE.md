@@ -321,7 +321,8 @@ Both Google reviews are approved and the add-on is published:
   screen, no unverified-app interstitial, `Extensions → Polyglot Slides` in a
   fresh deck, translation ran. That is an install smoke test, not INSTALL.md's
   full functional sweep, which is still owed on every entry point.
-- Live listing (`unlisted`, link-only, not searchable):
+- Live listing (approved as `unlisted`; the *Unlisted* checkbox was cleared
+  2026-10-06, so it is `public` and searchable):
   <https://workspace.google.com/marketplace/app/polyglot_slides/556097262294>
   — committed in `docs/index.html` (`#install`) and README "Install".
 

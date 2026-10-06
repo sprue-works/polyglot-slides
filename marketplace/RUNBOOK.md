@@ -40,6 +40,12 @@ the same school Workspace domain?* Yes → `private` (set
 `distribution.privateDomain` to the domain). Mixed / personal Gmail → `unlisted`.
 The steps below are written for `unlisted` and mark what `private` skips.
 
+`public` is `unlisted` with the SDK's *Unlisted* checkbox cleared: identical
+review, install and consent behaviour, plus appearance in Marketplace search
+and browse. This listing started `unlisted` and was switched to `public` on
+2026-10-06; that checkbox is the only visibility setting the SDK still allows
+changing after a save.
+
 ## 1. Publish the static pages (GitHub Pages)
 
 The homepage, privacy policy, and terms of service in `docs/` are required
@@ -444,7 +450,7 @@ Both reviews came back approved and the listing is live:
 | | Approved | Covers |
 |---|---|---|
 | OAuth verification | 2026-09-13 | brand verification plus the sensitive scope `script.container.ui` |
-| Marketplace listing review | 2026-09-15 | the store listing itself; `unlisted`, so link-only, not searchable |
+| Marketplace listing review | 2026-09-15 | the store listing itself, approved as `unlisted` (link-only); the *Unlisted* checkbox was cleared 2026-10-06, so it is now searchable |
 
 Live listing:
 <https://workspace.google.com/marketplace/app/polyglot_slides/556097262294>
@@ -472,8 +478,8 @@ Code releases are exempt: bumping the pinned *Slides add-on script version*
 **Domain-wide admin install.** The Marketplace SDK is configured for
 *Individual + Admin install* (step 4), so a Workspace admin can install the
 add-on for a whole domain from **Admin console → Apps → Google Workspace
-Marketplace apps**, finding this listing by its URL rather than by search
-(`unlisted` is not searchable). That path is **optional for `unlisted`** —
+Marketplace apps**, finding this listing by its URL or, now that it is
+`public`, by search. That path is **optional** —
 individual install is the normal route, and admin install is not part of this
 add-on's acceptance. It has not been exercised; nothing here claims it was.
 
