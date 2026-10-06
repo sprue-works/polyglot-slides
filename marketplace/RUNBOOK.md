@@ -43,9 +43,10 @@ The steps below are written for `unlisted` and mark what `private` skips.
 `public` is `unlisted` with the SDK's *Unlisted* checkbox cleared, so the
 listing also appears in Marketplace search and browse. This listing started
 `unlisted` and was switched to `public` on 2026-10-06; that checkbox is the
-only visibility setting the SDK still allows changing after a save. Whether
-Google re-reviews the listing for that change is **unconfirmed** — the flip
-was made without checking, so treat the SDK review thread as the record.
+only visibility setting the SDK still allows changing after a save. Observed
+on this listing, as reported by the owner: Google did **not** re-review the
+change, and the listing was findable in Marketplace search afterwards
+(2026-10-06). That is one observation, not a documented guarantee.
 
 ## 1. Publish the static pages (GitHub Pages)
 
