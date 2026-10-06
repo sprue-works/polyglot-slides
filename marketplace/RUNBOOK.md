@@ -40,6 +40,14 @@ the same school Workspace domain?* Yes → `private` (set
 `distribution.privateDomain` to the domain). Mixed / personal Gmail → `unlisted`.
 The steps below are written for `unlisted` and mark what `private` skips.
 
+`public` is `unlisted` with the SDK's *Unlisted* checkbox cleared, so the
+listing also appears in Marketplace search and browse. This listing started
+`unlisted` and was switched to `public` on 2026-10-06; that checkbox is the
+only visibility setting the SDK still allows changing after a save. Observed
+on this listing, as reported by the owner: Google did **not** re-review the
+change, and the listing was findable in Marketplace search afterwards
+(2026-10-06). That is one observation, not a documented guarantee.
+
 ## 1. Publish the static pages (GitHub Pages)
 
 The homepage, privacy policy, and terms of service in `docs/` are required
@@ -343,7 +351,7 @@ SDK*) and click **Manage**, then the **App Configuration** tab:
 
 | Field | Value |
 |---|---|
-| App visibility | `distribution.visibility`: **Private** (own domain) or **Public** with *Unlisted* checked. **Private vs Public is irreversible once saved** — the SDK will not let you switch later; only the *Unlisted* checkbox under Public can be changed afterwards. Get `listing.json` → `distribution.visibility` right before clicking Save |
+| App visibility | `distribution.visibility`: **Private** (own domain) or **Public**: *Unlisted* checked is link-only (`unlisted`), cleared is searchable (`public`). **Private vs Public is irreversible once saved** — the SDK will not let you switch later; only the *Unlisted* checkbox under Public can be changed afterwards. Get `listing.json` → `distribution.visibility` right before clicking Save |
 | Installation settings | **Individual + Admin install** (admins can push to a whole domain) |
 | App integration | **Editor add-on** → tick **Slides**. Do **not** tick *Google Workspace add-on* — that is a different architecture (an `addOns` manifest block, card-based UI) and this add-on is a classic Editor add-on (`createAddonMenu` + HtmlService sidebar) |
 | Slides add-on Project Script ID | `.clasp.json` → `scriptId` — the org-owned project (#36); copy it from the file, never from memory |
@@ -418,7 +426,8 @@ refused at the consent prompt, so add them to both.
 - `private`: **Publish**. It appears in the domain's Marketplace immediately;
   an admin can install it for everyone from **Admin console → Apps → Google
   Workspace Marketplace apps**.
-- `unlisted`: **Submit for review** (the *Publish* button becomes *Submit*).
+- `unlisted` (and `public`, which differs only by the *Unlisted* checkbox):
+  **Submit for review** (the *Publish* button becomes *Submit*).
   Two reviews run: the Marketplace listing review (a few business days) and
   the OAuth verification from step 3, which is a **sensitive-scope** review
   because of `script.container.ui` — expect Google to ask for the scope
@@ -444,7 +453,7 @@ Both reviews came back approved and the listing is live:
 | | Approved | Covers |
 |---|---|---|
 | OAuth verification | 2026-09-13 | brand verification plus the sensitive scope `script.container.ui` |
-| Marketplace listing review | 2026-09-15 | the store listing itself; `unlisted`, so link-only, not searchable |
+| Marketplace listing review | 2026-09-15 | the store listing itself, approved as `unlisted` (link-only); the *Unlisted* checkbox was cleared 2026-10-06, so it is now searchable |
 
 Live listing:
 <https://workspace.google.com/marketplace/app/polyglot_slides/556097262294>
@@ -472,8 +481,8 @@ Code releases are exempt: bumping the pinned *Slides add-on script version*
 **Domain-wide admin install.** The Marketplace SDK is configured for
 *Individual + Admin install* (step 4), so a Workspace admin can install the
 add-on for a whole domain from **Admin console → Apps → Google Workspace
-Marketplace apps**, finding this listing by its URL rather than by search
-(`unlisted` is not searchable). That path is **optional for `unlisted`** —
+Marketplace apps**, finding this listing by its URL or, now that it is
+`public`, by search. That path is **optional** —
 individual install is the normal route, and admin install is not part of this
 add-on's acceptance. It has not been exercised; nothing here claims it was.
 

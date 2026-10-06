@@ -56,8 +56,8 @@
   },
 
   "distribution": {
-    "_comment": "Pick one before publishing. 'private' = visible only inside the publishing Workspace domain (no Google review; admins can install for everyone). 'unlisted' = Marketplace review + OAuth brand verification, installable by any Google account via the listing link.",
-    "visibility": "unlisted",
+    "_comment": "Pick one before publishing. 'private' = visible only inside the publishing Workspace domain (no Google review; admins can install for everyone). 'unlisted' = Marketplace review + OAuth brand verification, installable by any Google account via the listing link. 'public' = 'unlisted' with the SDK's Unlisted checkbox cleared, so it also appears in Marketplace search and browse.",
+    "visibility": "public",
     "privateDomain": null
   }
 }

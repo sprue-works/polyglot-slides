@@ -13,8 +13,8 @@ Marketplace](https://workspace.google.com/marketplace/app/polyglot_slides/556097
 **Extensions → Polyglot Slides** in every deck you open, and updates reach you
 without reinstalling. No command line, no Apps Script editor.
 
-The listing is *unlisted*: it is not searchable in the Marketplace, but anyone
-with the link above can install it. Domain-wide admin install is configured
+The listing is *public*: it appears in Marketplace search and browse, and
+anyone with the link above can install it. Domain-wide admin install is configured
 too, so a Workspace admin *can* push it to everyone from the same listing —
 optional and unexercised, so treat it as available rather than proven
 (`marketplace/RUNBOOK.md` §6).
@@ -146,7 +146,8 @@ publish, and verify from a second account. The listing pins a **script
 version number**; after each release someone bumps that field (no re-review
 for a version bump alone) before installed users see the new code.
 
-**The listing is live** (`unlisted`, approved 2026-09-15:
+**The listing is live** (approved 2026-09-15 as `unlisted`; made `public`
+and searchable 2026-10-06:
 <https://workspace.google.com/marketplace/app/polyglot_slides/556097262294>),
 so the template-deck flow in [INSTALL.md](INSTALL.md) is now the
 development/testing path rather than the install path; push `src/` changes
@@ -258,7 +259,7 @@ has no API that a CI job could drive:
   text/assets are kept in `marketplace/` so a human can paste them, but the
   paste is manual — [marketplace/RUNBOOK.md](marketplace/RUNBOOK.md).
 - **OAuth consent screen** (scopes, branding, verification status) and
-  **OAuth verification** for an unlisted listing — brand verification plus
+  **OAuth verification** for the public listing — brand verification plus
   sensitive-scope review, because `script.container.ui` is classified
   sensitive (runbook steps 1 and 3).
 - **Attaching the script to a standard GCP project** (Apps Script editor →
