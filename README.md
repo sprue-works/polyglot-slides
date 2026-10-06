@@ -259,7 +259,7 @@ has no API that a CI job could drive:
   text/assets are kept in `marketplace/` so a human can paste them, but the
   paste is manual — [marketplace/RUNBOOK.md](marketplace/RUNBOOK.md).
 - **OAuth consent screen** (scopes, branding, verification status) and
-  **OAuth verification** for an unlisted listing — brand verification plus
+  **OAuth verification** for the public listing — brand verification plus
   sensitive-scope review, because `script.container.ui` is classified
   sensitive (runbook steps 1 and 3).
 - **Attaching the script to a standard GCP project** (Apps Script editor →

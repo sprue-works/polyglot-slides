@@ -40,11 +40,12 @@ the same school Workspace domain?* Yes → `private` (set
 `distribution.privateDomain` to the domain). Mixed / personal Gmail → `unlisted`.
 The steps below are written for `unlisted` and mark what `private` skips.
 
-`public` is `unlisted` with the SDK's *Unlisted* checkbox cleared: identical
-review, install and consent behaviour, plus appearance in Marketplace search
-and browse. This listing started `unlisted` and was switched to `public` on
-2026-10-06; that checkbox is the only visibility setting the SDK still allows
-changing after a save.
+`public` is `unlisted` with the SDK's *Unlisted* checkbox cleared, so the
+listing also appears in Marketplace search and browse. This listing started
+`unlisted` and was switched to `public` on 2026-10-06; that checkbox is the
+only visibility setting the SDK still allows changing after a save. Whether
+Google re-reviews the listing for that change is **unconfirmed** — the flip
+was made without checking, so treat the SDK review thread as the record.
 
 ## 1. Publish the static pages (GitHub Pages)
 
@@ -349,7 +350,7 @@ SDK*) and click **Manage**, then the **App Configuration** tab:
 
 | Field | Value |
 |---|---|
-| App visibility | `distribution.visibility`: **Private** (own domain) or **Public** with *Unlisted* checked. **Private vs Public is irreversible once saved** — the SDK will not let you switch later; only the *Unlisted* checkbox under Public can be changed afterwards. Get `listing.json` → `distribution.visibility` right before clicking Save |
+| App visibility | `distribution.visibility`: **Private** (own domain) or **Public**: *Unlisted* checked is link-only (`unlisted`), cleared is searchable (`public`). **Private vs Public is irreversible once saved** — the SDK will not let you switch later; only the *Unlisted* checkbox under Public can be changed afterwards. Get `listing.json` → `distribution.visibility` right before clicking Save |
 | Installation settings | **Individual + Admin install** (admins can push to a whole domain) |
 | App integration | **Editor add-on** → tick **Slides**. Do **not** tick *Google Workspace add-on* — that is a different architecture (an `addOns` manifest block, card-based UI) and this add-on is a classic Editor add-on (`createAddonMenu` + HtmlService sidebar) |
 | Slides add-on Project Script ID | `.clasp.json` → `scriptId` — the org-owned project (#36); copy it from the file, never from memory |
@@ -424,7 +425,8 @@ refused at the consent prompt, so add them to both.
 - `private`: **Publish**. It appears in the domain's Marketplace immediately;
   an admin can install it for everyone from **Admin console → Apps → Google
   Workspace Marketplace apps**.
-- `unlisted`: **Submit for review** (the *Publish* button becomes *Submit*).
+- `unlisted` (and `public`, which differs only by the *Unlisted* checkbox):
+  **Submit for review** (the *Publish* button becomes *Submit*).
   Two reviews run: the Marketplace listing review (a few business days) and
   the OAuth verification from step 3, which is a **sensitive-scope** review
   because of `script.container.ui` — expect Google to ask for the scope
