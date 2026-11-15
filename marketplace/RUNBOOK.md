@@ -81,7 +81,7 @@ GitHub Pages needs exactly one DNS-only CNAME from `polyglot.sprue.works` to
 record or corrects a single drifted CNAME. It deliberately stops on A/AAAA,
 non-CNAME, or multiple records rather than deleting unrelated DNS.
 
-The token currently used by `maguerrieri/toolbox` cannot be read back or copied
+The token currently used by `sprue-works/toolbox` cannot be read back or copied
 between repositories by GitHub or automation. A human must either enter the
 original token or rotate it:
 
